@@ -6,27 +6,20 @@ import { useState, useEffect, useRef } from 'react';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const [isAttendanceOpen, setIsAttendanceOpen] = useState(() => {
-    // 如果當前路徑是出席管理相關的，預設展開菜單
-    return pathname.startsWith('/attendance');
-  });
+  const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   
   // 新增：用於防止快速鼠標移動造成的閃爍
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   // 新增：標記是否是從菜單項點擊導航的
   const isMenuClickNavigation = useRef(false);
 
-  // 監聽路徑變化，自動調整下拉菜單狀態
+  // 監聽路徑變化，只在從其他菜單項導航時關閉菜單
   useEffect(() => {
-    // 如果是從菜單項點擊導航的，不自動打開菜單
+    // 如果是從菜單項點擊導航的，重置標記
     if (isMenuClickNavigation.current) {
       isMenuClickNavigation.current = false;
-      return;
     }
-    
-    if (pathname.startsWith('/attendance')) {
-      setIsAttendanceOpen(true);
-    }
+    // 移除自動打開菜單的邏輯，只保留必要的狀態管理
   }, [pathname]);
 
   const isActive = (href: string) => {

@@ -15,9 +15,12 @@ interface AttendanceRecord {
 
 export default function CheckPage() {
   const [selectedDate, setSelectedDate] = useState(() => {
-    // 预设为今天的日期
+    // 获取本地今天的日期，避免时区问题
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   });
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -56,8 +59,18 @@ export default function CheckPage() {
     }
   };
 
-  // 更新出席状态
+  // 更新出席状态 - 优化版本以防止闪烁
   const updateStatus = async (recordId: string, newStatus: string) => {
+    // 立即更新本地状态以获得即时反馈
+    const optimisticUpdate = (prevRecords: AttendanceRecord[]) => 
+      prevRecords.map(record => 
+        record._id === recordId 
+          ? { ...record, status: newStatus }
+          : record
+      );
+    
+    // 先乐观更新UI
+    setRecords(optimisticUpdate);
     setUpdatingStatus(recordId);
     
     try {
@@ -75,16 +88,24 @@ export default function CheckPage() {
 
       const updatedRecord = await response.json();
       
-      // 更新本地状态
+      // 确认更新成功，再次更新状态确保数据一致性
       setRecords(prevRecords => 
         prevRecords.map(record => 
           record._id === recordId 
-            ? { ...record, status: updatedRecord.status }
+            ? { ...record, status: updatedRecord.status, updatedAt: updatedRecord.updatedAt }
             : record
         )
       );
     } catch (err) {
       console.error('更新狀態失敗:', err);
+      // 回滚乐观更新
+      setRecords(prevRecords => 
+        prevRecords.map(record => 
+          record._id === recordId 
+            ? { ...record, status: record.status === newStatus ? '出席' : record.status }
+            : record
+        )
+      );
       alert('更新狀態失敗，請稍後重試');
     } finally {
       setUpdatingStatus(null);
@@ -208,7 +229,7 @@ export default function CheckPage() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {records.map((record, index) => (
-                      <tr key={record._id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <tr key={record._id} className={`transition-colors duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {record.name}
                         </td>
@@ -224,22 +245,53 @@ export default function CheckPage() {
                           {record.location}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <select
-                            value={record.status || '出席'}
-                            onChange={(e) => updateStatus(record._id, e.target.value)}
-                            disabled={updatingStatus === record._id}
-                            className={`text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                              record.status === '早退' ? 'text-orange-600 bg-orange-50' : 'text-green-600 bg-green-50'
-                            } ${updatingStatus === record._id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          >
-                            <option value="出席">出席</option>
-                            <option value="早退">早退</option>
-                          </select>
-                          {updatingStatus === record._id && (
-                            <div className="inline-flex items-center ml-2">
-                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                          <div className="relative inline-block">
+                            <select
+                              value={record.status || '出席'}
+                              onChange={(e) => updateStatus(record._id, e.target.value)}
+                              disabled={updatingStatus === record._id}
+                              className={`
+                                appearance-none
+                                relative
+                                w-16
+                                pl-2
+                                pr-5
+                                py-2
+                                border
+                                rounded-lg
+                                text-sm
+                                font-medium
+                                transition-all
+                                duration-200
+                                cursor-pointer
+                                focus:outline-none
+                                focus:ring-2
+                                focus:ring-offset-1
+                                ${record.status === '早退' 
+                                  ? 'border-orange-200 bg-orange-50 text-orange-700 focus:ring-orange-500 hover:bg-orange-100' 
+                                  : 'border-green-200 bg-green-50 text-green-700 focus:ring-green-500 hover:bg-green-100'
+                                }
+                                ${updatingStatus === record._id 
+                                  ? 'opacity-60 cursor-wait' 
+                                  : 'hover:shadow-sm'
+                                }
+                              `}
+                            >
+                              <option value="出席">出席</option>
+                              <option value="早退">早退</option>
+                            </select>
+                            
+                            {/* 自定义下拉箭头 */}
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                              {updatingStatus === record._id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
+                              ) : (
+                                <svg className="h-4 w-4 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </td>
                       </tr>
                     ))}
