@@ -35,7 +35,8 @@ const AttendanceSchema: Schema = new Schema({
     maxLength: [1000, '活動內容不能超過1000個字符']
   }
 }, {
-  timestamps: true // 自動添加 createdAt 和 updatedAt
+  timestamps: true, // 自動添加 createdAt 和 updatedAt
+  collection: 'attendance' // 明確指定 collection 名稱
 });
 
 // 創建複合索引以提高查詢性能
