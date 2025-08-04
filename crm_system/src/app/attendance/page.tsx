@@ -24,6 +24,10 @@ export default function AttendancePage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [updatedCount, setUpdatedCount] = useState(0);
   const [isUpdating, setIsUpdating] = useState(false);
+  // 新增状态：删除功能相关
+  const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchAttendanceRecords();
@@ -65,6 +69,7 @@ export default function AttendancePage() {
   const enterUpdateMode = () => {
     setIsUpdateMode(true);
     setEditedRecords([...attendanceRecords]);
+    setSelectedRecords([]);
   };
 
   // 新增函数：退出更新模式
@@ -72,6 +77,7 @@ export default function AttendancePage() {
     setIsUpdateMode(false);
     setEditedRecords([]);
     setUpdatedCount(0);
+    setSelectedRecords([]);
   };
 
   // 新增函数：处理记录编辑
@@ -94,6 +100,66 @@ export default function AttendancePage() {
       );
     }).length;
     setUpdatedCount(changedCount);
+  };
+
+  // 新增函数：处理记录选择
+  const handleRecordSelect = (recordId: string) => {
+    setSelectedRecords(prev => {
+      if (prev.includes(recordId)) {
+        return prev.filter(id => id !== recordId);
+      } else {
+        return [...prev, recordId];
+      }
+    });
+  };
+
+  // 新增函数：全选/取消全选
+  const handleSelectAll = () => {
+    if (selectedRecords.length === filteredRecords.length) {
+      setSelectedRecords([]);
+    } else {
+      setSelectedRecords(filteredRecords.map(record => record._id));
+    }
+  };
+
+  // 新增函数：确认删除
+  const confirmDelete = () => {
+    if (selectedRecords.length > 0) {
+      setShowDeleteModal(true);
+    }
+  };
+
+  // 新增函数：执行删除操作
+  const executeDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const deletePromises = selectedRecords.map(async (recordId) => {
+        const response = await fetch(`/api/attendance/${recordId}`, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+          throw new Error(`刪除記錄 ${recordId} 失敗`);
+        }
+        return response.json();
+      });
+
+      await Promise.all(deletePromises);
+      
+      // 重新获取数据
+      await fetchAttendanceRecords();
+      
+      // 退出更新模式
+      exitUpdateMode();
+      setShowDeleteModal(false);
+      
+      alert(`成功刪除 ${selectedRecords.length} 筆記錄！`);
+    } catch (error) {
+      console.error('刪除失敗:', error);
+      alert('刪除失敗，請稍後重試');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // 新增函数：确认更新
@@ -213,6 +279,11 @@ export default function AttendancePage() {
                   ({updatedCount} 筆待更新)
                 </span>
               )}
+              {isUpdateMode && selectedRecords.length > 0 && (
+                <span className="ml-2 text-sm text-red-600">
+                  ({selectedRecords.length} 筆已選擇)
+                </span>
+              )}
             </h2>
             
             <div className="flex gap-3">
@@ -254,8 +325,22 @@ export default function AttendancePage() {
                     {isUpdating ? '更新中...' : '確認更新'}
                   </button>
                   <button
+                    onClick={confirmDelete}
+                    disabled={selectedRecords.length === 0 || isDeleting}
+                    className={`flex items-center px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${
+                      selectedRecords.length === 0 || isDeleting
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-red-600 hover:bg-red-700'
+                    }`}
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    {isDeleting ? '刪除中...' : '刪除記錄'}
+                  </button>
+                  <button
                     onClick={exitUpdateMode}
-                    disabled={isUpdating}
+                    disabled={isUpdating || isDeleting}
                     className="flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,6 +359,16 @@ export default function AttendancePage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0">
               <tr>
+                {isUpdateMode && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      checked={selectedRecords.length === filteredRecords.length && filteredRecords.length > 0}
+                      onChange={handleSelectAll}
+                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                    />
+                  </th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   參加者姓名
                 </th>
@@ -294,7 +389,7 @@ export default function AttendancePage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={isUpdateMode ? 6 : 5} className="px-6 py-8 text-center text-gray-500">
                     {searchTerm ? '未找到符合條件的記錄' : '暫無活動記錄'}
                   </td>
                 </tr>
@@ -305,6 +400,16 @@ export default function AttendancePage() {
                   
                   return (
                     <tr key={record._id} className="hover:bg-gray-50">
+                      {isUpdateMode && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={selectedRecords.includes(record._id)}
+                            onChange={() => handleRecordSelect(record._id)}
+                            className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                          />
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap">
                         {isUpdateMode ? (
                           <input
@@ -407,6 +512,44 @@ export default function AttendancePage() {
                 }`}
               >
                 {isUpdating ? '更新中...' : '確認更新'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 確認刪除彈窗 */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0"></div>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 z-10">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800">確認刪除記錄</h3>
+            </div>
+            <div className="px-6 py-4">
+              <p className="text-gray-600 mb-4">
+                您即將刪除 <span className="font-semibold text-red-600">{selectedRecords.length}</span> 筆記錄，
+                此操作不可撤銷。是否確認執行？
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={executeDelete}
+                disabled={isDeleting}
+                className={`px-4 py-2 text-white rounded-lg transition-colors ${
+                  isDeleting 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
+              >
+                {isDeleting ? '刪除中...' : '確認刪除'}
               </button>
             </div>
           </div>

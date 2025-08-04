@@ -29,6 +29,18 @@ export default function Navigation() {
     return pathname.startsWith('/attendance');
   };
 
+  // 新增鼠標事件處理函數
+  const handleMouseEnter = () => {
+    setIsAttendanceOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    // 如果當前不在出席管理頁面，則關閉菜單
+    if (!pathname.startsWith('/attendance')) {
+      setIsAttendanceOpen(false);
+    }
+  };
+
   return (
     <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -36,7 +48,6 @@ export default function Navigation() {
           {/* 左側 Logo 和標題 */}
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-3">
-              <span className="text-2xl">🏢</span>
               <div>
                 <span className="text-xl font-bold text-gray-800">CRM 系統</span>
                 <div className="text-xs text-gray-500">管理系統</div>
@@ -57,22 +68,23 @@ export default function Navigation() {
                       : 'text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300'
                   }`}
                 >
-                  <span>🏠</span>
                   <span>首頁</span>
                 </Link>
               </li>
 
-              {/* 出席管理下拉菜單 */}
-              <li className="nav-item relative">
-                <button
-                  onClick={() => setIsAttendanceOpen(!isAttendanceOpen)}
-                  className={`nav-link flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 ${
+              {/* 出席管理下拉菜單 - 改為鼠標懸停 */}
+              <li 
+                className="nav-item relative"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
+                <div
+                  className={`nav-link flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 cursor-pointer ${
                     isAttendanceActive()
                       ? 'text-blue-700 border-blue-700'
                       : 'text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300'
                   }`}
                 >
-                  <span>📋</span>
                   <span>出席管理</span>
                   <svg 
                     className={`w-4 h-4 transition-transform duration-200 ${isAttendanceOpen ? 'rotate-180' : ''}`} 
@@ -82,7 +94,7 @@ export default function Navigation() {
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
-                </button>
+                </div>
 
                 {/* 下拉菜單 */}
                 {isAttendanceOpen && (
@@ -94,10 +106,8 @@ export default function Navigation() {
                           ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
-                      onClick={() => setIsAttendanceOpen(false)}
                     >
                       <div className="flex items-center space-x-2">
-                        <span>📋</span>
                         <span>出席記錄管理</span>
                       </div>
                     </Link>
@@ -108,10 +118,8 @@ export default function Navigation() {
                           ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
-                      onClick={() => setIsAttendanceOpen(false)}
                     >
                       <div className="flex items-center space-x-2">
-                        <span>👥</span>
                         <span>按姓名分類</span>
                       </div>
                     </Link>
@@ -122,10 +130,8 @@ export default function Navigation() {
                           ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
-                      onClick={() => setIsAttendanceOpen(false)}
                     >
                       <div className="flex items-center space-x-2">
-                        <span>➕</span>
                         <span>添加記錄</span>
                       </div>
                     </Link>
@@ -139,7 +145,6 @@ export default function Navigation() {
                   href="#"
                   className="nav-link flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 text-gray-400 border-transparent cursor-not-allowed"
                 >
-                  <span>📊</span>
                   <span>報告</span>
                 </Link>
               </li>
@@ -149,7 +154,6 @@ export default function Navigation() {
                   href="#"
                   className="nav-link flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 text-gray-400 border-transparent cursor-not-allowed"
                 >
-                  <span>⚙️</span>
                   <span>設置</span>
                 </Link>
               </li>
@@ -157,14 +161,6 @@ export default function Navigation() {
           </div>
         </div>
       </div>
-
-      {/* 點擊外部關閉下拉菜單 */}
-      {isAttendanceOpen && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setIsAttendanceOpen(false)}
-        />
-      )}
     </nav>
   );
 } 

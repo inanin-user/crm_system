@@ -6,11 +6,11 @@ import mongoose from 'mongoose';
 // PATCH - 更新指定ID的出席记录
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
     
     // 验证ID格式
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -64,11 +64,11 @@ export async function PATCH(
 // DELETE - 删除指定ID的出席记录
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
     
     // 验证ID格式
     if (!mongoose.Types.ObjectId.isValid(id)) {
