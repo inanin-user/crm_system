@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -10,9 +10,20 @@ export default function Navigation() {
     // 如果當前路徑是出席管理相關的，預設展開菜單
     return pathname.startsWith('/attendance');
   });
+  
+  // 新增：用於防止快速鼠標移動造成的閃爍
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // 新增：標記是否是從菜單項點擊導航的
+  const isMenuClickNavigation = useRef(false);
 
   // 監聽路徑變化，自動調整下拉菜單狀態
   useEffect(() => {
+    // 如果是從菜單項點擊導航的，不自動打開菜單
+    if (isMenuClickNavigation.current) {
+      isMenuClickNavigation.current = false;
+      return;
+    }
+    
     if (pathname.startsWith('/attendance')) {
       setIsAttendanceOpen(true);
     }
@@ -29,17 +40,45 @@ export default function Navigation() {
     return pathname.startsWith('/attendance');
   };
 
-  // 新增鼠標事件處理函數
+  // 修改鼠標事件處理函數
   const handleMouseEnter = () => {
+    // 清除任何待執行的關閉操作
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
     setIsAttendanceOpen(true);
   };
 
   const handleMouseLeave = () => {
-    // 如果當前不在出席管理頁面，則關閉菜單
-    if (!pathname.startsWith('/attendance')) {
+    // 添加延遲，防止快速移動造成的意外關閉
+    timeoutRef.current = setTimeout(() => {
+      // 無論在哪個頁面，鼠標移開都關閉菜單，提升用戶體驗
       setIsAttendanceOpen(false);
-    }
+    }, 150); // 稍微增加延遲到150ms，讓操作更流暢
   };
+
+  // 新增：點擊菜單項後關閉菜單
+  const handleMenuItemClick = () => {
+    // 清除任何待執行的關閉操作
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    // 標記為菜單項點擊導航
+    isMenuClickNavigation.current = true;
+    // 立即關閉菜單
+    setIsAttendanceOpen(false);
+  };
+
+  // 清理計時器
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
@@ -98,7 +137,11 @@ export default function Navigation() {
 
                 {/* 下拉菜單 */}
                 {isAttendanceOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+                  <div 
+                    className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                  >
                     <Link
                       href="/attendance"
                       className={`block px-4 py-2 text-sm transition-colors ${
@@ -106,6 +149,7 @@ export default function Navigation() {
                           ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
+                      onClick={handleMenuItemClick}
                     >
                       <div className="flex items-center space-x-2">
                         <span>出席記錄管理</span>
@@ -118,6 +162,7 @@ export default function Navigation() {
                           ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
+                      onClick={handleMenuItemClick}
                     >
                       <div className="flex items-center space-x-2">
                         <span>按姓名分類</span>
@@ -130,6 +175,7 @@ export default function Navigation() {
                           ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
+                      onClick={handleMenuItemClick}
                     >
                       <div className="flex items-center space-x-2">
                         <span>添加記錄</span>
