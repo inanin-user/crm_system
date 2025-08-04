@@ -1,0 +1,46 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IAttendance extends Document {
+  name: string;              // 參加者姓名
+  contactInfo: string;       // 聯絡方式
+  location: string;          // 地點
+  activity: string;          // 活動內容
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const AttendanceSchema: Schema = new Schema({
+  name: {
+    type: String,
+    required: [true, '請提供參加者姓名'],
+    trim: true,
+    maxLength: [100, '姓名不能超過100個字符']
+  },
+  contactInfo: {
+    type: String,
+    required: [true, '請提供聯絡方式'],
+    trim: true,
+    maxLength: [200, '聯絡方式不能超過200個字符']
+  },
+  location: {
+    type: String,
+    required: [true, '請提供地點'],
+    trim: true,
+    maxLength: [200, '地點不能超過200個字符']
+  },
+  activity: {
+    type: String,
+    required: [true, '請提供活動內容'],
+    trim: true,
+    maxLength: [1000, '活動內容不能超過1000個字符']
+  }
+}, {
+  timestamps: true // 自動添加 createdAt 和 updatedAt
+});
+
+// 創建複合索引以提高查詢性能
+AttendanceSchema.index({ name: 1, createdAt: -1 });
+AttendanceSchema.index({ location: 1 });
+AttendanceSchema.index({ activity: 1 });
+
+export default mongoose.models.Attendance || mongoose.model<IAttendance>('Attendance', AttendanceSchema); 
