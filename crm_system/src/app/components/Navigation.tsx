@@ -181,6 +181,19 @@ export default function Navigation() {
                         <span>添加記錄</span>
                       </div>
                     </Link>
+                    <Link
+                      href="/attendance/check"
+                      className={`block px-4 py-2 text-sm transition-colors ${
+                        pathname === '/attendance/check'
+                          ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                      onClick={handleMenuItemClick}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <span>點名記錄</span>
+                      </div>
+                    </Link>
                   </div>
                 )}
               </li>
