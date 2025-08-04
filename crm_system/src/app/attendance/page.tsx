@@ -18,6 +18,12 @@ export default function AttendancePage() {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  // 新增状态：更新模式相关
+  const [isUpdateMode, setIsUpdateMode] = useState(false);
+  const [editedRecords, setEditedRecords] = useState<AttendanceRecord[]>([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [updatedCount, setUpdatedCount] = useState(0);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     fetchAttendanceRecords();
@@ -52,6 +58,97 @@ export default function AttendancePage() {
       });
     } catch (error) {
       return dateString;
+    }
+  };
+
+  // 新增函数：开启更新模式
+  const enterUpdateMode = () => {
+    setIsUpdateMode(true);
+    setEditedRecords([...attendanceRecords]);
+  };
+
+  // 新增函数：退出更新模式
+  const exitUpdateMode = () => {
+    setIsUpdateMode(false);
+    setEditedRecords([]);
+    setUpdatedCount(0);
+  };
+
+  // 新增函数：处理记录编辑
+  const handleRecordEdit = (index: number, field: string, value: string) => {
+    const newEditedRecords = [...editedRecords];
+    newEditedRecords[index] = {
+      ...newEditedRecords[index],
+      [field]: value
+    };
+    setEditedRecords(newEditedRecords);
+    
+    // 计算修改的记录数量
+    const changedCount = newEditedRecords.filter((record) => {
+      const original = attendanceRecords.find(orig => orig._id === record._id);
+      return original && (
+        record.name !== original.name ||
+        record.contactInfo !== original.contactInfo ||
+        record.location !== original.location ||
+        record.activity !== original.activity
+      );
+    }).length;
+    setUpdatedCount(changedCount);
+  };
+
+  // 新增函数：确认更新
+  const confirmUpdate = () => {
+    setShowConfirmModal(true);
+  };
+
+  // 新增函数：执行更新
+  const executeUpdate = async () => {
+    setIsUpdating(true);
+    try {
+      const updatePromises = editedRecords.map(async (record) => {
+        const original = attendanceRecords.find(orig => orig._id === record._id);
+        if (original && (
+          record.name !== original.name ||
+          record.contactInfo !== original.contactInfo ||
+          record.location !== original.location ||
+          record.activity !== original.activity
+        )) {
+          const response = await fetch(`/api/attendance/${record._id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: record.name,
+              contactInfo: record.contactInfo,
+              location: record.location,
+              activity: record.activity
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error(`更新記錄 ${record.name} 失敗`);
+          }
+          return response.json();
+        }
+        return null;
+      });
+
+      await Promise.all(updatePromises);
+      
+      // 重新获取数据
+      await fetchAttendanceRecords();
+      
+      // 退出更新模式
+      exitUpdateMode();
+      setShowConfirmModal(false);
+      
+      alert(`成功更新 ${updatedCount} 筆記錄！`);
+    } catch (error) {
+      console.error('更新失敗:', error);
+      alert('更新失敗，請稍後重試');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -111,25 +208,71 @@ export default function AttendancePage() {
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-800">
               活動出席記錄 ({filteredRecords.length} 筆)
+              {isUpdateMode && updatedCount > 0 && (
+                <span className="ml-2 text-sm text-orange-600">
+                  ({updatedCount} 筆待更新)
+                </span>
+              )}
             </h2>
             
             <div className="flex gap-3">
-              <button
-                onClick={() => router.push('/attendance/add')}
-                className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                添加記錄
-              </button>
+              {!isUpdateMode ? (
+                <>
+                  <button
+                    onClick={() => router.push('/attendance/add')}
+                    className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    添加記錄
+                  </button>
+                  <button
+                    onClick={enterUpdateMode}
+                    className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    更新記錄
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={confirmUpdate}
+                    disabled={updatedCount === 0 || isUpdating}
+                    className={`flex items-center px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${
+                      updatedCount === 0 || isUpdating
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-green-600 hover:bg-green-700'
+                    }`}
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {isUpdating ? '更新中...' : '確認更新'}
+                  </button>
+                  <button
+                    onClick={exitUpdateMode}
+                    disabled={isUpdating}
+                    className="flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    取消
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
         
-        <div className="overflow-x-auto">
+        {/* 滑動窗口的表格容器 */}
+        <div className="overflow-x-auto max-h-96 overflow-y-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 sticky top-0">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   參加者姓名
@@ -156,40 +299,119 @@ export default function AttendancePage() {
                   </td>
                 </tr>
               ) : (
-                filteredRecords.map((record) => (
-                  <tr key={record._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {record.name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {record.contactInfo}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {record.location}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-500 max-w-xs truncate" title={record.activity}>
-                        {record.activity}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">
-                        {formatDate(record.createdAt)}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                filteredRecords.map((record, index) => {
+                  const editedRecord = isUpdateMode ? editedRecords.find(r => r._id === record._id) || record : record;
+                  const editIndex = isUpdateMode ? editedRecords.findIndex(r => r._id === record._id) : -1;
+                  
+                  return (
+                    <tr key={record._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {isUpdateMode ? (
+                          <input
+                            type="text"
+                            value={editedRecord.name}
+                            onChange={(e) => handleRecordEdit(editIndex, 'name', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        ) : (
+                          <div className="text-sm font-medium text-gray-900">
+                            {record.name}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {isUpdateMode ? (
+                          <input
+                            type="text"
+                            value={editedRecord.contactInfo}
+                            onChange={(e) => handleRecordEdit(editIndex, 'contactInfo', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        ) : (
+                          <div className="text-sm text-gray-900">
+                            {record.contactInfo}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {isUpdateMode ? (
+                          <input
+                            type="text"
+                            value={editedRecord.location}
+                            onChange={(e) => handleRecordEdit(editIndex, 'location', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        ) : (
+                          <div className="text-sm text-gray-900">
+                            {record.location}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {isUpdateMode ? (
+                          <textarea
+                            value={editedRecord.activity}
+                            onChange={(e) => handleRecordEdit(editIndex, 'activity', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                            rows={2}
+                          />
+                        ) : (
+                          <div className="text-sm text-gray-500 max-w-xs truncate" title={record.activity}>
+                            {record.activity}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">
+                          {formatDate(record.createdAt)}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* 確認更新彈窗 */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0"></div>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 z-10">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800">確認更新記錄</h3>
+            </div>
+            <div className="px-6 py-4">
+              <p className="text-gray-600 mb-4">
+                您即將更新 <span className="font-semibold text-orange-600">{updatedCount}</span> 筆記錄，
+                此操作不可撤銷。是否確認執行？
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                disabled={isUpdating}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={executeUpdate}
+                disabled={isUpdating}
+                className={`px-4 py-2 text-white rounded-lg transition-colors ${
+                  isUpdating 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-green-600 hover:bg-green-700'
+                }`}
+              >
+                {isUpdating ? '更新中...' : '確認更新'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
