@@ -21,7 +21,7 @@ export async function PATCH(
     }
     
     const body = await request.json();
-    const { name, contactInfo, location, activity } = body;
+    const { name, contactInfo, location, activity, status } = body;
     
     // 构建更新对象
     const updateData: any = {};
@@ -29,6 +29,7 @@ export async function PATCH(
     if (contactInfo !== undefined) updateData.contactInfo = contactInfo.trim();
     if (location !== undefined) updateData.location = location.trim();
     if (activity !== undefined) updateData.activity = activity.trim();
+    if (status !== undefined) updateData.status = status;
     
     // 检查是否有要更新的数据
     if (Object.keys(updateData).length === 0) {

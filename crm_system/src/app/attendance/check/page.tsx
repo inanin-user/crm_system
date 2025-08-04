@@ -8,6 +8,7 @@ interface AttendanceRecord {
   contactInfo: string;
   location: string;
   activity: string;
+  status: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +22,7 @@ export default function CheckPage() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   // 格式化时间，只显示时:分
   const formatTime = (dateString: string) => {
@@ -51,6 +53,41 @@ export default function CheckPage() {
       setRecords([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 更新出席状态
+  const updateStatus = async (recordId: string, newStatus: string) => {
+    setUpdatingStatus(recordId);
+    
+    try {
+      const response = await fetch(`/api/attendance/${recordId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (!response.ok) {
+        throw new Error('更新狀態失敗');
+      }
+
+      const updatedRecord = await response.json();
+      
+      // 更新本地状态
+      setRecords(prevRecords => 
+        prevRecords.map(record => 
+          record._id === recordId 
+            ? { ...record, status: updatedRecord.status }
+            : record
+        )
+      );
+    } catch (err) {
+      console.error('更新狀態失敗:', err);
+      alert('更新狀態失敗，請稍後重試');
+    } finally {
+      setUpdatingStatus(null);
     }
   };
 
@@ -164,6 +201,9 @@ export default function CheckPage() {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         地點
                       </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        狀態
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -182,6 +222,24 @@ export default function CheckPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {record.location}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <select
+                            value={record.status || '出席'}
+                            onChange={(e) => updateStatus(record._id, e.target.value)}
+                            disabled={updatingStatus === record._id}
+                            className={`text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                              record.status === '早退' ? 'text-orange-600 bg-orange-50' : 'text-green-600 bg-green-50'
+                            } ${updatingStatus === record._id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            <option value="出席">出席</option>
+                            <option value="早退">早退</option>
+                          </select>
+                          {updatingStatus === record._id && (
+                            <div className="inline-flex items-center ml-2">
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}

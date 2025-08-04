@@ -5,6 +5,7 @@ export interface IAttendance extends Document {
   contactInfo: string;       // 聯絡方式
   location: string;          // 地點
   activity: string;          // 活動內容
+  status: string;            // 出席狀態
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +34,12 @@ const AttendanceSchema: Schema = new Schema({
     required: [true, '請提供活動內容'],
     trim: true,
     maxLength: [1000, '活動內容不能超過1000個字符']
+  },
+  status: {
+    type: String,
+    enum: ['出席', '早退'],
+    default: '出席',
+    required: [true, '請提供出席狀態']
   }
 }, {
   timestamps: true, // 自動添加 createdAt 和 updatedAt
@@ -44,4 +51,9 @@ AttendanceSchema.index({ name: 1, createdAt: -1 });
 AttendanceSchema.index({ location: 1 });
 AttendanceSchema.index({ activity: 1 });
 
-export default mongoose.models.Attendance || mongoose.model<IAttendance>('Attendance', AttendanceSchema); 
+// 刪除現有模型（如果存在）並重新創建
+if (mongoose.models.Attendance) {
+  delete mongoose.models.Attendance;
+}
+
+export default mongoose.model<IAttendance>('Attendance', AttendanceSchema); 
