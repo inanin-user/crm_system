@@ -9,10 +9,12 @@ export default function Navigation() {
   const pathname = usePathname();
   const { user, isLoading, logout } = useAuth();
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   
   // 新增：用於防止快速鼠標移動造成的閃爍
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const accountTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const userMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // 新增：標記是否是從菜單項點擊導航的
   const isMenuClickNavigation = useRef(false);
@@ -37,6 +39,10 @@ export default function Navigation() {
     return pathname.startsWith('/attendance');
   };
 
+  const isAccountActive = () => {
+    return pathname.startsWith('/account_management');
+  };
+
   // 修改鼠標事件處理函數
   const handleMouseEnter = () => {
     // 清除任何待執行的關閉操作
@@ -55,6 +61,23 @@ export default function Navigation() {
     }, 150); // 稍微增加延遲到150ms，讓操作更流暢
   };
 
+  // 账号管理鼠标事件处理函数
+  const handleAccountMouseEnter = () => {
+    // 清除任何待執行的關閉操作
+    if (accountTimeoutRef.current) {
+      clearTimeout(accountTimeoutRef.current);
+      accountTimeoutRef.current = null;
+    }
+    setIsAccountOpen(true);
+  };
+
+  const handleAccountMouseLeave = () => {
+    // 添加延遲，防止快速移動造成的意外關閉
+    accountTimeoutRef.current = setTimeout(() => {
+      setIsAccountOpen(false);
+    }, 150);
+  };
+
   // 新增：點擊菜單項後關閉菜單
   const handleMenuItemClick = () => {
     // 清除任何待執行的關閉操作
@@ -62,10 +85,15 @@ export default function Navigation() {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    if (accountTimeoutRef.current) {
+      clearTimeout(accountTimeoutRef.current);
+      accountTimeoutRef.current = null;
+    }
     // 標記為菜單項點擊導航
     isMenuClickNavigation.current = true;
     // 立即關閉菜單
     setIsAttendanceOpen(false);
+    setIsAccountOpen(false);
   };
 
   // 用户菜单鼠标事件处理
@@ -93,6 +121,9 @@ export default function Navigation() {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+      }
+      if (accountTimeoutRef.current) {
+        clearTimeout(accountTimeoutRef.current);
       }
       if (userMenuTimeoutRef.current) {
         clearTimeout(userMenuTimeoutRef.current);
@@ -218,23 +249,78 @@ export default function Navigation() {
                 )}
               </li>
 
-              {/* 其他導航項目可以在這裡添加 */}
-              <li className="nav-item">
-                <Link
-                  href="#"
-                  className="nav-link flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 text-gray-400 border-transparent cursor-not-allowed"
+              {/* 账号管理下拉菜单 */}
+              <li 
+                className="nav-item relative"
+                onMouseEnter={handleAccountMouseEnter}
+                onMouseLeave={handleAccountMouseLeave}
+              >
+                <div
+                  className={`nav-link flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 cursor-pointer ${
+                    isAccountActive()
+                      ? 'text-blue-700 border-blue-700'
+                      : 'text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300'
+                  }`}
                 >
-                  <span>報告</span>
-                </Link>
-              </li>
+                  <span>帳號管理</span>
+                  <svg 
+                    className={`w-4 h-4 transition-transform duration-200 ${isAccountOpen ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
 
-              <li className="nav-item">
-                <Link
-                  href="#"
-                  className="nav-link flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 text-gray-400 border-transparent cursor-not-allowed"
-                >
-                  <span>設置</span>
-                </Link>
+                {/* 下拉菜單 */}
+                {isAccountOpen && (
+                  <div 
+                    className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+                    onMouseEnter={handleAccountMouseEnter}
+                    onMouseLeave={handleAccountMouseLeave}
+                  >
+                    <Link
+                      href="/account_management/admin"
+                      className={`block px-4 py-2 text-sm transition-colors ${
+                        pathname === '/account_management/admin'
+                          ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                      onClick={handleMenuItemClick}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <span>管理員</span>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/account_management/trainer"
+                      className={`block px-4 py-2 text-sm transition-colors ${
+                        pathname === '/account_management/trainer'
+                          ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                      onClick={handleMenuItemClick}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <span>教練</span>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/account_management/member"
+                      className={`block px-4 py-2 text-sm transition-colors ${
+                        pathname === '/account_management/member'
+                          ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                      onClick={handleMenuItemClick}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <span>會員</span>
+                      </div>
+                    </Link>
+                  </div>
+                )}
               </li>
             </ul>
 

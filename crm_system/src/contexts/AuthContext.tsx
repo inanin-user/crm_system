@@ -24,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const PROTECTED_ROUTES = [
   '/',
   '/attendance',
+  '/account_management',
   '/admin',
 ];
 
