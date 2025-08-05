@@ -132,7 +132,12 @@ export default function Navigation() {
   }, []);
 
   return (
-    <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
+    <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50 will-change-transform"
+         style={{ 
+           transform: 'translateZ(0)',
+           backfaceVisibility: 'hidden',
+           WebkitBackfaceVisibility: 'hidden'
+         }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* 左側 Logo 和標題 */}
@@ -190,6 +195,12 @@ export default function Navigation() {
                 {isAttendanceOpen && (
                   <div 
                     className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+                    style={{
+                      transform: 'translateZ(0)',
+                      backfaceVisibility: 'hidden',
+                      WebkitBackfaceVisibility: 'hidden',
+                      willChange: 'opacity, transform'
+                    }}
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                   >
@@ -277,6 +288,12 @@ export default function Navigation() {
                 {isAccountOpen && (
                   <div 
                     className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+                    style={{
+                      transform: 'translateZ(0)',
+                      backfaceVisibility: 'hidden',
+                      WebkitBackfaceVisibility: 'hidden',
+                      willChange: 'opacity, transform'
+                    }}
                     onMouseEnter={handleAccountMouseEnter}
                     onMouseLeave={handleAccountMouseLeave}
                   >
@@ -357,6 +374,12 @@ export default function Navigation() {
                 {isUserMenuOpen && (
                   <div 
                     className="absolute top-full right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+                    style={{
+                      transform: 'translateZ(0)',
+                      backfaceVisibility: 'hidden',
+                      WebkitBackfaceVisibility: 'hidden',
+                      willChange: 'opacity, transform'
+                    }}
                     onMouseEnter={handleUserMenuEnter}
                     onMouseLeave={handleUserMenuLeave}
                   >

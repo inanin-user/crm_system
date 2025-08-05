@@ -1,9 +1,13 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 
 export default function AdminManagementPage() {
   const { user } = useAuth();
+  
+  // 启用滚动性能优化
+  useScrollOptimization();
 
   return (
     <div className="max-w-7xl mx-auto">

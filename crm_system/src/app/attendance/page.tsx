@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 
 interface AttendanceRecord {
   _id: string;
@@ -18,6 +19,9 @@ export default function AttendancePage() {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // 启用滚动性能优化
+  useScrollOptimization();
   // 新增状态：更新模式相关
   const [isUpdateMode, setIsUpdateMode] = useState(false);
   const [editedRecords, setEditedRecords] = useState<AttendanceRecord[]>([]);

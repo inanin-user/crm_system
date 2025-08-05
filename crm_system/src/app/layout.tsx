@@ -30,9 +30,22 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
       >
         <AuthProvider>
-          <div className="min-h-screen bg-gray-50">
+          <div 
+            className="min-h-screen bg-gray-50"
+            style={{
+              transform: 'translateZ(0)',
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden'
+            }}
+          >
             <Navigation />
-            <main className="container mx-auto px-4 py-6">
+            <main 
+              className="container mx-auto px-4 py-6"
+              style={{
+                transform: 'translateZ(0)',
+                willChange: 'scroll-position'
+              }}
+            >
               {children}
             </main>
           </div>

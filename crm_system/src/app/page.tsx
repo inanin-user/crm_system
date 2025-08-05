@@ -1,9 +1,13 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 
 export default function Home() {
   const { user, isLoading } = useAuth();
+  
+  // 启用滚动性能优化
+  useScrollOptimization();
 
   return (
     <div>
