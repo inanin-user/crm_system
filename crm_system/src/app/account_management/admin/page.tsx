@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 import AddAccountModal from '@/app/components/AddAccountModal';
+import DeleteAccountModal from '@/app/components/DeleteAccountModal';
+import EditAccountModal from '@/app/components/EditAccountModal';
 
 interface Account {
   _id: string;
@@ -28,6 +30,10 @@ export default function AdminManagementPage() {
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [accountToEdit, setAccountToEdit] = useState<AccountDetail | null>(null);
   const [error, setError] = useState('');
 
   // 获取管理员列表
@@ -77,6 +83,37 @@ export default function AdminManagementPage() {
     fetchAdminAccounts(); // 重新获取列表
   };
 
+  // 删除账户处理
+  const handleDeleteClick = () => {
+    if (selectedAccount) {
+      setAccountToDelete(selectedAccount);
+      setIsDeleteModalOpen(true);
+    }
+  };
+
+  // 删除账户成功回调
+  const handleDeleteSuccess = () => {
+    fetchAdminAccounts(); // 重新获取列表
+    setSelectedAccount(null); // 清空选中的账户
+  };
+
+  // 修改账户处理
+  const handleEditClick = () => {
+    if (selectedAccount) {
+      setAccountToEdit(selectedAccount);
+      setIsEditModalOpen(true);
+    }
+  };
+
+  // 修改账户成功回调
+  const handleEditSuccess = () => {
+    fetchAdminAccounts(); // 重新获取列表
+    if (selectedAccount) {
+      // 重新获取选中账户的详细信息
+      handleSelectAccount(selectedAccount._id);
+    }
+  };
+
   // 格式化日期
   const formatDate = (dateString: string) => {
     if (!dateString) return '从未登录';
@@ -95,12 +132,28 @@ export default function AdminManagementPage() {
           <h1 className="text-3xl font-bold text-gray-900">管理員帳號管理</h1>
           <p className="mt-2 text-gray-600">管理系統管理員帳號，包括查看詳情和新增管理員</p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          + 添加帳戶
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={handleDeleteClick}
+            disabled={!selectedAccount}
+            className="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            刪除帳戶
+          </button>
+          <button
+            onClick={handleEditClick}
+            disabled={!selectedAccount}
+            className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            修改帳戶
+          </button>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            + 添加帳戶
+          </button>
+        </div>
       </div>
 
       {/* 错误提示 */}
@@ -241,6 +294,22 @@ export default function AdminManagementPage() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleAddSuccess}
         defaultRole="admin"
+      />
+      
+      <DeleteAccountModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onSuccess={handleDeleteSuccess}
+        account={accountToDelete}
+        currentRole="admin"
+      />
+      
+      <EditAccountModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={handleEditSuccess}
+        account={accountToEdit}
+        currentRole="admin"
       />
     </div>
   );

@@ -77,8 +77,7 @@ AccountSchema.methods.comparePassword = async function(candidatePassword: string
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// 创建索引
-AccountSchema.index({ username: 1 });
+// 创建索引（username已经通过unique自动创建索引）
 AccountSchema.index({ role: 1 });
 AccountSchema.index({ isActive: 1 });
 

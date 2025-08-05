@@ -9,8 +9,9 @@ export async function GET(
 ) {
   try {
     await connectDB();
+    const { id } = await params;
     
-    const account = await Account.findById(params.id);
+    const account = await Account.findById(id);
     
     if (!account) {
       return NextResponse.json(
@@ -36,6 +37,122 @@ export async function GET(
     console.error('获取账户详情失败:', error);
     return NextResponse.json(
       { success: false, message: '获取账户详情失败' },
+      { status: 500 }
+    );
+  }
+}
+
+// 删除账户
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectDB();
+    const { id } = await params;
+    
+    const account = await Account.findById(id);
+    
+    if (!account) {
+      return NextResponse.json(
+        { success: false, message: '账户不存在' },
+        { status: 404 }
+      );
+    }
+    
+    // 删除账户
+    await Account.findByIdAndDelete(id);
+    
+    return NextResponse.json({
+      success: true,
+      message: '账户删除成功',
+      data: {
+        _id: account._id,
+        username: account.username,
+        role: account.role
+      }
+    });
+  } catch (error) {
+    console.error('删除账户失败:', error);
+    return NextResponse.json(
+      { success: false, message: '删除账户失败' },
+      { status: 500 }
+    );
+  }
+}
+
+// 更新账户
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectDB();
+    const { id } = await params;
+    const { username, password } = await request.json();
+    
+    // 验证输入
+    if (!username || username.trim().length < 3) {
+      return NextResponse.json(
+        { success: false, message: '用户名至少需要3个字符' },
+        { status: 400 }
+      );
+    }
+    
+    if (!password || password.length < 6) {
+      return NextResponse.json(
+        { success: false, message: '密码至少需要6个字符' },
+        { status: 400 }
+      );
+    }
+    
+    const account = await Account.findById(id);
+    
+    if (!account) {
+      return NextResponse.json(
+        { success: false, message: '账户不存在' },
+        { status: 404 }
+      );
+    }
+    
+    // 检查用户名是否已存在（排除当前账户）
+    const existingAccount = await Account.findOne({ 
+      username: username.trim(),
+      _id: { $ne: id }
+    });
+    
+    if (existingAccount) {
+      return NextResponse.json(
+        { success: false, message: '用户名已存在' },
+        { status: 400 }
+      );
+    }
+    
+    // 更新账户信息
+    account.username = username.trim();
+    account.password = password;
+    account.displayPassword = password; // 保存明文密码用于显示
+    
+    await account.save();
+    
+    return NextResponse.json({
+      success: true,
+      message: '账户更新成功',
+      data: {
+        _id: account._id,
+        username: account.username,
+        password: account.displayPassword || account.password,
+        role: account.role,
+        isActive: account.isActive,
+        createdAt: account.createdAt,
+        updatedAt: account.updatedAt,
+        lastLogin: account.lastLogin
+      }
+    });
+  } catch (error) {
+    console.error('更新账户失败:', error);
+    return NextResponse.json(
+      { success: false, message: '更新账户失败' },
       { status: 500 }
     );
   }
