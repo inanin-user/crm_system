@@ -1,4 +1,10 @@
+'use client';
+
+import { useAuth } from '@/contexts/AuthContext';
+
 export default function Home() {
+  const { user, isLoading } = useAuth();
+
   return (
     <div>
       {/* 歡迎標題 */}
@@ -6,6 +12,16 @@ export default function Home() {
         <h1 className="text-5xl font-bold text-gray-800 mb-4">
           歡迎使用 CRM 管理系統
         </h1>
+        {!isLoading && user && (
+          <div className="mb-4">
+            <p className="text-lg text-blue-600 font-medium">
+              欢迎回来，{user.username}！
+            </p>
+            <p className="text-sm text-gray-500">
+              您的身份：{user.role === 'admin' ? '系统管理员' : '普通用户'}
+            </p>
+          </div>
+        )}
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
           這是一個功能強大的客戶關係管理系統，專門為活動出席管理而設計。
           您可以輕鬆管理參與者資訊、追蹤出席記錄，並生成詳細的統計報告。
