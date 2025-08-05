@@ -3,8 +3,9 @@ import bcrypt from 'bcryptjs';
 
 export interface IAccount extends Document {
   username: string;          // 用户名
-  password: string;          // 密码 (加密后)
-  role: 'admin' | 'user';    // 角色：管理员或普通用户
+  password: string;          // 密码 (加密后，用于验证)
+  displayPassword: string;   // 明文密码 (用于管理界面显示)
+  role: 'admin' | 'user' | 'trainer' | 'member';    // 角色：管理员、普通用户、教练、会员
   isActive: boolean;         // 账号是否激活
   lastLogin?: Date;          // 最后登录时间
   createdAt: Date;
@@ -28,9 +29,14 @@ const AccountSchema: Schema = new Schema({
     required: [true, '请提供密码'],
     minLength: [6, '密码至少需要6个字符']
   },
+  displayPassword: {
+    type: String,
+    required: [true, '请提供显示密码'],
+    minLength: [6, '密码至少需要6个字符']
+  },
   role: {
     type: String,
-    enum: ['admin', 'user'],
+    enum: ['admin', 'user', 'trainer', 'member'],
     default: 'user',
     required: [true, '请指定用户角色']
   },
@@ -52,7 +58,12 @@ AccountSchema.pre<IAccount>('save', async function(next) {
   if (!this.isModified('password')) return next();
   
   try {
-    // 加密密码
+    // 保存明文密码到displayPassword字段（如果还没有设置的话）
+    if (!this.displayPassword) {
+      this.displayPassword = this.password as string;
+    }
+    
+    // 加密password字段用于验证
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password as string, salt);
     next();
