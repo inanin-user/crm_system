@@ -12,6 +12,7 @@ interface Account {
   username: string;
   role: string;
   isActive: boolean;
+  locations: string[];
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
@@ -249,18 +250,7 @@ export default function MemberManagementPage() {
                     </span>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      狀態
-                    </label>
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                      selectedAccount.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {selectedAccount.isActive ? '活躍' : '已禁用'}
-                    </span>
-                  </div>
+
 
                   <div className="grid grid-cols-1 gap-4">
                     <div>

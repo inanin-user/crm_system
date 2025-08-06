@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
         id: (user._id as any).toString(),
         username: user.username,
         role: user.role,
+        locations: user.locations || [],
         lastLogin: user.lastLogin,
       },
     });

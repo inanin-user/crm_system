@@ -28,6 +28,7 @@ export async function GET(
         password: account.displayPassword || account.password, // 显示明文密码用于管理
         role: account.role,
         isActive: account.isActive,
+        locations: account.locations,
         createdAt: account.createdAt,
         updatedAt: account.updatedAt,
         lastLogin: account.lastLogin
@@ -89,7 +90,7 @@ export async function PUT(
   try {
     await connectDB();
     const { id } = await params;
-    const { username, password } = await request.json();
+    const { username, password, locations } = await request.json();
     
     // 验证输入
     if (!username || username.trim().length < 3) {
@@ -104,6 +105,18 @@ export async function PUT(
         { success: false, message: '密码至少需要6个字符' },
         { status: 400 }
       );
+    }
+    
+    // 验证地区权限（如果提供的话）
+    const validLocations = ['灣仔', '黃大仙', '石門'];
+    if (locations && Array.isArray(locations)) {
+      const invalidLocations = locations.filter((loc: string) => !validLocations.includes(loc));
+      if (invalidLocations.length > 0) {
+        return NextResponse.json(
+          { success: false, message: '包含无效的地区权限' },
+          { status: 400 }
+        );
+      }
     }
     
     const account = await Account.findById(id);
@@ -133,6 +146,11 @@ export async function PUT(
     account.password = password;
     account.displayPassword = password; // 保存明文密码用于显示
     
+    // 更新地区权限（如果提供的话）
+    if (locations !== undefined) {
+      account.locations = locations;
+    }
+    
     await account.save();
     
     return NextResponse.json({
@@ -144,6 +162,7 @@ export async function PUT(
         password: account.displayPassword || account.password,
         role: account.role,
         isActive: account.isActive,
+        locations: account.locations,
         createdAt: account.createdAt,
         updatedAt: account.updatedAt,
         lastLogin: account.lastLogin

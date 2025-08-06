@@ -1,11 +1,14 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AddAttendancePage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     contactInfo: '',
@@ -13,7 +16,22 @@ export default function AddAttendancePage() {
     activity: ''
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // 所有可用的地区
+  const ALL_LOCATIONS = ['灣仔', '黃大仙', '石門'];
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'admin') {
+        // 管理员可以选择所有地区
+        setAvailableLocations(ALL_LOCATIONS);
+      } else if (user.role === 'trainer') {
+        // 教练只能选择他们有权限的地区
+        setAvailableLocations(user.locations || []);
+      }
+    }
+  }, [user]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -51,7 +69,8 @@ export default function AddAttendancePage() {
   };
 
   const isFormValid = formData.name.trim() && formData.contactInfo.trim() && 
-                     formData.location.trim() && formData.activity.trim();
+                     formData.location.trim() && formData.activity.trim() &&
+                     availableLocations.length > 0;
 
   return (
     <div>
@@ -111,16 +130,27 @@ export default function AddAttendancePage() {
             <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
               地點 <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="請輸入活動地點"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
+            {availableLocations.length > 0 ? (
+              <select
+                id="location"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="">請選擇地點</option>
+                {availableLocations.map((location) => (
+                  <option key={location} value={location}>
+                    {location}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="w-full px-4 py-2 border border-red-300 rounded-lg bg-red-50 text-red-600">
+                您沒有任何地區權限，無法添加出席記錄
+              </div>
+            )}
           </div>
 
           <div>

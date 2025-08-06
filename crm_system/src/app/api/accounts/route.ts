@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 // 添加新账户
 export async function POST(request: NextRequest) {
   try {
-    const { username, password, role } = await request.json();
+    const { username, password, role, locations } = await request.json();
     
     // 验证必填字段
     if (!username || !password || !role) {
@@ -43,6 +43,18 @@ export async function POST(request: NextRequest) {
         { success: false, message: '账号名、密码和角色都是必填项' },
         { status: 400 }
       );
+    }
+    
+    // 验证地区权限（如果提供的话）
+    const validLocations = ['灣仔', '黃大仙', '石門'];
+    if (locations && Array.isArray(locations)) {
+      const invalidLocations = locations.filter((loc: string) => !validLocations.includes(loc));
+      if (invalidLocations.length > 0) {
+        return NextResponse.json(
+          { success: false, message: '包含无效的地区权限' },
+          { status: 400 }
+        );
+      }
     }
     
     await connectDB();
@@ -62,7 +74,8 @@ export async function POST(request: NextRequest) {
       password,
       displayPassword: password, // 保存明文密码用于显示
       role,
-      isActive: true
+      isActive: true,
+      locations: locations || [] // 地区权限，默认为空数组
     });
     
     await newAccount.save();
@@ -73,6 +86,7 @@ export async function POST(request: NextRequest) {
       username: newAccount.username,
       role: newAccount.role,
       isActive: newAccount.isActive,
+      locations: newAccount.locations,
       createdAt: newAccount.createdAt,
       updatedAt: newAccount.updatedAt
     };

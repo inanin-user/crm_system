@@ -32,13 +32,21 @@ export default function AttendanceByNamePage() {
 
   const fetchAttendanceRecords = async () => {
     try {
-      const response = await fetch('/api/attendance');
+      const response = await fetch('/api/attendance/accessible');
       const data = await response.json();
-      if (response.ok) {
-        setAttendanceRecords(data);
-        processPersonSummaries(data);
+      if (response.ok && data.success) {
+        setAttendanceRecords(data.data);
+        processPersonSummaries(data.data);
+        
+        // 如果用户是教练且没有地区权限，显示提示信息
+        if (data.data.length === 0 && data.message) {
+          console.info(data.message);
+        }
       } else {
-        console.error('获取数据失败:', data.error);
+        console.error('获取数据失败:', data.message || data.error);
+        if (response.status === 403) {
+          alert('您沒有權限查看出席記錄');
+        }
       }
     } catch (error) {
       console.error('获取数据失败:', error);

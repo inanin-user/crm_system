@@ -26,8 +26,8 @@ const AttendanceSchema: Schema = new Schema({
   location: {
     type: String,
     required: [true, '請提供地點'],
-    trim: true,
-    maxLength: [200, '地點不能超過200個字符']
+    enum: ['灣仔', '黃大仙', '石門'],
+    trim: true
   },
   activity: {
     type: String,

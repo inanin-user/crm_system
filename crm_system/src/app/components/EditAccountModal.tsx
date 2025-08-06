@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import LocationPermissionEditor from './LocationPermissionEditor';
 
 interface Account {
   _id: string;
@@ -8,6 +9,7 @@ interface Account {
   password: string;
   role: string;
   isActive: boolean;
+  locations: string[];
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
@@ -30,7 +32,8 @@ export default function EditAccountModal({
 }: EditAccountModalProps) {
   const [formData, setFormData] = useState({
     username: '',
-    password: ''
+    password: '',
+    locations: [] as string[]
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -40,7 +43,8 @@ export default function EditAccountModal({
     if (account) {
       setFormData({
         username: account.username,
-        password: account.password
+        password: account.password,
+        locations: account.locations || []
       });
     }
   }, [account]);
@@ -81,7 +85,8 @@ export default function EditAccountModal({
     setError('');
     setFormData({
       username: '',
-      password: ''
+      password: '',
+      locations: []
     });
     onClose();
   };
@@ -146,14 +151,7 @@ export default function EditAccountModal({
                   {getRoleDisplayName(account.role)}
                 </span>
               </div>
-              <div>
-                <span className="text-sm font-medium text-gray-600">狀態：</span>
-                <span className={`ml-2 inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                  account.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
-                  {account.isActive ? '活躍' : '已禁用'}
-                </span>
-              </div>
+
             </div>
 
             {/* 可编辑字段 */}
@@ -191,6 +189,17 @@ export default function EditAccountModal({
               />
               <p className="text-xs text-gray-500 mt-1">密碼至少需要 6 個字符</p>
             </div>
+
+            {/* 地区权限编辑器 - 仅对教练显示 */}
+            {account?.role === 'trainer' && (
+              <div>
+                <LocationPermissionEditor
+                  initialLocations={formData.locations}
+                  onLocationsChange={(locations) => setFormData({ ...formData, locations })}
+                  disabled={isLoading}
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-6">

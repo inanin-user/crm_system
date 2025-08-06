@@ -12,6 +12,7 @@ interface Account {
   username: string;
   role: string;
   isActive: boolean;
+  locations: string[];
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
@@ -251,16 +252,25 @@ export default function TrainerManagementPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      狀態
+                      地區權限
                     </label>
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                      selectedAccount.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {selectedAccount.isActive ? '活躍' : '已禁用'}
-                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedAccount.locations && selectedAccount.locations.length > 0 ? (
+                        selectedAccount.locations.map((location) => (
+                          <span
+                            key={location}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                          >
+                            {location}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-500 text-sm">無地區權限</span>
+                      )}
+                    </div>
                   </div>
+
+
 
                   <div className="grid grid-cols-1 gap-4">
                     <div>

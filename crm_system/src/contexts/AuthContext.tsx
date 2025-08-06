@@ -7,6 +7,7 @@ interface User {
   id: string;
   username: string;
   role: 'admin' | 'user' | 'trainer' | 'member';
+  locations?: string[];
   lastLogin?: string;
 }
 

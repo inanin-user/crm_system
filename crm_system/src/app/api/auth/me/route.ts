@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
         id: (user._id as any).toString(),
         username: user.username,
         role: user.role,
+        locations: user.locations || [],
         lastLogin: user.lastLogin,
         createdAt: user.createdAt,
       },

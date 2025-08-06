@@ -7,6 +7,7 @@ export interface IAccount extends Document {
   displayPassword: string;   // 明文密码 (用于管理界面显示)
   role: 'admin' | 'user' | 'trainer' | 'member';    // 角色：管理员、普通用户、教练、会员
   isActive: boolean;         // 账号是否激活
+  locations: string[];       // 地区权限：['灣仔', '黃大仙', '石門']
   lastLogin?: Date;          // 最后登录时间
   createdAt: Date;
   updatedAt: Date;
@@ -43,6 +44,11 @@ const AccountSchema: Schema = new Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  locations: {
+    type: [String],
+    enum: ['灣仔', '黃大仙', '石門'],
+    default: []
   },
   lastLogin: {
     type: Date

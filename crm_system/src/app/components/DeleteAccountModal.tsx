@@ -134,14 +134,7 @@ export default function DeleteAccountModal({
                 {getRoleDisplayName(account.role)}
               </span>
             </div>
-            <div>
-              <span className="text-sm font-medium text-gray-700">狀態：</span>
-              <span className={`ml-2 inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                account.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {account.isActive ? '活躍' : '已禁用'}
-              </span>
-            </div>
+
           </div>
         </div>
 
