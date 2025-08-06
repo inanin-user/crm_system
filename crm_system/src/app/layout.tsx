@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navigation from "./components/Navigation";
+import ConditionalNavigation from "./components/ConditionalNavigation";
+import ConditionalMain from "./components/ConditionalMain";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 const geistSans = Geist({
@@ -38,16 +39,10 @@ export default function RootLayout({
               WebkitBackfaceVisibility: 'hidden'
             }}
           >
-            <Navigation />
-            <main 
-              className="container mx-auto px-4 py-6"
-              style={{
-                transform: 'translateZ(0)',
-                willChange: 'scroll-position'
-              }}
-            >
+            <ConditionalNavigation />
+            <ConditionalMain>
               {children}
-            </main>
+            </ConditionalMain>
           </div>
         </AuthProvider>
       </body>

@@ -43,6 +43,11 @@ export default function Navigation() {
     return pathname.startsWith('/account_management');
   };
 
+  // 检查用户是否有权限访问账号管理
+  const hasAccountManagementAccess = () => {
+    return user?.role === 'admin'; // 只有管理员可以访问账号管理
+  };
+
   // 修改鼠標事件處理函數
   const handleMouseEnter = () => {
     // 清除任何待執行的關閉操作
@@ -260,85 +265,87 @@ export default function Navigation() {
                 )}
               </li>
 
-              {/* 账号管理下拉菜单 */}
-              <li 
-                className="nav-item relative"
-                onMouseEnter={handleAccountMouseEnter}
-                onMouseLeave={handleAccountMouseLeave}
-              >
-                <div
-                  className={`nav-link flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 cursor-pointer ${
-                    isAccountActive()
-                      ? 'text-blue-700 border-blue-700'
-                      : 'text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300'
-                  }`}
+              {/* 账号管理下拉菜单 - 只有管理员可以看到 */}
+              {hasAccountManagementAccess() && (
+                <li 
+                  className="nav-item relative"
+                  onMouseEnter={handleAccountMouseEnter}
+                  onMouseLeave={handleAccountMouseLeave}
                 >
-                  <span>帳號管理</span>
-                  <svg 
-                    className={`w-4 h-4 transition-transform duration-200 ${isAccountOpen ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
+                  <div
+                    className={`nav-link flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 cursor-pointer ${
+                      isAccountActive()
+                        ? 'text-blue-700 border-blue-700'
+                        : 'text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300'
+                    }`}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-
-                {/* 下拉菜單 */}
-                {isAccountOpen && (
-                  <div 
-                    className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
-                    style={{
-                      transform: 'translateZ(0)',
-                      backfaceVisibility: 'hidden',
-                      WebkitBackfaceVisibility: 'hidden',
-                      willChange: 'opacity, transform'
-                    }}
-                    onMouseEnter={handleAccountMouseEnter}
-                    onMouseLeave={handleAccountMouseLeave}
-                  >
-                    <Link
-                      href="/account_management/admin"
-                      className={`block px-4 py-2 text-sm transition-colors ${
-                        pathname === '/account_management/admin'
-                          ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                      onClick={handleMenuItemClick}
+                    <span>帳號管理</span>
+                    <svg 
+                      className={`w-4 h-4 transition-transform duration-200 ${isAccountOpen ? 'rotate-180' : ''}`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
                     >
-                      <div className="flex items-center space-x-2">
-                        <span>管理員</span>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/account_management/trainer"
-                      className={`block px-4 py-2 text-sm transition-colors ${
-                        pathname === '/account_management/trainer'
-                          ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                      onClick={handleMenuItemClick}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span>教練</span>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/account_management/member"
-                      className={`block px-4 py-2 text-sm transition-colors ${
-                        pathname === '/account_management/member'
-                          ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                      onClick={handleMenuItemClick}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span>會員</span>
-                      </div>
-                    </Link>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
-                )}
-              </li>
+
+                  {/* 下拉菜單 */}
+                  {isAccountOpen && (
+                    <div 
+                      className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+                      style={{
+                        transform: 'translateZ(0)',
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden',
+                        willChange: 'opacity, transform'
+                      }}
+                      onMouseEnter={handleAccountMouseEnter}
+                      onMouseLeave={handleAccountMouseLeave}
+                    >
+                      <Link
+                        href="/account_management/admin"
+                        className={`block px-4 py-2 text-sm transition-colors ${
+                          pathname === '/account_management/admin'
+                            ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                        onClick={handleMenuItemClick}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span>管理員</span>
+                        </div>
+                      </Link>
+                      <Link
+                        href="/account_management/trainer"
+                        className={`block px-4 py-2 text-sm transition-colors ${
+                          pathname === '/account_management/trainer'
+                            ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                        onClick={handleMenuItemClick}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span>教練</span>
+                        </div>
+                      </Link>
+                      <Link
+                        href="/account_management/member"
+                        className={`block px-4 py-2 text-sm transition-colors ${
+                          pathname === '/account_management/member'
+                            ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                        onClick={handleMenuItemClick}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span>會員</span>
+                        </div>
+                      </Link>
+                    </div>
+                  )}
+                </li>
+              )}
             </ul>
 
             {/* 用户信息和菜单 */}
@@ -385,7 +392,12 @@ export default function Navigation() {
                   >
                     <div className="px-4 py-2 border-b border-gray-100">
                       <div className="text-sm font-medium text-gray-900">{user.username}</div>
-                      <div className="text-xs text-gray-500">角色: {user.role === 'admin' ? '管理员' : '普通用户'}</div>
+                      <div className="text-xs text-gray-500">角色: {
+                        user.role === 'admin' ? '管理員' :
+                        user.role === 'trainer' ? '教練' :
+                        user.role === 'member' ? '會員' :
+                        '普通用戶'
+                      }</div>
                       {user.lastLogin && (
                         <div className="text-xs text-gray-500">
                           最后登录: {new Date(user.lastLogin).toLocaleString('zh-CN')}

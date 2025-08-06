@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'crm_system_secret_key_2024';
 export interface TokenPayload {
   userId: string;
   username: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | 'trainer' | 'member';
 }
 
 // 生成JWT token

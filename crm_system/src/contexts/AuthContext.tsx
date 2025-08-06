@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 interface User {
   id: string;
   username: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | 'trainer' | 'member';
   lastLogin?: string;
 }
 
@@ -31,6 +31,7 @@ const PROTECTED_ROUTES = [
 // 公开路由列表
 const PUBLIC_ROUTES = [
   '/login',
+  '/unauthorized',
 ];
 
 // 检查路径是否需要认证
@@ -45,6 +46,33 @@ function isProtectedRoute(pathname: string): boolean {
 
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+}
+
+// 检查用户是否有权限访问特定路径
+function hasRouteAccess(pathname: string, userRole: string): boolean {
+  // 管理员可以访问所有页面
+  if (userRole === 'admin') {
+    return true;
+  }
+  
+  // 教练只能访问首页和出席管理
+  if (userRole === 'trainer') {
+    if (pathname === '/' || pathname.startsWith('/attendance')) {
+      return true;
+    }
+    // 不能访问账号管理
+    if (pathname.startsWith('/account_management')) {
+      return false;
+    }
+    return true; // 其他页面暂时允许访问
+  }
+  
+  // 普通用户和会员暂时按原来的逻辑
+  if (userRole === 'user' || userRole === 'member') {
+    return true; // 暂时允许访问所有页面
+  }
+  
+  return false;
 }
 
 interface AuthProviderProps {
@@ -115,6 +143,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } else if (pathname === '/login' && user) {
       // 已登录用户访问登录页，重定向到主页
       router.push('/');
+    } else if (user && isProtected && !hasRouteAccess(pathname, user.role)) {
+      // 用户已登录但没有权限访问该页面，重定向到无权限页面
+      console.warn(`用户 ${user.username} (${user.role}) 尝试访问无权限页面: ${pathname}`);
+      router.push('/unauthorized');
     }
   }, [user, pathname, isLoading, router]);
 
