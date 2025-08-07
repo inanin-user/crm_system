@@ -14,16 +14,31 @@ interface Member {
   isActive: boolean;
 }
 
+interface Activity {
+  _id: string;
+  activityName: string;
+  trainerId: string;
+  trainerName: string;
+  startTime: string;
+  endTime: string;
+  duration: number;
+  location: string;
+  isActive: boolean;
+}
+
 export default function AddAttendancePage() {
   const router = useRouter();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoadingActivities, setIsLoadingActivities] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     contactInfo: '',
     location: '',
-    activity: ''
+    activityId: '',
+    activityName: ''
   });
   const [memberValidation, setMemberValidation] = useState<{
     isValidating: boolean;
@@ -38,6 +53,23 @@ export default function AddAttendancePage() {
   // 所有可用的地区
   const ALL_LOCATIONS = ['灣仔', '黃大仙', '石門'];
 
+  // 获取活动列表
+  const fetchActivities = async () => {
+    try {
+      setIsLoadingActivities(true);
+      const response = await fetch('/api/activities');
+      const result = await response.json();
+      
+      if (result.success) {
+        setActivities(result.data);
+      }
+    } catch (error) {
+      console.error('获取活动列表失败:', error);
+    } finally {
+      setIsLoadingActivities(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       if (user.role === 'admin') {
@@ -48,6 +80,8 @@ export default function AddAttendancePage() {
         setAvailableLocations(user.locations || []);
       }
     }
+    // 获取活动列表
+    fetchActivities();
   }, [user]);
 
   // 验证会员信息
@@ -106,10 +140,22 @@ export default function AddAttendancePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // 特殊处理活动选择
+    if (name === 'activityId') {
+      const selectedActivity = activities.find(activity => activity._id === value);
+      setFormData(prev => ({
+        ...prev,
+        activityId: value,
+        activityName: selectedActivity?.activityName || '',
+        location: selectedActivity?.location || ''
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
 
     // 当姓名或联系方式改变时，重新验证会员
     if (name === 'name' || name === 'contactInfo') {
@@ -135,13 +181,19 @@ export default function AddAttendancePage() {
     setIsSubmitting(true);
 
     try {
+      const selectedActivity = activities.find(a => a._id === formData.activityId);
+      
       const response = await fetch('/api/attendance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...formData,
+          name: formData.name,
+          contactInfo: formData.contactInfo,
+          location: formData.location,
+          activity: formData.activityName,
+          activityId: formData.activityId,
           memberId: memberValidation.member._id // 添加会员ID用于quota扣除
         }),
       });
@@ -163,7 +215,7 @@ export default function AddAttendancePage() {
   };
 
   const isFormValid = formData.name.trim() && formData.contactInfo.trim() && 
-                     formData.location.trim() && formData.activity.trim() &&
+                     formData.location.trim() && formData.activityId.trim() &&
                      availableLocations.length > 0 && 
                      memberValidation.member && 
                      !memberValidation.error;
@@ -267,43 +319,39 @@ export default function AddAttendancePage() {
             <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
               地點 <span className="text-red-500">*</span>
             </label>
-            {availableLocations.length > 0 ? (
-              <select
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              >
-                <option value="">請選擇地點</option>
-                {availableLocations.map((location) => (
-                  <option key={location} value={location}>
-                    {location}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className="w-full px-4 py-2 border border-red-300 rounded-lg bg-red-50 text-red-600">
-                您沒有任何地區權限，無法添加出席記錄
-              </div>
-            )}
+            <input
+              type="text"
+              id="location"
+              name="location"
+              value={formData.location}
+              readOnly
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+              placeholder={formData.activityId ? "地點將根據選擇的活動自動設置" : "請先選擇活動"}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              地點會根據選擇的活動自動設置
+            </p>
           </div>
 
           <div>
             <label htmlFor="activity" className="block text-sm font-medium text-gray-700 mb-2">
               活動內容 <span className="text-red-500">*</span>
             </label>
-            <textarea
-              id="activity"
-              name="activity"
-              value={formData.activity}
+            <select
+              id="activityId"
+              name="activityId"
+              value={formData.activityId}
               onChange={handleChange}
-              placeholder="請詳細描述活動內容"
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
-            />
+            >
+              <option value="">請選擇活動</option>
+              {activities.map((activity) => (
+                <option key={activity._id} value={activity._id}>
+                  {activity.activityName} - {activity.trainerName} ({new Date(activity.startTime).toLocaleDateString('zh-CN')})
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex gap-4 pt-4">

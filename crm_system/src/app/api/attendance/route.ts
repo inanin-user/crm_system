@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json();
-    const { name, contactInfo, location, activity, memberId } = body;
+    const { name, contactInfo, location, activity, activityId, memberId } = body;
     
     // 验证必需字段
     if (!name || !contactInfo || !location || !activity) {
@@ -128,9 +128,25 @@ export async function POST(request: NextRequest) {
     
     const savedAttendance = await newAttendance.save();
     
+    // 如果指定了活动ID，将参与者添加到活动中
+    if (activityId) {
+      try {
+        const Activity = require('@/models/Activity').default;
+        await Activity.findByIdAndUpdate(
+          activityId,
+          { $addToSet: { participants: name.trim() } }, // 使用$addToSet避免重复
+          { new: true }
+        );
+      } catch (error) {
+        console.error('添加参与者到活动失败:', error);
+        // 不影响出席记录的创建，只记录错误
+      }
+    }
+    
     return NextResponse.json({
       ...savedAttendance.toObject(),
-      quotaDeducted: !!memberId
+      quotaDeducted: !!memberId,
+      activityUpdated: !!activityId
     }, { status: 201 });
   } catch (error) {
     console.error('创建出席记录失败:', error);

@@ -6,11 +6,11 @@ interface Params {
   id: string;
 }
 
-export async function PUT(request: NextRequest, { params }: { params: Params }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<Params> }) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await params;
     const { quota } = await request.json();
 
     // 验证输入

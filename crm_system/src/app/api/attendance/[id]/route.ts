@@ -3,13 +3,14 @@ import connectDB from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
 import mongoose from 'mongoose';
 
-// PATCH - 更新指定ID的出席记录
+// PATCH - 更新出席记录
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    
     const { id } = await params;
     
     // 验证ID格式
