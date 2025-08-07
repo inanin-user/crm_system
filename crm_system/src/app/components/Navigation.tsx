@@ -11,6 +11,7 @@ export default function Navigation() {
   const { user, isLoading, logout } = useAuth();
   const { isCollapsed, toggleCollapse, isMobile } = useSidebar();
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
+  const [isMemberManagementOpen, setIsMemberManagementOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   
   // 防止快速鼠标移动造成的闪烁
@@ -24,6 +25,12 @@ export default function Navigation() {
       setIsAttendanceOpen(true);
     } else {
       setIsAttendanceOpen(false);
+    }
+    
+    if (pathname.startsWith('/member_management')) {
+      setIsMemberManagementOpen(true);
+    } else {
+      setIsMemberManagementOpen(false);
     }
     
     if (pathname.startsWith('/account_management')) {
@@ -46,6 +53,10 @@ export default function Navigation() {
 
   const isAccountActive = () => {
     return pathname.startsWith('/account_management');
+  };
+
+  const isMemberManagementActive = () => {
+    return pathname.startsWith('/member_management');
   };
 
   // 检查用户是否有权限访问账号管理
@@ -267,6 +278,55 @@ export default function Navigation() {
                           }`}
                         >
                           點名記錄
+                        </Link>
+                      </li>
+                    </ul>
+                  )}
+                </div>
+              </li>
+
+              {/* 会员管理 */}
+              <li>
+                <div>
+                  <button
+                    onClick={() => setIsMemberManagementOpen(!isMemberManagementOpen)}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
+                      isMemberManagementActive()
+                        ? 'bg-blue-50 text-blue-700'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      {!isCollapsed && <span>會員管理</span>}
+                    </div>
+                    {!isCollapsed && (
+                      <svg 
+                        className={`w-4 h-4 transition-transform duration-200 ${isMemberManagementOpen ? 'rotate-180' : ''}`} 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    )}
+                  </button>
+
+                  {/* 会员管理子菜单 */}
+                  {(isMemberManagementOpen && !isCollapsed) && (
+                    <ul className="mt-1 ml-8 space-y-1">
+                      <li>
+                        <Link
+                          href="/member_management/profile"
+                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                            pathname === '/member_management/profile'
+                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                              : 'text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          會員資料
                         </Link>
                       </li>
                     </ul>

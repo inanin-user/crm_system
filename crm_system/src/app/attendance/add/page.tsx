@@ -4,6 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
+interface Member {
+  _id: string;
+  username: string;
+  memberName: string;
+  phone: string;
+  email: string;
+  quota: number;
+  isActive: boolean;
+}
+
 export default function AddAttendancePage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -14,6 +24,15 @@ export default function AddAttendancePage() {
     contactInfo: '',
     location: '',
     activity: ''
+  });
+  const [memberValidation, setMemberValidation] = useState<{
+    isValidating: boolean;
+    member: Member | null;
+    error: string;
+  }>({
+    isValidating: false,
+    member: null,
+    error: ''
   });
 
   // 所有可用的地区
@@ -31,16 +50,88 @@ export default function AddAttendancePage() {
     }
   }, [user]);
 
+  // 验证会员信息
+  const validateMember = async (name: string, contactInfo: string) => {
+    if (!name.trim() || !contactInfo.trim()) {
+      setMemberValidation({
+        isValidating: false,
+        member: null,
+        error: ''
+      });
+      return;
+    }
+
+    setMemberValidation(prev => ({ ...prev, isValidating: true, error: '' }));
+
+    try {
+      const response = await fetch(`/api/accounts/validate-member?name=${encodeURIComponent(name)}&contact=${encodeURIComponent(contactInfo)}`);
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        const member = result.data;
+        if (!member.isActive) {
+          setMemberValidation({
+            isValidating: false,
+            member: null,
+            error: '該會員帳戶已被禁用'
+          });
+        } else if (member.quota <= 0) {
+          setMemberValidation({
+            isValidating: false,
+            member: member,
+            error: '該會員配額不足，無法參加活動'
+          });
+        } else {
+          setMemberValidation({
+            isValidating: false,
+            member: member,
+            error: ''
+          });
+        }
+      } else {
+        setMemberValidation({
+          isValidating: false,
+          member: null,
+          error: '找不到該會員記錄，請檢查姓名和聯絡方式是否正確'
+        });
+      }
+    } catch (error) {
+      setMemberValidation({
+        isValidating: false,
+        member: null,
+        error: '驗證會員信息時出錯，請重試'
+      });
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    // 当姓名或联系方式改变时，重新验证会员
+    if (name === 'name' || name === 'contactInfo') {
+      const newFormData = { ...formData, [name]: value };
+      validateMember(newFormData.name, newFormData.contactInfo);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 检查会员验证状态
+    if (!memberValidation.member) {
+      alert('❌ 請先確認會員信息有效');
+      return;
+    }
+
+    if (memberValidation.error) {
+      alert(`❌ ${memberValidation.error}`);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -49,13 +140,16 @@ export default function AddAttendancePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          memberId: memberValidation.member._id // 添加会员ID用于quota扣除
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alert('✅ 出席記錄已成功添加！');
+        alert('✅ 出席記錄已成功添加，會員配額已自動扣除！');
         router.push('/attendance');
       } else {
         alert(`❌ 添加失敗：${data.error}`);
@@ -70,7 +164,9 @@ export default function AddAttendancePage() {
 
   const isFormValid = formData.name.trim() && formData.contactInfo.trim() && 
                      formData.location.trim() && formData.activity.trim() &&
-                     availableLocations.length > 0;
+                     availableLocations.length > 0 && 
+                     memberValidation.member && 
+                     !memberValidation.error;
 
   return (
     <div>
@@ -87,7 +183,7 @@ export default function AddAttendancePage() {
         </button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-gray-800">添加新的出席記錄</h1>
-          <p className="text-gray-600 mt-1">填寫以下資訊來創建新的出席記錄</p>
+          <p className="text-gray-600 mt-1">填寫以下資訊來創建新的出席記錄（會自動扣除會員配額）</p>
         </div>
       </div>
 
@@ -125,6 +221,47 @@ export default function AddAttendancePage() {
               required
             />
           </div>
+
+          {/* 会员验证状态显示 */}
+          {(formData.name.trim() && formData.contactInfo.trim()) && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">會員驗證狀態</h3>
+              
+              {memberValidation.isValidating ? (
+                <div className="flex items-center text-blue-600">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  正在驗證會員信息...
+                </div>
+              ) : memberValidation.error ? (
+                <div className="text-red-600 flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {memberValidation.error}
+                </div>
+              ) : memberValidation.member ? (
+                <div className="text-green-600">
+                  <div className="flex items-center mb-2">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    會員驗證成功
+                  </div>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <div>會員姓名: {memberValidation.member.memberName}</div>
+                    <div>聯絡方式: {memberValidation.member.phone}</div>
+                    <div>剩餘配額: <span className="font-semibold text-blue-600">{memberValidation.member.quota}</span></div>
+                    <div className="text-xs text-yellow-600 mt-2">
+                      ⚠️ 提交後將自動扣除 1 個配額
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
 
           <div>
             <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">

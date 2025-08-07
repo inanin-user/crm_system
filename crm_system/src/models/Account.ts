@@ -9,6 +9,13 @@ export interface IAccount extends Document {
   isActive: boolean;         // 账号是否激活
   locations: string[];       // 地区权限：['灣仔', '黃大仙', '石門']
   lastLogin?: Date;          // 最后登录时间
+  
+  // 会员专用字段
+  memberName?: string;       // 会员真实姓名
+  phone?: string;           // 电话号码
+  email?: string;           // 邮箱地址
+  quota?: number;           // 剩余配额
+  
   createdAt: Date;
   updatedAt: Date;
   
@@ -52,6 +59,42 @@ const AccountSchema: Schema = new Schema({
   },
   lastLogin: {
     type: Date
+  },
+  
+  // 会员专用字段
+  memberName: {
+    type: String,
+    required: function(this: IAccount) {
+      return this.role === 'member';
+    },
+    trim: true,
+    maxLength: [100, '会员姓名不能超过100个字符']
+  },
+  phone: {
+    type: String,
+    required: function(this: IAccount) {
+      return this.role === 'member';
+    },
+    trim: true,
+    maxLength: [20, '电话号码不能超过20个字符']
+  },
+  email: {
+    type: String,
+    required: function(this: IAccount) {
+      return this.role === 'member';
+    },
+    trim: true,
+    lowercase: true,
+    maxLength: [100, '邮箱地址不能超过100个字符'],
+    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, '请提供有效的邮箱地址']
+  },
+  quota: {
+    type: Number,
+    required: function(this: IAccount) {
+      return this.role === 'member';
+    },
+    min: [0, '配额不能为负数'],
+    default: 0
   }
 }, {
   timestamps: true, // 自动添加 createdAt 和 updatedAt
@@ -86,6 +129,9 @@ AccountSchema.methods.comparePassword = async function(candidatePassword: string
 // 创建索引（username已经通过unique自动创建索引）
 AccountSchema.index({ role: 1 });
 AccountSchema.index({ isActive: 1 });
+AccountSchema.index({ memberName: 1 });
+AccountSchema.index({ phone: 1 });
+AccountSchema.index({ email: 1 });
 
 // 删除现有模型（如果存在）并重新创建
 if (mongoose.models.Account) {

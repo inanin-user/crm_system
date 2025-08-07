@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json();
-    const { name, contactInfo, location, activity } = body;
+    const { name, contactInfo, location, activity, memberId } = body;
     
     // 验证必需字段
     if (!name || !contactInfo || !location || !activity) {
@@ -77,6 +77,47 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
+
+    // 如果提供了memberId，验证会员并扣除quota
+    if (memberId) {
+      const member = await Account.findById(memberId);
+      
+      if (!member || member.role !== 'member') {
+        return NextResponse.json(
+          { error: '无效的会员ID' },
+          { status: 400 }
+        );
+      }
+
+      if (!member.isActive) {
+        return NextResponse.json(
+          { error: '该会员账户已被禁用' },
+          { status: 400 }
+        );
+      }
+
+      if (!member.quota || member.quota <= 0) {
+        return NextResponse.json(
+          { error: '该会员配额不足，无法参加活动' },
+          { status: 400 }
+        );
+      }
+
+      // 验证会员信息是否匹配
+      const isNameMatch = member.memberName === name.trim();
+      const isContactMatch = member.phone === contactInfo.trim() || member.email === contactInfo.trim();
+
+      if (!isNameMatch || !isContactMatch) {
+        return NextResponse.json(
+          { error: '提供的姓名和联系方式与会员记录不匹配' },
+          { status: 400 }
+        );
+      }
+
+      // 扣除配额（减1）
+      member.quota = (member.quota || 0) - 1;
+      await member.save();
+    }
     
     const newAttendance = new Attendance({
       name: name.trim(),
@@ -87,7 +128,10 @@ export async function POST(request: NextRequest) {
     
     const savedAttendance = await newAttendance.save();
     
-    return NextResponse.json(savedAttendance, { status: 201 });
+    return NextResponse.json({
+      ...savedAttendance.toObject(),
+      quotaDeducted: !!memberId
+    }, { status: 201 });
   } catch (error) {
     console.error('创建出席记录失败:', error);
     return NextResponse.json(
