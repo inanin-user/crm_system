@@ -14,6 +14,7 @@ export default function Navigation() {
   const [isMemberManagementOpen, setIsMemberManagementOpen] = useState(false);
   const [isTrainerManagementOpen, setIsTrainerManagementOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [isActivityManagementOpen, setIsActivityManagementOpen] = useState(false);
   
   // 防止快速鼠标移动造成的闪烁
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -45,6 +46,12 @@ export default function Navigation() {
     } else {
       setIsAccountOpen(false);
     }
+    
+    if (pathname.startsWith('/activity_management')) {
+      setIsActivityManagementOpen(true);
+    } else {
+      setIsActivityManagementOpen(false);
+    }
   }, [pathname]);
 
   const isActive = (href: string) => {
@@ -68,6 +75,10 @@ export default function Navigation() {
 
   const isTrainerManagementActive = () => {
     return pathname.startsWith('/trainer_management');
+  };
+
+  const isActivityManagementActive = () => {
+    return pathname.startsWith('/activity_management');
   };
 
   // 检查用户是否有权限访问账号管理
@@ -291,120 +302,177 @@ export default function Navigation() {
                           點名記錄
                         </Link>
                       </li>
-                      <li>
-                        <Link
-                          href="/attendance/activity_management"
-                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                            pathname === '/attendance/activity_management'
-                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          活動管理
-                        </Link>
-                      </li>
+                      {user?.role === 'admin' && (
+                        <li>
+                          <Link
+                            href="/attendance/activity_management"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/attendance/activity_management'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            活動管理
+                          </Link>
+                        </li>
+                      )}
                     </ul>
                   )}
                 </div>
               </li>
 
-              {/* 会员管理 */}
-              <li>
-                <div>
-                  <button
-                    onClick={() => setIsMemberManagementOpen(!isMemberManagementOpen)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
-                      isMemberManagementActive()
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      {!isCollapsed && <span>會員管理</span>}
-                    </div>
-                    {!isCollapsed && (
-                      <svg 
-                        className={`w-4 h-4 transition-transform duration-200 ${isMemberManagementOpen ? 'rotate-180' : ''}`} 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+              {/* 会员管理 - 只有管理员可以看到 */}
+              {user?.role === 'admin' && (
+                <li>
+                  <div>
+                    <button
+                      onClick={() => setIsMemberManagementOpen(!isMemberManagementOpen)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
+                        isMemberManagementActive()
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        {!isCollapsed && <span>會員管理</span>}
+                      </div>
+                      {!isCollapsed && (
+                        <svg 
+                          className={`w-4 h-4 transition-transform duration-200 ${isMemberManagementOpen ? 'rotate-180' : ''}`} 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* 会员管理子菜单 */}
+                    {(isMemberManagementOpen && !isCollapsed) && (
+                      <ul className="mt-1 ml-8 space-y-1">
+                        <li>
+                          <Link
+                            href="/member_management/profile"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/member_management/profile'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            會員資料
+                          </Link>
+                        </li>
+                      </ul>
                     )}
-                  </button>
+                  </div>
+                </li>
+              )}
 
-                  {/* 会员管理子菜单 */}
-                  {(isMemberManagementOpen && !isCollapsed) && (
-                    <ul className="mt-1 ml-8 space-y-1">
-                      <li>
-                        <Link
-                          href="/member_management/profile"
-                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                            pathname === '/member_management/profile'
-                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
+              {/* 教练管理 - 只有管理员可以看到 */}
+              {user?.role === 'admin' && (
+                <li>
+                  <div>
+                    <button
+                      onClick={() => setIsTrainerManagementOpen(!isTrainerManagementOpen)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
+                        isTrainerManagementActive()
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        {!isCollapsed && <span>教練管理</span>}
+                      </div>
+                      {!isCollapsed && (
+                        <svg 
+                          className={`w-4 h-4 transition-transform duration-200 ${isTrainerManagementOpen ? 'rotate-180' : ''}`} 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
                         >
-                          會員資料
-                        </Link>
-                      </li>
-                    </ul>
-                  )}
-                </div>
-              </li>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </button>
 
-              {/* 教练管理 */}
-              <li>
-                <div>
-                  <button
-                    onClick={() => setIsTrainerManagementOpen(!isTrainerManagementOpen)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
-                      isTrainerManagementActive()
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
-                      {!isCollapsed && <span>教練管理</span>}
-                    </div>
-                    {!isCollapsed && (
-                      <svg 
-                        className={`w-4 h-4 transition-transform duration-200 ${isTrainerManagementOpen ? 'rotate-180' : ''}`} 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+                    {/* 教练管理子菜单 */}
+                    {(isTrainerManagementOpen && !isCollapsed) && (
+                      <ul className="mt-1 ml-8 space-y-1">
+                        <li>
+                          <Link
+                            href="/trainer_management/profile"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/trainer_management/profile'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            教練資料
+                          </Link>
+                        </li>
+                      </ul>
                     )}
-                  </button>
+                  </div>
+                </li>
+              )}
 
-                  {/* 教练管理子菜单 */}
-                  {(isTrainerManagementOpen && !isCollapsed) && (
-                    <ul className="mt-1 ml-8 space-y-1">
-                      <li>
-                        <Link
-                          href="/trainer_management/profile"
-                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                            pathname === '/trainer_management/profile'
-                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
+              {/* 活动管理 - 只有教练可以看到 */}
+              {user?.role === 'trainer' && (
+                <li>
+                  <div>
+                    <button
+                      onClick={() => setIsActivityManagementOpen(!isActivityManagementOpen)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
+                        isActivityManagementActive()
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {!isCollapsed && <span>活動管理</span>}
+                      </div>
+                      {!isCollapsed && (
+                        <svg 
+                          className={`w-4 h-4 transition-transform duration-200 ${isActivityManagementOpen ? 'rotate-180' : ''}`} 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
                         >
-                          教練資料
-                        </Link>
-                      </li>
-                    </ul>
-                  )}
-                </div>
-              </li>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* 活动管理子菜单 */}
+                    {(isActivityManagementOpen && !isCollapsed) && (
+                      <ul className="mt-1 ml-8 space-y-1">
+                        <li>
+                          <Link
+                            href="/activity_management/my_activity"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/activity_management/my_activity'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            我的活動
+                          </Link>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+                </li>
+              )}
 
               {/* 账号管理 - 只有管理员可以看到 */}
               {hasAccountManagementAccess() && (
