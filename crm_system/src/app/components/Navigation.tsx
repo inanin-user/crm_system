@@ -263,43 +263,7 @@ export default function Navigation() {
                               : 'text-gray-600 hover:bg-gray-100'
                           }`}
                         >
-                          出席記錄管理
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/attendance/by_name"
-                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                            pathname === '/attendance/by_name'
-                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          按姓名分類
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/attendance/add"
-                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                            pathname === '/attendance/add'
-                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          添加記錄
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/attendance/check"
-                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                            pathname === '/attendance/check'
-                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          點名記錄
+                          所有記錄
                         </Link>
                       </li>
                       {user?.role === 'admin' && (
@@ -316,6 +280,42 @@ export default function Navigation() {
                           </Link>
                         </li>
                       )}
+                      <li>
+                        <Link
+                          href="/attendance/check"
+                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                            pathname === '/attendance/check'
+                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                              : 'text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          點名記錄
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/attendance/add"
+                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                            pathname === '/attendance/add'
+                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                              : 'text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          添加記錄
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/attendance/by_name"
+                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                            pathname === '/attendance/by_name'
+                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                              : 'text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          按姓名分類
+                        </Link>
+                      </li>
                     </ul>
                   )}
                 </div>
