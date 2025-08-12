@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import ConditionalNavigation from "./components/ConditionalNavigation";
 import ConditionalMain from "./components/ConditionalMain";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -29,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="zh-TW">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
+        className={`${inter.variable} antialiased bg-gray-50`}
       >
         <AuthProvider>
           <SidebarProvider>

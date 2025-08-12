@@ -27,6 +27,7 @@ const PROTECTED_ROUTES = [
   '/attendance',
   '/account_management',
   '/admin',
+  '/financial_management',
 ];
 
 // 公开路由列表

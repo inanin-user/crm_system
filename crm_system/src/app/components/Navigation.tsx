@@ -15,6 +15,7 @@ export default function Navigation() {
   const [isTrainerManagementOpen, setIsTrainerManagementOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isActivityManagementOpen, setIsActivityManagementOpen] = useState(false);
+  const [isFinancialManagementOpen, setIsFinancialManagementOpen] = useState(false);
   
   // 防止快速鼠标移动造成的闪烁
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -52,6 +53,12 @@ export default function Navigation() {
     } else {
       setIsActivityManagementOpen(false);
     }
+    
+    if (pathname.startsWith('/financial_management')) {
+      setIsFinancialManagementOpen(true);
+    } else {
+      setIsFinancialManagementOpen(false);
+    }
   }, [pathname]);
 
   const isActive = (href: string) => {
@@ -79,6 +86,10 @@ export default function Navigation() {
 
   const isActivityManagementActive = () => {
     return pathname.startsWith('/activity_management');
+  };
+
+  const isFinancialManagementActive = () => {
+    return pathname.startsWith('/financial_management');
   };
 
   // 检查用户是否有权限访问账号管理
@@ -466,6 +477,93 @@ export default function Navigation() {
                             }`}
                           >
                             我的活動
+                          </Link>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+                </li>
+              )}
+
+              {/* 財務管理 - 只有管理员可以看到 */}
+              {user?.role === 'admin' && (
+                <li>
+                  <div>
+                    <button
+                      onClick={() => setIsFinancialManagementOpen(!isFinancialManagementOpen)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
+                        isFinancialManagementActive()
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                        {!isCollapsed && <span>財務管理</span>}
+                      </div>
+                      {!isCollapsed && (
+                        <svg 
+                          className={`w-4 h-4 transition-transform duration-200 ${isFinancialManagementOpen ? 'rotate-180' : ''}`} 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* 財務管理子菜单 */}
+                    {(isFinancialManagementOpen && !isCollapsed) && (
+                      <ul className="mt-1 ml-8 space-y-1">
+                        <li>
+                          <Link
+                            href="/financial_management"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/financial_management'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            財務總覽
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href="/financial_management/by_name"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/financial_management/by_name'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            按姓名分類
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href="/financial_management/report"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/financial_management/report'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            財務報告
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href="/financial_management/add"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/financial_management/add'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            新增記錄
                           </Link>
                         </li>
                       </ul>
