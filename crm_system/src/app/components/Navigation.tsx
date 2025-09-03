@@ -21,6 +21,45 @@ export default function Navigation() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const accountTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // 觸摸手勢支持
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // 處理觸摸開始
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isMobile) return;
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  // 處理觸摸移動
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isMobile) return;
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  // 處理觸摸結束，檢測滑動手勢
+  const handleTouchEnd = () => {
+    if (!isMobile || !touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    // 如果在屏幕左邊緣開始滑動且向右滑動，打開菜單
+    if (touchStart < 50 && isRightSwipe && isCollapsed) {
+      toggleCollapse();
+    }
+    
+    // 如果菜單打開且向左滑動，關閉菜單
+    if (isLeftSwipe && !isCollapsed) {
+      toggleCollapse();
+    }
+
+    // 重置觸摸狀態
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
   // 监听路径变化
   useEffect(() => {
     // 当路径变化时，自动展开相关的菜单
@@ -116,9 +155,26 @@ export default function Navigation() {
 
   return (
     <>
+      {/* 移動端觸摸手勢檢測區域 */}
+      {isMobile && (
+        <div
+          className="fixed inset-0 z-30 pointer-events-none"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{
+            pointerEvents: isCollapsed ? 'auto' : 'none',
+            // 只在左邊緣 50px 內響應觸摸
+            background: isCollapsed 
+              ? 'linear-gradient(to right, transparent 0px, transparent 50px, transparent 100%)' 
+              : 'transparent'
+          }}
+        />
+      )}
+
       {/* 侧边导航栏 */}
       <nav 
-        className={`fixed left-0 top-0 h-full bg-white shadow-lg border-r border-gray-200 z-50 transition-all duration-300 ${
+        className={`fixed left-0 top-0 h-full bg-white shadow-2xl border-r border-gray-200 z-50 transition-all duration-300 ease-in-out ${
           isCollapsed ? 'w-16' : 'w-64'
         } ${
           isMobile 
@@ -130,8 +186,15 @@ export default function Navigation() {
         style={{ 
           transform: 'translateZ(0)',
           backfaceVisibility: 'hidden',
-          WebkitBackfaceVisibility: 'hidden'
+          WebkitBackfaceVisibility: 'hidden',
+          // 移動端時添加更強的陰影效果
+          ...(isMobile && !isCollapsed && {
+            boxShadow: '4px 0 20px rgba(0, 0, 0, 0.15), 0 0 40px rgba(0, 0, 0, 0.1)'
+          })
         }}
+        onTouchStart={isMobile ? handleTouchStart : undefined}
+        onTouchMove={isMobile ? handleTouchMove : undefined}
+        onTouchEnd={isMobile ? handleTouchEnd : undefined}
       >
         <div className="flex flex-col h-full">
           {/* 顶部区域 - Logo和折叠按钮 */}
@@ -651,23 +714,46 @@ export default function Navigation() {
         </div>
       </nav>
 
-      {/* 移动端遮罩层 */}
+      {/* 移动端遮罩层 - 半透明背景，保留內容可見度 */}
       {isMobile && !isCollapsed && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black bg-opacity-20 backdrop-blur-sm z-40 transition-all duration-300 animate-in fade-in"
           onClick={toggleCollapse}
+          onTouchStart={(e) => {
+            // 添加觸摸回饋
+            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
+          }}
+          onTouchEnd={(e) => {
+            // 恢復原色
+            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+          }}
+          style={{
+            backdropFilter: 'blur(2px)',
+            WebkitBackdropFilter: 'blur(2px)',
+            transition: 'all 0.3s ease-in-out',
+          }}
         />
       )}
 
-      {/* 移动端菜单按钮 */}
+      {/* 移动端菜单按钮 - 改進的漢堡包菜單 */}
       {isMobile && (
         <button
           onClick={toggleCollapse}
-          className="fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-lg border border-gray-200"
+          className="fixed top-4 left-4 z-50 p-3 bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl active:scale-95 transition-all duration-200"
+          aria-label={isCollapsed ? "打開菜單" : "關閉菜單"}
         >
-          <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+          <div className="relative w-6 h-6 flex flex-col justify-center items-center">
+            {/* 漢堡包菜單動畫圖標 */}
+            <span className={`block absolute h-0.5 w-6 bg-gray-700 transform transition duration-300 ease-in-out ${
+              isCollapsed ? 'rotate-0 translate-y-0' : 'rotate-45 translate-y-0'
+            }`} />
+            <span className={`block absolute h-0.5 w-6 bg-gray-700 transform transition duration-300 ease-in-out ${
+              isCollapsed ? 'opacity-100' : 'opacity-0'
+            }`} style={{ top: '50%', transform: 'translateY(-50%)' }} />
+            <span className={`block absolute h-0.5 w-6 bg-gray-700 transform transition duration-300 ease-in-out ${
+              isCollapsed ? 'rotate-0 translate-y-0' : '-rotate-45 translate-y-0'
+            }`} />
+          </div>
         </button>
       )}
     </>
