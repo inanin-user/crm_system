@@ -714,26 +714,24 @@ export default function Navigation() {
         </div>
       </nav>
 
-      {/* 移动端遮罩层 - 半透明背景，保留內容可見度 */}
+      {/* 移动端遮罩层 - 變暗半透明背景，凸顯菜單欄 */}
       {isMobile && !isCollapsed && (
         <div 
           className="fixed inset-0 z-40 transition-all duration-300"
           onClick={toggleCollapse}
           onTouchStart={(e) => {
-            // 添加觸摸回饋
-            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+            // 添加觸摸回饋 - 稍微加深
+            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
           }}
           onTouchEnd={(e) => {
             // 恢復原色
-            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.25)';
+            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
           }}
           style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.25)',
-            // 使用現代CSS，並提供回退方案
-            backdropFilter: 'blur(3px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(3px) saturate(180%)',
-            // 如果不支持backdrop-filter，使用更深的背景色作為回退
-            background: 'rgba(0, 0, 0, 0.25)',
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            // 移除模糊效果，保持內容清晰可見
+            // backdropFilter: 移除
+            // WebkitBackdropFilter: 移除
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             // 確保在所有設備上顯示
             opacity: 1,
