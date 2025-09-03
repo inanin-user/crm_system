@@ -28,12 +28,12 @@ export async function GET(request: NextRequest) {
       message: `找到 ${activities.length} 条活动记录`
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('获取教练活动记录失败:', error);
     return NextResponse.json({
       success: false,
       message: '获取活动记录失败',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     }, { status: 500 });
   }
 } 

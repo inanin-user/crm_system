@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 import AddAccountModal from '@/app/components/AddAccountModal';
 import DeleteAccountModal from '@/app/components/DeleteAccountModal';
@@ -23,7 +22,6 @@ interface AccountDetail extends Account {
 }
 
 export default function TrainerManagementPage() {
-  const { user } = useAuth();
   useScrollOptimization();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -53,7 +51,7 @@ export default function TrainerManagementPage() {
       } else {
         setError('获取教練列表失败');
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请重试');
     } finally {
       setIsLoadingAccounts(false);
@@ -72,7 +70,7 @@ export default function TrainerManagementPage() {
       } else {
         setError('获取账户详情失败');
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请重试');
     } finally {
       setIsLoadingDetail(false);

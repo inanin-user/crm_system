@@ -27,14 +27,13 @@ interface Trainer {
 }
 
 export default function ActivityManagementPage() {
-  const { user } = useAuth();
   useScrollOptimization();
 
   const [activities, setActivities] = useState<Activity[]>([]);
   const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isLoadingActivities, setIsLoadingActivities] = useState(true);
-  const [isLoadingTrainers, setIsLoadingTrainers] = useState(true);
+  const [, setIsLoadingTrainers] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -65,7 +64,7 @@ export default function ActivityManagementPage() {
       } else {
         setError('获取活动列表失败');
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请重试');
     } finally {
       setIsLoadingActivities(false);
@@ -84,7 +83,7 @@ export default function ActivityManagementPage() {
       } else {
         setError('获取教练列表失败');
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请重试');
     } finally {
       setIsLoadingTrainers(false);
@@ -157,7 +156,7 @@ export default function ActivityManagementPage() {
       } else {
         setError(result.message || '添加活动失败');
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请重试');
     } finally {
       setIsSubmitting(false);
@@ -177,12 +176,7 @@ export default function ActivityManagementPage() {
     });
   };
 
-  // 格式化时间用于输入框
-  const formatDateTimeInput = (dateString: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toISOString().slice(0, 16);
-  };
+  // formatDateTimeInput function removed as it's not used
 
   useEffect(() => {
     fetchActivities();

@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     endDate.setHours(23, 59, 59, 999);
     
     // 构建查询条件
-    let query: any = {
+    const query: Record<string, unknown> = {
       createdAt: {
         $gte: startDate,
         $lte: endDate

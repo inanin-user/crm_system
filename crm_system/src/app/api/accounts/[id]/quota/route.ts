@@ -49,12 +49,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<Pa
       message: '配额更新成功'
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('更新配额失败:', error);
     return NextResponse.json({
       success: false,
       message: '更新配额失败',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     }, { status: 500 });
   }
 } 

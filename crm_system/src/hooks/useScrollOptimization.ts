@@ -19,9 +19,9 @@ export function useScrollOptimization() {
         } as EventListenerOptions;
         
         const testFunc = () => {};
-        window.addEventListener('test' as any, testFunc, options);
-        window.removeEventListener('test' as any, testFunc);
-      } catch (err) {
+        window.addEventListener('test', testFunc, options);
+        window.removeEventListener('test', testFunc);
+      } catch {
         passiveSupported = false;
       }
       

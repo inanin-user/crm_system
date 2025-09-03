@@ -5,10 +5,11 @@ import FinancialRecord from '@/models/FinancialRecord';
 // 修改財務記錄
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('開始修改財務記錄...', params.id);
+    const { id } = await params;
+    console.log('開始修改財務記錄...', id);
     
     await connectDB();
     console.log('數據庫連接成功');
@@ -47,7 +48,7 @@ export async function PUT(
     
     // 查找並更新記錄
     const updatedRecord = await FinancialRecord.findByIdAndUpdate(
-      params.id,
+      id,
       {
         recordType,
         memberName,
@@ -87,17 +88,18 @@ export async function PUT(
 
 // 刪除財務記錄
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('開始刪除財務記錄...', params.id);
+    const { id } = await params;
+    console.log('開始刪除財務記錄...', id);
     
     await connectDB();
     console.log('數據庫連接成功');
     
     // 查找並刪除記錄
-    const deletedRecord = await FinancialRecord.findByIdAndDelete(params.id);
+    const deletedRecord = await FinancialRecord.findByIdAndDelete(id);
     
     if (!deletedRecord) {
       return NextResponse.json(

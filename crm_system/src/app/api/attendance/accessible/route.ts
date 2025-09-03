@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let attendanceQuery: any = {};
+    const attendanceQuery: Record<string, unknown> = {};
 
     // 根据用户角色设置查询条件
     if (user.role === 'admin') {

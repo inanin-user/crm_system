@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function LoginPage() {
+function LoginForm() {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -17,6 +17,14 @@ export default function LoginPage() {
 
   // 获取重定向URL
   const redirectUrl = searchParams.get('redirect') || '/';
+
+  // 檢查是否有會話過期消息
+  useEffect(() => {
+    const message = searchParams.get('message');
+    if (message === 'session_expired') {
+      setError('會話已過期，請重新登錄');
+    }
+  }, [searchParams]);
 
   // 如果已经登录，重定向
   useEffect(() => {
@@ -57,7 +65,7 @@ export default function LoginPage() {
       } else {
         setError(data.message || '登录失败');
       }
-    } catch (error) {
+    } catch {
       setError('登录失败，请稍后重试');
     } finally {
       setLoading(false);
@@ -136,5 +144,13 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 } 

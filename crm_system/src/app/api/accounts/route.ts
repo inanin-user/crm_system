@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const role = searchParams.get('role');
     
-    let query: any = { isActive: true };
+    const query: Record<string, unknown> = { isActive: true };
     if (role) {
       query.role = role;
     }
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
     
     // 创建新账户
-    const newAccountData: any = {
+    const newAccountData: Record<string, unknown> = {
       username,
       password,
       displayPassword: password, // 保存明文密码用于显示
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     await newAccount.save();
     
     // 返回创建的账户信息（不包含加密密码）
-    const accountData: any = {
+    const accountData: Record<string, unknown> = {
       _id: newAccount._id,
       username: newAccount.username,
       role: newAccount.role,

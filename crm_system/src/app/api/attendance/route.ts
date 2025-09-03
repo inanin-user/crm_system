@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     // 如果指定了活动ID，将参与者添加到活动中
     if (activityId) {
       try {
-        const Activity = require('@/models/Activity').default;
+        const { default: Activity } = await import('@/models/Activity');
         await Activity.findByIdAndUpdate(
           activityId,
           { $addToSet: { participants: name.trim() } }, // 使用$addToSet避免重复

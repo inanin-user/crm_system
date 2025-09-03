@@ -7,7 +7,11 @@ if (!MONGODB_URI) {
 }
 
 declare global {
-  var mongoose: any; // This must be a `var` and not a `let` / `const`
+  // eslint-disable-next-line no-var
+  var mongoose: {
+    conn: unknown | null;
+    promise: Promise<unknown> | null;
+  };
 }
 
 let cached = global.mongoose;
@@ -33,7 +37,7 @@ async function connectDB() {
 
   try {
     cached.conn = await cached.promise;
-  } catch (e) {
+  } catch (e: unknown) {
     cached.promise = null;
     throw e;
   }

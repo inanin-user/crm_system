@@ -15,12 +15,12 @@ export async function GET() {
       data: activities,
       message: `找到 ${activities.length} 个活动`
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('获取活动列表失败:', error);
     return NextResponse.json({
       success: false,
       message: '获取活动列表失败',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     }, { status: 500 });
   }
 }
@@ -114,12 +114,12 @@ export async function POST(request: NextRequest) {
       data: savedActivity,
       message: '活动创建成功'
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('创建活动失败:', error);
     return NextResponse.json({
       success: false,
       message: '创建活动失败',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     }, { status: 500 });
   }
 } 

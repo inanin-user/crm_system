@@ -13,7 +13,7 @@ export interface TokenPayload {
 // 生成JWT token
 export function generateToken(payload: TokenPayload): string {
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: '7d', // 7天过期
+    expiresIn: '30m', // 30分鐘過期，與自動登出時間匹配
   });
 }
 
@@ -22,7 +22,7 @@ export function verifyToken(token: string): TokenPayload | null {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
     return decoded;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

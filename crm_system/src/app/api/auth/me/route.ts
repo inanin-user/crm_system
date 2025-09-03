@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       user: {
-        id: (user._id as any).toString(),
+        id: String(user._id),
         username: user.username,
         role: user.role,
         locations: user.locations || [],

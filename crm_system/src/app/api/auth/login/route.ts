@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // 生成JWT token
     const token = generateToken({
-      userId: (user._id as any).toString(),
+      userId: String(user._id),
       username: user.username,
       role: user.role,
     });
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: '登录成功',
       user: {
-        id: (user._id as any).toString(),
+        id: String(user._id),
         username: user.username,
         role: user.role,
         locations: user.locations || [],
@@ -63,12 +63,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 设置cookie
+    // 設置會話 cookie（關閉瀏覽器後過期）
     response.cookies.set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7天
+      // 移除 maxAge，使其成為會話 cookie（關閉瀏覽器後過期）
       path: '/',
     });
 

@@ -49,12 +49,12 @@ export async function GET(request: NextRequest) {
       message: '会员验证成功'
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('验证会员失败:', error);
     return NextResponse.json({
       success: false,
       message: '验证会员时出错',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     }, { status: 500 });
   }
 } 

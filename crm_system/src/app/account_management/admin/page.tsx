@@ -23,7 +23,7 @@ interface AccountDetail extends Account {
 }
 
 export default function AdminManagementPage() {
-  const { user } = useAuth();
+  const { } = useAuth();
   useScrollOptimization();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -53,7 +53,7 @@ export default function AdminManagementPage() {
       } else {
         setError('获取管理员列表失败');
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请重试');
     } finally {
       setIsLoadingAccounts(false);
@@ -72,7 +72,7 @@ export default function AdminManagementPage() {
       } else {
         setError('获取账户详情失败');
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请重试');
     } finally {
       setIsLoadingDetail(false);

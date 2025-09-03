@@ -25,7 +25,7 @@ export async function PATCH(
     const { name, contactInfo, location, activity, status } = body;
     
     // 构建更新对象
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (name !== undefined) updateData.name = name.trim();
     if (contactInfo !== undefined) updateData.contactInfo = contactInfo.trim();
     if (location !== undefined) updateData.location = location.trim();

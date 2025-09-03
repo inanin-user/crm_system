@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -32,7 +32,7 @@ export default function AddAttendancePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [isLoadingActivities, setIsLoadingActivities] = useState(true);
+  const [, setIsLoadingActivities] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     contactInfo: '',
@@ -51,7 +51,7 @@ export default function AddAttendancePage() {
   });
 
   // 所有可用的地区
-  const ALL_LOCATIONS = ['灣仔', '黃大仙', '石門'];
+  const ALL_LOCATIONS = useMemo(() => ['灣仔', '黃大仙', '石門'], []);
 
   // 获取活动列表
   const fetchActivities = async () => {
@@ -63,8 +63,8 @@ export default function AddAttendancePage() {
       if (result.success) {
         setActivities(result.data);
       }
-    } catch (error) {
-      console.error('获取活动列表失败:', error);
+    } catch {
+      console.error('获取活动列表失败');
     } finally {
       setIsLoadingActivities(false);
     }
@@ -82,7 +82,7 @@ export default function AddAttendancePage() {
     }
     // 获取活动列表
     fetchActivities();
-  }, [user]);
+  }, [user, ALL_LOCATIONS]);
 
   // 验证会员信息
   const validateMember = async (name: string, contactInfo: string) => {
@@ -129,7 +129,7 @@ export default function AddAttendancePage() {
           error: '找不到該會員記錄，請檢查姓名和聯絡方式是否正確'
         });
       }
-    } catch (error) {
+    } catch {
       setMemberValidation({
         isValidating: false,
         member: null,
@@ -206,8 +206,7 @@ export default function AddAttendancePage() {
       } else {
         alert(`❌ 添加失敗：${data.error}`);
       }
-    } catch (error) {
-      console.error('提交失败:', error);
+    } catch {
       alert('❌ 提交失敗，請重試');
     } finally {
       setIsSubmitting(false);

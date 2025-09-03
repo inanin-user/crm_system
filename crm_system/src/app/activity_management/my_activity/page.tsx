@@ -48,7 +48,7 @@ export default function MyActivityPage() {
       } else {
         setError('获取活动列表失败');
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请重试');
     } finally {
       setIsLoadingActivities(false);
@@ -75,7 +75,9 @@ export default function MyActivityPage() {
   };
 
   useEffect(() => {
-    fetchMyActivities();
+    if (user && user.role === 'trainer') {
+      fetchMyActivities();
+    }
   }, [user]);
 
   // 检查权限
