@@ -65,7 +65,7 @@ export default function ScanAttendancePage() {
     if (!user) return;
     
     try {
-      const response = await fetch(`/api/accounts/validate-member?name=${encodeURIComponent(user.username)}&contact=${encodeURIComponent(user.username)}`);
+      const response = await fetch('/api/accounts/current-member');
       const result = await response.json();
       
       if (result.success && result.data) {
@@ -73,9 +73,11 @@ export default function ScanAttendancePage() {
         return result.data;
       } else {
         setError('無法獲取會員資料，請聯絡管理員');
+        console.error('獲取會員資料失敗:', result);
         return null;
       }
-    } catch {
+    } catch (error) {
+      console.error('獲取會員資料時發生錯誤:', error);
       setError('獲取會員資料時發生錯誤');
       return null;
     }
