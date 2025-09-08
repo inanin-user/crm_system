@@ -253,24 +253,24 @@ export default function AttendancePage() {
   return (
     <div>
       {/* 頁面標題和搜索框 */}
-      <div className="flex justify-between items-start mb-8">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">
             活動出席管理系統
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-sm md:text-base">
             管理活動出席、會議簽到和相關聯絡資訊
           </p>
         </div>
         
         {/* 搜索框 */}
-        <div className="relative">
+        <div className="relative w-full md:w-64">
           <input
             type="text"
             placeholder="搜索..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-64 px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-full bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:shadow-md"
+            className="w-full px-4 py-2 pl-10 pr-10 text-base md:text-sm border border-gray-300 rounded-full bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:shadow-md"
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

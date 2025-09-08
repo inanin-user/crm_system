@@ -1,0 +1,301 @@
+/* 移動端專用優化樣式 - 不影響桌面端 */
+
+/* 基礎移動端優化 */
+@media (max-width: 768px) {
+  
+  /* 確保觸控目標大小符合標準（44px minimum） */
+  button, 
+  a[role="button"],
+  input[type="button"],
+  input[type="submit"],
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 12px 16px;
+    font-size: 16px; /* 防止 iOS 自動縮放 */
+  }
+
+  /* 表單輸入優化 */
+  input,
+  textarea,
+  select {
+    font-size: 16px; /* 防止 iOS Safari 自動縮放 */
+    padding: 12px 16px;
+    min-height: 44px;
+  }
+
+  /* 文字大小調整 */
+  h1 { font-size: 1.75rem !important; } /* 28px */
+  h2 { font-size: 1.5rem !important; }  /* 24px */
+  h3 { font-size: 1.25rem !important; } /* 20px */
+  
+  /* 間距調整 */
+  .p-6 { padding: 1rem !important; }    /* 16px */
+  .p-4 { padding: 0.75rem !important; } /* 12px */
+  .mb-6 { margin-bottom: 1.5rem !important; } /* 24px */
+  .mb-4 { margin-bottom: 1rem !important; }   /* 16px */
+
+  /* 確保內容不會被截斷 */
+  .max-w-md {
+    max-width: 95vw !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  /* QR 掃描頁面特殊優化 */
+  video {
+    max-height: 50vh !important;
+    height: auto !important;
+    width: 100% !important;
+  }
+
+  /* 按鈕組優化 */
+  .flex.gap-3 > button,
+  .flex.gap-4 > button {
+    flex: 1;
+    min-height: 48px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  /* 防止文字過小 */
+  .text-xs { font-size: 0.875rem !important; } /* 14px */
+  .text-sm { font-size: 1rem !important; }     /* 16px */
+
+  /* 確保模態框在移動端正確顯示 */
+  .fixed.inset-0 {
+    padding: 1rem !important;
+  }
+
+  .max-w-md.mx-4 {
+    margin-left: 0.75rem !important;
+    margin-right: 0.75rem !important;
+    max-width: calc(100vw - 1.5rem) !important;
+  }
+
+  /* 表格響應式優化 */
+  .overflow-x-auto {
+    scrollbar-width: thin;
+  }
+
+  /* 導航按鈕優化 */
+  .flex.items-center.px-4.py-2 {
+    padding: 16px 12px !important;
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  /* QR 碼顯示優化 */
+  .bg-white.rounded-lg.shadow-xl .px-6.py-4 {
+    padding: 1rem !important;
+  }
+
+  /* 表單標籤優化 */
+  label {
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    margin-bottom: 8px !important;
+    display: block;
+  }
+
+  /* 選擇器優化 */
+  select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    padding-right: 44px !important;
+  }
+
+  /* 改善觸摸反饋 */
+  button:active,
+  a:active,
+  input:active,
+  select:active,
+  textarea:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  /* 確保重要按鈕可見 */
+  .bg-blue-600,
+  .bg-green-600,
+  .bg-red-600 {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+  }
+
+  /* 防止文字溢出 */
+  .truncate {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* 掃描區域優化 */
+  .h-64 {
+    height: 50vh !important;
+    max-height: 400px !important;
+    min-height: 200px !important;
+  }
+
+  /* 確保列表項可點擊 */
+  li a,
+  li button {
+    padding: 14px 16px !important;
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
+
+  /* 提示文字優化 */
+  .text-gray-600,
+  .text-gray-500 {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+  }
+}
+
+/* 超小屏幕優化（小於 480px） */
+@media (max-width: 480px) {
+  
+  h1 { font-size: 1.5rem !important; }  /* 24px */
+  h2 { font-size: 1.25rem !important; } /* 20px */
+  
+  .p-6 { padding: 0.75rem !important; } /* 12px */
+  .px-6 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+  .py-4 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+
+  /* 確保按鈕不會過小 */
+  button {
+    min-height: 48px !important;
+    padding: 14px 20px !important;
+  }
+
+  /* 模態框優化 */
+  .fixed.inset-0 {
+    padding: 0.75rem !important;
+  }
+
+  /* 表單間距 */
+  .space-y-6 > * + * {
+    margin-top: 1.5rem !important;
+  }
+
+  .space-y-3 > * + * {
+    margin-top: 0.75rem !important;
+  }
+}
+
+/* 橫屏模式優化 */
+@media (max-width: 768px) and (orientation: landscape) {
+  
+  .h-64,
+  video {
+    height: 40vh !important;
+    max-height: 300px !important;
+  }
+
+  /* 優化橫屏時的標題 */
+  h1 {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* 減少垂直間距 */
+  .mb-6 { margin-bottom: 1rem !important; }
+  .mb-4 { margin-bottom: 0.75rem !important; }
+}
+
+/* 高DPI螢幕優化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  
+  /* 確保文字在高DPI螢幕上清晰 */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* 邊框優化 */
+  .border,
+  .border-gray-300,
+  .border-gray-200 {
+    border-width: 0.5px !important;
+  }
+}
+
+/* iOS 特定優化 */
+@supports (-webkit-appearance: none) {
+  
+  /* 移除 iOS 預設樣式 */
+  input,
+  textarea,
+  select,
+  button {
+    -webkit-appearance: none;
+    border-radius: 8px;
+  }
+
+  /* 防止 iOS 縮放 */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    font-size: 16px !important;
+  }
+}
+
+/* Android Chrome 優化 */
+@media screen and (max-width: 768px) {
+  
+  /* 改善 Android 上的觸摸目標 */
+  .tap-target {
+    position: relative;
+  }
+
+  .tap-target::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    z-index: -1;
+  }
+}
+
+/* 確保重要元素在移動端可見 */
+@media (max-width: 768px) {
+  
+  /* QR 碼生成按鈕優化 */
+  .bg-blue-50 {
+    padding: 1rem !important;
+    margin: 1rem 0 !important;
+  }
+
+  /* 會員資料顯示優化 */
+  .bg-green-50,
+  .bg-blue-50,
+  .bg-red-50 {
+    padding: 0.75rem !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+
+  /* 確保所有文字可讀 */
+  .text-xs {
+    font-size: 14px !important;
+  }
+
+  .text-sm {
+    font-size: 16px !important;
+  }
+
+  /* 按鈕組間距 */
+  .gap-3 {
+    gap: 0.75rem !important;
+  }
+
+  .gap-4 {
+    gap: 1rem !important;
+  }
+}

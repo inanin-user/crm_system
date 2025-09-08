@@ -231,7 +231,7 @@ export default function ScanAttendancePage() {
   }
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-md mx-auto px-4 sm:px-0">
       {/* 返回按钮和页面标题 */}
       <div className="flex items-center mb-6">
         <button
@@ -244,12 +244,12 @@ export default function ScanAttendancePage() {
           返回
         </button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-800">掃描簽到</h1>
-          <p className="text-gray-600 mt-1">掃描二維碼快速簽到</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">掃描簽到</h1>
+          <p className="text-gray-600 mt-1 text-sm md:text-base">掃描二維碼快速簽到</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
         {/* 錯誤信息 */}
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
