@@ -13,82 +13,54 @@ export function initializeMobileClickFix() {
   const isMobile = window.innerWidth <= 768;
   if (!isMobile) return;
 
-  console.log('初始化移動端點擊修復...');
+  console.log('初始化移動端點擊修復（簡化版）...');
 
-  // 修復所有現有按鈕
-  const fixExistingButtons = () => {
-    const buttons = document.querySelectorAll('button, a, [role="button"], [onclick]');
+  // 強制修復點擊事件
+  const forceEnableClicks = () => {
+    // 移除所有可能阻擋的事件監聽器
+    document.removeEventListener('touchstart', () => {});
+    document.removeEventListener('touchend', () => {});
     
-    buttons.forEach((element) => {
-      const htmlElement = element as HTMLElement;
+    // 確保所有按鈕可點擊
+    const elements = document.querySelectorAll('button, a, [role="button"], input[type="button"], input[type="submit"]');
+    
+    elements.forEach((el) => {
+      const element = el as HTMLElement;
       
-      // 確保元素可以接收點擊事件
-      if (htmlElement.style.pointerEvents !== 'auto') {
-        htmlElement.style.pointerEvents = 'auto';
-      }
+      // 直接設置樣式
+      element.style.pointerEvents = 'auto';
+      element.style.touchAction = 'manipulation';
+      element.style.webkitTapHighlightColor = 'rgba(0,0,0,0.1)';
+      element.style.cursor = 'pointer';
+      element.style.userSelect = 'none';
+      element.style.webkitUserSelect = 'none';
       
-      // 添加觸摸事件處理
-      if (!htmlElement.dataset.mobileFixed) {
-        htmlElement.dataset.mobileFixed = 'true';
-        
-        // 處理觸摸開始
-        htmlElement.addEventListener('touchstart', (e) => {
-          htmlElement.style.opacity = '0.8';
-        }, { passive: true });
-        
-        // 處理觸摸結束
-        htmlElement.addEventListener('touchend', (e) => {
-          htmlElement.style.opacity = '1';
-          
-          // 如果是按鈕，觸發點擊
-          if (htmlElement.tagName === 'BUTTON' || htmlElement.getAttribute('role') === 'button') {
-            e.preventDefault();
-            setTimeout(() => {
-              htmlElement.click();
-            }, 10);
-          }
-        }, { passive: false });
-        
-        // 處理觸摸取消
-        htmlElement.addEventListener('touchcancel', () => {
-          htmlElement.style.opacity = '1';
-        }, { passive: true });
-      }
+      // 移除舊的事件監聽器
+      const newElement = element.cloneNode(true) as HTMLElement;
+      element.parentNode?.replaceChild(newElement, element);
     });
+    
+    console.log(`修復了 ${elements.length} 個可點擊元素`);
   };
 
   // 立即修復現有按鈕
-  fixExistingButtons();
+  forceEnableClicks();
 
-  // 監聽 DOM 變化，修復新添加的按鈕
-  const observer = new MutationObserver((mutations) => {
-    let shouldFix = false;
-    
-    mutations.forEach((mutation) => {
-      if (mutation.type === 'childList') {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === 1) { // Element node
-            const element = node as HTMLElement;
-            if (element.tagName === 'BUTTON' || 
-                element.tagName === 'A' || 
-                element.getAttribute('role') === 'button' ||
-                element.hasAttribute('onclick')) {
-              shouldFix = true;
-            }
-            
-            // 檢查子元素
-            const childButtons = element.querySelectorAll('button, a, [role="button"], [onclick]');
-            if (childButtons.length > 0) {
-              shouldFix = true;
-            }
-          }
-        });
-      }
-    });
-    
-    if (shouldFix) {
-      setTimeout(fixExistingButtons, 100);
+  // 定期重新修復（簡單但有效）
+  const intervalId = setInterval(() => {
+    forceEnableClicks();
+  }, 2000); // 每2秒重新檢查一次
+
+  // 頁面可見性變化時重新修復
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      setTimeout(forceEnableClicks, 100);
     }
+  });
+
+  // 監聽 DOM 變化（簡化版）
+  const observer = new MutationObserver(() => {
+    setTimeout(forceEnableClicks, 200);
   });
 
   // 開始觀察 DOM 變化
@@ -97,46 +69,22 @@ export function initializeMobileClickFix() {
     subtree: true
   });
 
-  // 添加全局觸摸事件委託
-  document.addEventListener('touchend', (e) => {
-    const target = e.target as HTMLElement;
-    
-    if (target && (
-      target.tagName === 'BUTTON' || 
-      target.getAttribute('role') === 'button' ||
-      target.closest('button') ||
-      target.closest('[role="button"]')
-    )) {
-      // 強制觸發點擊事件
-      const clickableElement = target.tagName === 'BUTTON' ? target : target.closest('button') || target.closest('[role="button"]');
-      
-      if (clickableElement && !e.defaultPrevented) {
-        e.preventDefault();
-        setTimeout(() => {
-          (clickableElement as HTMLElement).click();
-        }, 10);
-      }
-    }
-  }, { passive: false });
-
-  // 監聽頁面路由變化
-  let currentUrl = window.location.href;
-  const checkForRouteChange = () => {
-    if (currentUrl !== window.location.href) {
-      currentUrl = window.location.href;
-      setTimeout(fixExistingButtons, 500); // 延遲一點讓新頁面完全加載
-    }
-  };
-  
-  setInterval(checkForRouteChange, 1000);
-
-  // 監聽 popstate 事件（瀏覽器後退/前進）
+  // 路由變化監聽
   window.addEventListener('popstate', () => {
-    setTimeout(fixExistingButtons, 100);
+    setTimeout(forceEnableClicks, 100);
   });
 
+  // 清理函數（當需要時）
+  const cleanup = () => {
+    clearInterval(intervalId);
+    observer.disconnect();
+  };
+
+  // 暴露清理函數到全局（調試用）
+  (window as any).mobileClickCleanup = cleanup;
+
   isInitialized = true;
-  console.log('移動端點擊修復初始化完成');
+  console.log('移動端點擊修復初始化完成（簡化版）');
 }
 
 // 手動修復特定元素

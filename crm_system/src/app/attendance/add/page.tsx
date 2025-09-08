@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDirectClickFix } from '@/hooks/useDirectClickFix';
 import QRCode from 'qrcode';
 
 interface Member {
@@ -31,6 +32,9 @@ export default function AddAttendancePage() {
   const router = useRouter();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // 啟用直接點擊修復
+  useDirectClickFix();
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [, setIsLoadingActivities] = useState(true);

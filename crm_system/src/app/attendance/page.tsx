@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
+import { useDirectClickFix } from '@/hooks/useDirectClickFix';
 
 interface AttendanceRecord {
   _id: string;
@@ -22,6 +23,8 @@ export default function AttendancePage() {
   
   // 启用滚动性能优化
   useScrollOptimization();
+  // 啟用直接點擊修復
+  useDirectClickFix();
   // 新增状态：更新模式相关
   const [isUpdateMode, setIsUpdateMode] = useState(false);
   const [editedRecords, setEditedRecords] = useState<AttendanceRecord[]>([]);
