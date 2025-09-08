@@ -70,8 +70,16 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         );
       }
+    } else if (user.role === 'member') {
+      // 會員只能為自己創建出席記錄（通過QR code掃描）
+      if (!memberId || memberId !== authUser.userId) {
+        return NextResponse.json(
+          { error: '會員只能為自己創建出席記錄' },
+          { status: 403 }
+        );
+      }
     } else if (user.role !== 'admin') {
-      // 非管理员和教练暂时不允许创建记录
+      // 其他角色不允許創建記錄
       return NextResponse.json(
         { error: '您没有权限创建出席记录' },
         { status: 403 }
