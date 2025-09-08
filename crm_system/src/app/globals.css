@@ -133,15 +133,32 @@ a:hover {
   html {
     /* 移动设备滚动优化 */
     -webkit-text-size-adjust: 100%;
-    -webkit-tap-highlight-color: transparent;
+    /* 恢復點擊高亮以改善觸摸反饋 */
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
   }
   
   body {
     /* 移动设备性能优化 */
     -webkit-transform: translateZ(0);
-    /* 禁用选择以提升性能 */
+    /* 只對文本禁用選擇，不影響互動元素 */
     -webkit-user-select: none;
     user-select: none;
+  }
+  
+  /* 確保互動元素可以正常點擊 */
+  button, 
+  a, 
+  input, 
+  textarea, 
+  select,
+  [role="button"],
+  .cursor-pointer {
+    -webkit-user-select: none;
+    user-select: none;
+    /* 確保觸摸事件正常 */
+    touch-action: manipulation;
+    /* 改善點擊響應 */
+    cursor: pointer;
   }
   
   /* 允许文本选择的元素 */

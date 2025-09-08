@@ -3,6 +3,29 @@
 /* 基礎移動端優化 */
 @media (max-width: 768px) {
   
+  /* 緊急修復：確保所有點擊事件都能正常工作 */
+  * {
+    -webkit-touch-callout: default;
+    -webkit-user-select: auto;
+    user-select: auto;
+  }
+
+  /* 重置所有可能阻擋點擊的樣式 */
+  button, 
+  a, 
+  input, 
+  select, 
+  textarea,
+  [onclick],
+  [role="button"] {
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1) !important;
+    cursor: pointer !important;
+    z-index: 999 !important;
+    position: relative !important;
+  }
+  
   /* 確保觸控目標大小符合標準（44px minimum） */
   button, 
   a[role="button"],
@@ -109,6 +132,19 @@
     padding-right: 44px !important;
   }
 
+  /* 確保所有互動元素都可點擊 */
+  button, 
+  a, 
+  input[type="button"],
+  input[type="submit"],
+  [role="button"],
+  .cursor-pointer {
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1) !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+  }
+
   /* 改善觸摸反饋 */
   button:active,
   a:active,
@@ -117,6 +153,42 @@
   textarea:active {
     transform: scale(0.98);
     transition: transform 0.1s ease;
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  /* 確保按鈕區域完全可點擊 */
+  button {
+    position: relative;
+    overflow: visible;
+    z-index: 10; /* 確保按鈕在最上層 */
+  }
+
+  /* 移除可能阻擋點擊的偽元素 */
+  button::before,
+  button::after {
+    pointer-events: none;
+  }
+
+  /* 確保沒有覆蓋層阻擋 */
+  .bg-white,
+  .shadow-lg,
+  .rounded-lg {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 確保按鈕容器不阻擋點擊 */
+  .flex.gap-3,
+  .flex.gap-4 {
+    position: relative;
+    z-index: 5;
+  }
+
+  /* 調試：給按鈕添加明顯的觸摸區域 */
+  button:hover,
+  button:focus {
+    outline: 2px solid rgba(59, 130, 246, 0.5);
+    outline-offset: 2px;
   }
 
   /* 確保重要按鈕可見 */

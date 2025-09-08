@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ConditionalNavigation from "./components/ConditionalNavigation";
 import ConditionalMain from "./components/ConditionalMain";
+import MobileClickInitializer from "./components/MobileClickInitializer";
+import DebugClickHelper from "./components/DebugClickHelper";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 
@@ -28,6 +30,8 @@ export default function RootLayout({
       >
         <AuthProvider>
           <SidebarProvider>
+            <MobileClickInitializer />
+            <DebugClickHelper />
             <div 
               className="min-h-screen bg-gray-50"
               style={{
