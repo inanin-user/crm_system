@@ -97,6 +97,43 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // 檢查重複簽到 - 使用activityId精確判斷
+      if (activityId) {
+        const existingAttendance = await Attendance.findOne({
+          $and: [
+            // 匹配活動ID（確保是同一活動時段）
+            { 
+              $or: [
+                { activityId: activityId },
+                // 兼容舊記錄：如果沒有activityId，用活動名稱和地點匹配
+                { 
+                  $and: [
+                    { activity: activity.trim() },
+                    { location: location.trim() },
+                    { activityId: { $exists: false } }
+                  ]
+                }
+              ]
+            },
+            // 匹配會員身份
+            {
+              $or: [
+                { name: member.memberName },
+                { contactInfo: member.phone },
+                { contactInfo: member.email }
+              ]
+            }
+          ]
+        });
+
+        if (existingAttendance) {
+          return NextResponse.json(
+            { error: '你已簽到' },
+            { status: 400 }
+          );
+        }
+      }
+
       if (!member.isActive) {
         return NextResponse.json(
           { error: '该会员账户已被禁用' },
@@ -131,7 +168,8 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
       contactInfo: contactInfo.trim(),
       location: location.trim(),
-      activity: activity.trim()
+      activity: activity.trim(),
+      activityId: activityId || undefined // 保存活動ID，如果沒有則為undefined
     });
     
     const savedAttendance = await newAttendance.save();

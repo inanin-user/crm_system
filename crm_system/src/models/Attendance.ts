@@ -5,6 +5,7 @@ export interface IAttendance extends Document {
   contactInfo: string;       // 聯絡方式
   location: string;          // 地點
   activity: string;          // 活動內容
+  activityId?: string;       // 活動ID（用於精確識別活動時段）
   status: string;            // 出席狀態
   createdAt: Date;
   updatedAt: Date;
@@ -35,6 +36,12 @@ const AttendanceSchema: Schema = new Schema({
     trim: true,
     maxLength: [1000, '活動內容不能超過1000個字符']
   },
+  activityId: {
+    type: String,
+    required: false,  // 可選字段，兼容舊記錄
+    trim: true,
+    maxLength: [100, '活動ID不能超過100個字符']
+  },
   status: {
     type: String,
     enum: ['出席', '早退'],
@@ -50,6 +57,8 @@ const AttendanceSchema: Schema = new Schema({
 AttendanceSchema.index({ name: 1, createdAt: -1 });
 AttendanceSchema.index({ location: 1 });
 AttendanceSchema.index({ activity: 1 });
+AttendanceSchema.index({ activityId: 1 }); // 活動ID索引，用於重複簽到檢查
+AttendanceSchema.index({ activityId: 1, name: 1 }); // 複合索引，用於快速查詢重複簽到
 
 // 刪除現有模型（如果存在）並重新創建
 if (mongoose.models.Attendance) {
