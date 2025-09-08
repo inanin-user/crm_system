@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import QRCode from 'qrcode';
 
 interface Member {
   _id: string;
@@ -49,6 +50,12 @@ export default function AddAttendancePage() {
     member: null,
     error: ''
   });
+
+  // QR Code 相關狀態
+  const [qrCode, setQrCode] = useState<string>('');
+  const [showQrCode, setShowQrCode] = useState(false);
+  const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // 所有可用的地区
   const ALL_LOCATIONS = useMemo(() => ['灣仔', '黃大仙', '石門'], []);
@@ -161,6 +168,56 @@ export default function AddAttendancePage() {
     if (name === 'name' || name === 'contactInfo') {
       const newFormData = { ...formData, [name]: value };
       validateMember(newFormData.name, newFormData.contactInfo);
+    }
+  };
+
+  // 生成簽到二維碼
+  const generateQrCode = async () => {
+    if (!formData.activityId || !formData.activityName || !formData.location) {
+      alert('請先選擇活動才能生成二維碼');
+      return;
+    }
+
+    setIsGeneratingQr(true);
+    
+    try {
+      const selectedActivity = activities.find(a => a._id === formData.activityId);
+      if (!selectedActivity) {
+        throw new Error('找不到選擇的活動');
+      }
+
+      // 創建 QR code 數據
+      const qrData = {
+        type: 'attendance_checkin', // 標識這是簽到用的 QR code
+        activityId: formData.activityId,
+        activityName: formData.activityName,
+        location: formData.location,
+        trainerId: selectedActivity.trainerId,
+        trainerName: selectedActivity.trainerName,
+        startTime: selectedActivity.startTime,
+        endTime: selectedActivity.endTime,
+        duration: selectedActivity.duration,
+        generatedAt: new Date().toISOString(),
+        generatedBy: user?.username || 'unknown'
+      };
+
+      // 生成 QR code
+      const qrCodeDataUrl = await QRCode.toDataURL(JSON.stringify(qrData), {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+
+      setQrCode(qrCodeDataUrl);
+      setShowQrCode(true);
+    } catch (error) {
+      console.error('生成二維碼失敗:', error);
+      alert('生成二維碼失敗，請重試');
+    } finally {
+      setIsGeneratingQr(false);
     }
   };
 
@@ -353,6 +410,39 @@ export default function AddAttendancePage() {
             </select>
           </div>
 
+          {/* QR 碼生成按鈕 */}
+          {(user?.role === 'admin' || user?.role === 'trainer') && formData.activityId && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-blue-800 mb-2">快速簽到功能</h3>
+              <p className="text-xs text-blue-600 mb-3">
+                生成二維碼讓會員掃描自動簽到，無需手動填寫資料
+              </p>
+              <button
+                type="button"
+                onClick={generateQrCode}
+                disabled={isGeneratingQr}
+                className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                {isGeneratingQr ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    生成中...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 16h4.01M12 8h4.01" />
+                    </svg>
+                    生成簽到二維碼
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
           <div className="flex gap-4 pt-4">
             <button
               type="button"
@@ -381,6 +471,69 @@ export default function AddAttendancePage() {
           </div>
         </form>
       </div>
+
+      {/* QR 碼顯示模態框 */}
+      {showQrCode && qrCode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50" 
+            onClick={() => setShowQrCode(false)}
+          ></div>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 z-10">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-800">簽到二維碼</h3>
+                <button
+                  onClick={() => setShowQrCode(false)}
+                  className="text-gray-400 hover:text-gray-600 text-xl"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="px-6 py-4 text-center">
+              <div className="mb-4">
+                <img 
+                  src={qrCode} 
+                  alt="簽到二維碼" 
+                  className="mx-auto border border-gray-200 rounded-lg"
+                />
+              </div>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p><strong>活動:</strong> {formData.activityName}</p>
+                <p><strong>地點:</strong> {formData.location}</p>
+                <p className="text-xs text-gray-500 mt-3">
+                  請讓會員使用手機掃描此二維碼進行自動簽到
+                </p>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-between gap-3">
+              <button
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = qrCode;
+                  link.download = `簽到二維碼_${formData.activityName}_${new Date().getTime()}.png`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                下載二維碼
+              </button>
+              <button
+                onClick={() => setShowQrCode(false)}
+                className="flex-1 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                關閉
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

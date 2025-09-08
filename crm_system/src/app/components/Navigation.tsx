@@ -390,6 +390,21 @@ export default function Navigation() {
                           按姓名分類
                         </Link>
                       </li>
+                      {/* 會員掃描簽到 */}
+                      {user?.role === 'member' && (
+                        <li>
+                          <Link
+                            href="/attendance/scan"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/attendance/scan'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            掃描簽到
+                          </Link>
+                        </li>
+                      )}
                     </ul>
                   )}
                 </div>
