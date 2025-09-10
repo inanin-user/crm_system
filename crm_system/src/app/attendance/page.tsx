@@ -13,6 +13,7 @@ interface AttendanceRecord {
   activity: string;
   createdAt: string;
   updatedAt: string;
+  quota?: number; // 剩餘配額，可選字段
 }
 
 export default function AttendancePage() {
@@ -45,10 +46,42 @@ export default function AttendancePage() {
       const response = await fetch('/api/attendance/accessible');
       const data = await response.json();
       if (response.ok && data.success) {
-        setAttendanceRecords(data.data);
+        const records = data.data;
+        
+        // 獲取所有會員信息來匹配quota
+        const membersResponse = await fetch('/api/accounts?role=member');
+        const membersData = await membersResponse.json();
+        
+        if (membersResponse.ok && membersData.success) {
+          const members = membersData.data;
+          
+          // 為每個出席記錄匹配對應的quota
+          const recordsWithQuota = records.map((record: AttendanceRecord) => {
+            // 雙層驗證：首先按姓名匹配，然後按電話號碼確認
+            const matchingMember = members.find((member: any) => {
+              // 檢查姓名匹配（會員真實姓名或用戶名）
+              const nameMatch = member.memberName === record.name || member.username === record.name;
+              // 檢查電話號碼匹配
+              const phoneMatch = member.phone === record.contactInfo;
+              
+              // 必須同時滿足姓名和電話號碼匹配
+              return nameMatch && phoneMatch;
+            });
+            
+            return {
+              ...record,
+              quota: matchingMember ? matchingMember.quota : undefined
+            };
+          });
+          
+          setAttendanceRecords(recordsWithQuota);
+        } else {
+          // 如果無法獲取會員信息，仍然顯示出席記錄但不顯示quota
+          setAttendanceRecords(records);
+        }
         
         // 如果用户是教练且没有地区权限，显示提示信息
-        if (data.data.length === 0 && data.message) {
+        if (records.length === 0 && data.message) {
           console.info(data.message);
         }
       } else {
@@ -259,10 +292,10 @@ export default function AttendancePage() {
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-8">
         <div>
           <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">
-            活動出席管理系統
+            運動班管理系統
           </h1>
           <p className="text-gray-600 text-sm md:text-base">
-            管理活動出席、會議簽到和相關聯絡資訊
+            管理運動班出席、簽到和相關聯絡資訊
           </p>
         </div>
         
@@ -288,7 +321,7 @@ export default function AttendancePage() {
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-800">
-              活動出席記錄 ({filteredRecords.length} 筆)
+              運動班出席記錄 ({filteredRecords.length} 筆)
               {isUpdateMode && updatedCount > 0 && (
                 <span className="ml-2 text-sm text-orange-600">
                   ({updatedCount} 筆待更新)
@@ -397,6 +430,9 @@ export default function AttendancePage() {
                   活動內容
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  剩餘配額
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   日期
                 </th>
               </tr>
@@ -404,8 +440,8 @@ export default function AttendancePage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={isUpdateMode ? 6 : 5} className="px-6 py-8 text-center text-gray-500">
-                    {searchTerm ? '未找到符合條件的記錄' : '暫無活動記錄'}
+                  <td colSpan={isUpdateMode ? 7 : 6} className="px-6 py-8 text-center text-gray-500">
+                    {searchTerm ? '未找到符合條件的記錄' : '暫無運動班記錄'}
                   </td>
                 </tr>
               ) : (
@@ -480,6 +516,21 @@ export default function AttendancePage() {
                             {record.activity}
                           </div>
                         )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {record.quota !== undefined ? (
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              record.quota > 0 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {record.quota}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">未知</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">
