@@ -296,6 +296,25 @@ export default function Navigation() {
                 </Link>
               </li>
 
+              {/* 活動管理 - 獨立菜單項 */}
+              {user?.role === 'admin' && (
+                <li>
+                  <Link
+                    href="/attendance/activity_management"
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${
+                      pathname === '/attendance/activity_management'
+                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {!isCollapsed && <span>活動管理</span>}
+                  </Link>
+                </li>
+              )}
+
               {/* 出席管理 */}
               <li>
                 <div>
@@ -340,20 +359,6 @@ export default function Navigation() {
                           所有記錄
                         </Link>
                       </li>
-                      {user?.role === 'admin' && (
-                        <li>
-                          <Link
-                            href="/attendance/activity_management"
-                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                              pathname === '/attendance/activity_management'
-                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            活動管理
-                          </Link>
-                        </li>
-                      )}
                       <li>
                         <Link
                           href="/attendance/check"
