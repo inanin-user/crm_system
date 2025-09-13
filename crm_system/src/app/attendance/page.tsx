@@ -14,6 +14,7 @@ interface AttendanceRecord {
   createdAt: string;
   updatedAt: string;
   quota?: number; // 剩餘配額，可選字段
+  trainerName?: string; // 教練姓名，可選字段
 }
 
 export default function AttendancePage() {
@@ -58,7 +59,7 @@ export default function AttendancePage() {
           // 為每個出席記錄匹配對應的quota
           const recordsWithQuota = records.map((record: AttendanceRecord) => {
             // 雙層驗證：首先按姓名匹配，然後按電話號碼確認
-            const matchingMember = members.find((member: any) => {
+            const matchingMember = members.find((member: { memberName?: string; username: string; phone: string; quota?: number }) => {
               // 檢查姓名匹配（會員真實姓名或用戶名）
               const nameMatch = member.memberName === record.name || member.username === record.name;
               // 檢查電話號碼匹配
@@ -274,7 +275,8 @@ export default function AttendancePage() {
       record.name.toLowerCase().includes(searchTermLower) ||
       record.contactInfo.toLowerCase().includes(searchTermLower) ||
       record.location.toLowerCase().includes(searchTermLower) ||
-      record.activity.toLowerCase().includes(searchTermLower)
+      record.activity.toLowerCase().includes(searchTermLower) ||
+      (record.trainerName && record.trainerName.toLowerCase().includes(searchTermLower))
     );
   });
 
@@ -303,7 +305,7 @@ export default function AttendancePage() {
         <div className="relative w-full md:w-64">
           <input
             type="text"
-            placeholder="搜索..."
+            placeholder="搜索姓名、聯絡方式、地點、活動或教練..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full px-4 py-2 pl-10 pr-10 text-base md:text-sm border border-gray-300 rounded-full bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:shadow-md"
@@ -430,6 +432,9 @@ export default function AttendancePage() {
                   活動內容
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  負責教練
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   剩餘配額
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -440,7 +445,7 @@ export default function AttendancePage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={isUpdateMode ? 7 : 6} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={isUpdateMode ? 8 : 7} className="px-6 py-8 text-center text-gray-500">
                     {searchTerm ? '未找到符合條件的記錄' : '暫無運動班記錄'}
                   </td>
                 </tr>
@@ -516,6 +521,17 @@ export default function AttendancePage() {
                             {record.activity}
                           </div>
                         )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {record.trainerName ? (
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                              {record.trainerName}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">未知</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">

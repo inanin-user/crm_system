@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface AddAccountModalProps {
   isOpen: boolean;
@@ -13,15 +13,38 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    role: defaultRole,
+    role: defaultRole === 'member' ? 'regular-member' : defaultRole,
     // 会员专用字段
     memberName: '',
     phone: '',
-    email: '',
+    herbalifePCNumber: '',
+    joinDate: '',
+    trainerIntroducer: '',
+    referrer: '',
     quota: 0
   });
+  const [trainers, setTrainers] = useState<{_id: string, username: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // 获取教练列表
+  useEffect(() => {
+    const fetchTrainers = async () => {
+      try {
+        const response = await fetch('/api/accounts?role=trainer');
+        const result = await response.json();
+        if (result.success) {
+          setTrainers(result.data);
+        }
+      } catch (error) {
+        console.error('获取教练列表失败:', error);
+      }
+    };
+
+    if (isOpen && ['member', 'regular-member', 'premium-member'].includes(defaultRole)) {
+      fetchTrainers();
+    }
+  }, [isOpen, defaultRole]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +53,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
 
     try {
       // 为会员角色准备完整的数据
-      const submitData = defaultRole === 'member' ? formData : {
+      const submitData = ['member', 'regular-member', 'premium-member'].includes(defaultRole) ? formData : {
         username: formData.username,
         password: formData.password,
         role: formData.role
@@ -50,10 +73,13 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
         setFormData({ 
           username: '', 
           password: '', 
-          role: defaultRole,
+          role: defaultRole === 'member' ? 'regular-member' : defaultRole,
           memberName: '',
           phone: '',
-          email: '',
+          herbalifePCNumber: '',
+          joinDate: '',
+          trainerIntroducer: '',
+          referrer: '',
           quota: 0
         });
         onSuccess();
@@ -72,10 +98,13 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
     setFormData({ 
       username: '', 
       password: '', 
-      role: defaultRole,
+      role: defaultRole === 'member' ? 'regular-member' : defaultRole,
       memberName: '',
       phone: '',
-      email: '',
+      herbalifePCNumber: '',
+      joinDate: '',
+      trainerIntroducer: '',
+      referrer: '',
       quota: 0
     });
     setError('');
@@ -84,7 +113,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
 
   if (!isOpen) return null;
 
-  const isMember = defaultRole === 'member';
+  const isMember = ['member', 'regular-member', 'premium-member'].includes(defaultRole);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -110,7 +139,22 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
             </div>
           )}
 
-          <div className={isMember ? 'grid grid-cols-2 gap-4' : ''}>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              密码
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="请输入密码"
+              required
+            />
+          </div>
+
+          {!isMember && (
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                 账号名
@@ -125,41 +169,11 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
                 required
               />
             </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                密码
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="请输入密码"
-                required
-              />
-            </div>
-          </div>
+          )}
 
           {isMember && (
             <>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="memberName" className="block text-sm font-medium text-gray-700 mb-1">
-                    會員姓名 <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="memberName"
-                    value={formData.memberName}
-                    onChange={(e) => setFormData({ ...formData, memberName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="请输入會員真實姓名"
-                    required
-                  />
-                </div>
-
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                     電話號碼 <span className="text-red-500">*</span>
@@ -174,41 +188,106 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
                     required
                   />
                 </div>
+
+                <div>
+                  <label htmlFor="memberName" className="block text-sm font-medium text-gray-700 mb-1">
+                    會員姓名 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="memberName"
+                    value={formData.memberName}
+                    onChange={(e) => setFormData({ ...formData, memberName: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="请输入會員真實姓名"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    電子郵箱 <span className="text-red-500">*</span>
+                  <label htmlFor="herbalifePCNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                    康寶萊PC/會員號碼 <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="email"
-                    id="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    type="text"
+                    id="herbalifePCNumber"
+                    value={formData.herbalifePCNumber}
+                    onChange={(e) => setFormData({ ...formData, herbalifePCNumber: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="请输入電子郵箱"
+                    placeholder="请输入康寶萊PC/會員號碼"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="quota" className="block text-sm font-medium text-gray-700 mb-1">
-                    初始配額
+                  <label htmlFor="joinDate" className="block text-sm font-medium text-gray-700 mb-1">
+                    入會日期 <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="number"
-                    id="quota"
-                    min="0"
-                    value={formData.quota}
-                    onChange={(e) => setFormData({ ...formData, quota: parseInt(e.target.value) || 0 })}
+                    type="date"
+                    id="joinDate"
+                    value={formData.joinDate}
+                    onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="请输入初始配額（默認為0）"
+                    required
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    會員可用的活動參與次數
-                  </p>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="trainerIntroducer" className="block text-sm font-medium text-gray-700 mb-1">
+                    教練介紹人 <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="trainerIntroducer"
+                    value={formData.trainerIntroducer}
+                    onChange={(e) => setFormData({ ...formData, trainerIntroducer: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">請選擇教練介紹人</option>
+                    {trainers.map((trainer) => (
+                      <option key={trainer._id} value={trainer.username}>
+                        {trainer.username}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="referrer" className="block text-sm font-medium text-gray-700 mb-1">
+                    轉介人
+                  </label>
+                  <input
+                    type="text"
+                    id="referrer"
+                    value={formData.referrer}
+                    onChange={(e) => setFormData({ ...formData, referrer: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="请输入轉介人（可選）"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="quota" className="block text-sm font-medium text-gray-700 mb-1">
+                  初始配額
+                </label>
+                <input
+                  type="number"
+                  id="quota"
+                  min="0"
+                  value={formData.quota}
+                  onChange={(e) => setFormData({ ...formData, quota: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="请输入初始配額（默認為0）"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  會員可用的活動參與次數
+                </p>
               </div>
             </>
           )}
@@ -217,15 +296,28 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
             <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
               角色
             </label>
-            <input
-              type="text"
-              id="role"
-              value={formData.role === 'member' ? '會員' : formData.role}
-              readOnly
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
-            />
+            {isMember ? (
+              <select
+                id="role"
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="regular-member">會員-普通會員</option>
+                <option value="premium-member">會員-星級會員</option>
+              </select>
+            ) : (
+              <input
+                type="text"
+                id="role"
+                value={formData.role === 'trainer' ? '教練' : formData.role === 'admin' ? '管理員' : formData.role}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+              />
+            )}
             <p className="text-xs text-gray-500 mt-1">
-              角色会根据当前页面自动设置
+              {isMember ? '請選擇會員類型' : '角色会根据当前页面自动设置'}
             </p>
           </div>
 

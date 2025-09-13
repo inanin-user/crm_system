@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 // 添加新账户
 export async function POST(request: NextRequest) {
   try {
-    const { username, password, role, locations, memberName, phone, email, quota } = await request.json();
+    const { username, password, role, locations, memberName, phone, herbalifePCNumber, joinDate, trainerIntroducer, referrer, quota } = await request.json();
     
     // 验证必填字段
     if (!username || !password || !role) {
@@ -46,19 +46,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 如果是会员角色，验证会员专用字段
-    if (role === 'member') {
-      if (!memberName || !phone || !email) {
+    if (['member', 'regular-member', 'premium-member'].includes(role)) {
+      if (!memberName || !phone || !herbalifePCNumber || !joinDate || !trainerIntroducer) {
         return NextResponse.json(
-          { success: false, message: '会员账户需要提供姓名、电话和邮箱' },
-          { status: 400 }
-        );
-      }
-
-      // 验证邮箱格式
-      const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
-      if (!emailRegex.test(email)) {
-        return NextResponse.json(
-          { success: false, message: '请提供有效的邮箱地址' },
+          { success: false, message: '会员账户需要提供姓名、电话、康寶萊PC/會員號碼、入會日期和教練介紹人' },
           { status: 400 }
         );
       }
@@ -98,10 +89,15 @@ export async function POST(request: NextRequest) {
     };
 
     // 如果是会员角色，添加会员专用字段
-    if (role === 'member') {
+    if (['member', 'regular-member', 'premium-member'].includes(role)) {
       newAccountData.memberName = memberName;
       newAccountData.phone = phone;
-      newAccountData.email = email;
+      newAccountData.herbalifePCNumber = herbalifePCNumber;
+      newAccountData.joinDate = new Date(joinDate);
+      newAccountData.trainerIntroducer = trainerIntroducer;
+      if (referrer) {
+        newAccountData.referrer = referrer;
+      }
       newAccountData.quota = quota || 0; // 默认配额为0
     }
 
@@ -121,10 +117,15 @@ export async function POST(request: NextRequest) {
     };
 
     // 如果是会员，添加会员字段到返回数据
-    if (newAccount.role === 'member') {
+    if (['member', 'regular-member', 'premium-member'].includes(newAccount.role)) {
       accountData.memberName = newAccount.memberName;
       accountData.phone = newAccount.phone;
-      accountData.email = newAccount.email;
+      accountData.herbalifePCNumber = newAccount.herbalifePCNumber;
+      accountData.joinDate = newAccount.joinDate;
+      accountData.trainerIntroducer = newAccount.trainerIntroducer;
+      if (newAccount.referrer) {
+        accountData.referrer = newAccount.referrer;
+      }
       accountData.quota = newAccount.quota;
     }
     

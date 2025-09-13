@@ -5,7 +5,7 @@ export interface IAccount extends Document {
   username: string;          // 用户名
   password: string;          // 密码 (加密后，用于验证)
   displayPassword: string;   // 明文密码 (用于管理界面显示)
-  role: 'admin' | 'user' | 'trainer' | 'member';    // 角色：管理员、普通用户、教练、会员
+  role: 'admin' | 'user' | 'trainer' | 'member' | 'regular-member' | 'premium-member';    // 角色：管理员、普通用户、教练、会员、普通会员、星级会员
   isActive: boolean;         // 账号是否激活
   locations: string[];       // 地区权限：['灣仔', '黃大仙', '石門']
   lastLogin?: Date;          // 最后登录时间
@@ -13,7 +13,10 @@ export interface IAccount extends Document {
   // 会员专用字段
   memberName?: string;       // 会员真实姓名
   phone?: string;           // 电话号码
-  email?: string;           // 邮箱地址
+  herbalifePCNumber?: string; // 康寶萊PC/會員號碼
+  joinDate?: Date;          // 入會日期
+  trainerIntroducer?: string; // 教練介紹人 (必选)
+  referrer?: string;        // 轉介人 (自由填写)
   quota?: number;           // 剩余配额
   
   createdAt: Date;
@@ -44,7 +47,7 @@ const AccountSchema: Schema = new Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'user', 'trainer', 'member'],
+    enum: ['admin', 'user', 'trainer', 'member', 'regular-member', 'premium-member'],
     default: 'user',
     required: [true, '请指定用户角色']
   },
@@ -65,7 +68,7 @@ const AccountSchema: Schema = new Schema({
   memberName: {
     type: String,
     required: function(this: IAccount) {
-      return this.role === 'member';
+      return ['member', 'regular-member', 'premium-member'].includes(this.role);
     },
     trim: true,
     maxLength: [100, '会员姓名不能超过100个字符']
@@ -73,25 +76,42 @@ const AccountSchema: Schema = new Schema({
   phone: {
     type: String,
     required: function(this: IAccount) {
-      return this.role === 'member';
+      return ['member', 'regular-member', 'premium-member'].includes(this.role);
     },
     trim: true,
     maxLength: [20, '电话号码不能超过20个字符']
   },
-  email: {
+  herbalifePCNumber: {
     type: String,
     required: function(this: IAccount) {
-      return this.role === 'member';
+      return ['member', 'regular-member', 'premium-member'].includes(this.role);
     },
     trim: true,
-    lowercase: true,
-    maxLength: [100, '邮箱地址不能超过100个字符'],
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, '请提供有效的邮箱地址']
+    maxLength: [50, '康寶萊PC/會員號碼不能超过50个字符']
+  },
+  joinDate: {
+    type: Date,
+    required: function(this: IAccount) {
+      return ['member', 'regular-member', 'premium-member'].includes(this.role);
+    }
+  },
+  trainerIntroducer: {
+    type: String,
+    required: function(this: IAccount) {
+      return ['member', 'regular-member', 'premium-member'].includes(this.role);
+    },
+    trim: true,
+    maxLength: [100, '教練介紹人不能超过100个字符']
+  },
+  referrer: {
+    type: String,
+    trim: true,
+    maxLength: [100, '轉介人不能超过100个字符']
   },
   quota: {
     type: Number,
     required: function(this: IAccount) {
-      return this.role === 'member';
+      return ['member', 'regular-member', 'premium-member'].includes(this.role);
     },
     min: [0, '配额不能为负数'],
     default: 0
@@ -131,7 +151,8 @@ AccountSchema.index({ role: 1 });
 AccountSchema.index({ isActive: 1 });
 AccountSchema.index({ memberName: 1 });
 AccountSchema.index({ phone: 1 });
-AccountSchema.index({ email: 1 });
+AccountSchema.index({ herbalifePCNumber: 1 });
+AccountSchema.index({ trainerIntroducer: 1 });
 
 // 删除现有模型（如果存在）并重新创建
 if (mongoose.models.Account) {

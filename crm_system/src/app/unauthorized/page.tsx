@@ -76,7 +76,7 @@ export default function UnauthorizedPage() {
                     </ul>
                   </>
                 )}
-                {user?.role === 'member' && (
+                {['member', 'regular-member', 'premium-member'].includes(user?.role || '') && (
                   <p>會員權限配置中，請聯繫管理員。</p>
                 )}
                 {user?.role === 'admin' && (

@@ -240,6 +240,8 @@ export default function Navigation() {
                       <div className="text-xs text-gray-500 capitalize">{
                         user.role === 'admin' ? '管理員' :
                         user.role === 'trainer' ? '教練' :
+                        user.role === 'regular-member' ? '普通會員' :
+                        user.role === 'premium-member' ? '星級會員' :
                         user.role === 'member' ? '會員' :
                         '普通用戶'
                       }</div>
@@ -373,18 +375,6 @@ export default function Navigation() {
                       </li>
                       <li>
                         <Link
-                          href="/attendance/add"
-                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                            pathname === '/attendance/add'
-                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          添加記錄
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
                           href="/attendance/by_name"
                           className={`block px-3 py-2 text-sm rounded-md transition-colors ${
                             pathname === '/attendance/by_name'
@@ -396,7 +386,7 @@ export default function Navigation() {
                         </Link>
                       </li>
                       {/* 會員掃描簽到 */}
-                      {user?.role === 'member' && (
+                      {['member', 'regular-member', 'premium-member'].includes(user?.role || '') && (
                         <li>
                           <Link
                             href="/attendance/scan"
@@ -448,6 +438,18 @@ export default function Navigation() {
                     {/* 会员管理子菜单 */}
                     {(isMemberManagementOpen && !isCollapsed) && (
                       <ul className="mt-1 ml-8 space-y-1">
+                        <li>
+                          <Link
+                            href="/attendance/add"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/attendance/add'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            補簽到
+                          </Link>
+                        </li>
                         <li>
                           <Link
                             href="/member_management/profile"

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
+import Activity from '@/models/Activity';
 import Account from '@/models/Account';
 import { getAuthUser } from '@/lib/auth';
 
@@ -92,9 +93,50 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .limit(100); // 限制返回数量
 
+    // 为每个出席记录添加教练信息
+    const attendancesWithTrainer = await Promise.all(
+      attendances.map(async (attendance) => {
+        let trainerName = null;
+        
+        // 如果有activityId，直接通过activityId查找活动
+        if (attendance.activityId) {
+          try {
+            const activity = await Activity.findById(attendance.activityId);
+            if (activity) {
+              trainerName = activity.trainerName;
+            }
+          } catch (error) {
+            console.warn(`无法通过activityId ${attendance.activityId} 查找活动:`, error);
+          }
+        }
+        
+        // 如果通过activityId没找到教练信息，尝试通过活动内容和地点匹配
+        if (!trainerName && attendance.activity && attendance.location) {
+          try {
+            const activity = await Activity.findOne({
+              activityName: attendance.activity,
+              location: attendance.location,
+              isActive: true
+            }).sort({ createdAt: -1 }); // 找最新的匹配活动
+            
+            if (activity) {
+              trainerName = activity.trainerName;
+            }
+          } catch (error) {
+            console.warn(`无法通过活动内容和地点匹配教练信息:`, error);
+          }
+        }
+        
+        return {
+          ...attendance.toObject(),
+          trainerName: trainerName || null
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
-      data: attendances,
+      data: attendancesWithTrainer,
       userRole: user.role,
       userLocations: user.locations || []
     });

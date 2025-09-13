@@ -294,8 +294,8 @@ export default function AddAttendancePage() {
           返回列表
         </button>
         <div className="flex-1">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">添加新的出席記錄</h1>
-          <p className="text-gray-600 mt-1 text-sm md:text-base">填寫以下資訊來創建新的出席記錄（會自動扣除會員配額）</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">補簽到</h1>
+          <p className="text-gray-600 mt-1 text-sm md:text-base">填寫以下資訊來進行補簽到（會自動扣除會員配額）</p>
         </div>
       </div>
 
@@ -395,7 +395,7 @@ export default function AddAttendancePage() {
 
           <div>
             <label htmlFor="activity" className="block text-sm font-medium text-gray-700 mb-2">
-              活動內容 <span className="text-red-500">*</span>
+              運動班選項 <span className="text-red-500">*</span>
             </label>
             <select
               id="activityId"
@@ -405,7 +405,7 @@ export default function AddAttendancePage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             >
-              <option value="">請選擇活動</option>
+              <option value="">請選擇運動班</option>
               {activities.map((activity) => (
                 <option key={activity._id} value={activity._id}>
                   {activity.activityName} - {activity.trainerName} ({new Date(activity.startTime).toLocaleDateString('zh-CN')})
@@ -469,7 +469,7 @@ export default function AddAttendancePage() {
                   提交中...
                 </>
               ) : (
-                '添加記錄'
+                '補簽到'
               )}
             </button>
           </div>

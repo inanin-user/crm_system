@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         );
       }
-    } else if (user.role === 'member') {
+    } else if (['member', 'regular-member', 'premium-member'].includes(user.role)) {
       // 會員只能為自己創建出席記錄（通過QR code掃描）
       if (!memberId || memberId !== authUser.userId) {
         return NextResponse.json(
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     if (memberId) {
       const member = await Account.findById(memberId);
       
-      if (!member || member.role !== 'member') {
+      if (!member || !['member', 'regular-member', 'premium-member'].includes(member.role)) {
         return NextResponse.json(
           { error: '无效的会员ID' },
           { status: 400 }
