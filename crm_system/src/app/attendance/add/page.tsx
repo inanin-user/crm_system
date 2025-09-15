@@ -479,8 +479,8 @@ export default function AddAttendancePage() {
       {/* QR 碼顯示模態框 */}
       {showQrCode && qrCode && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50" 
+          <div
+            className="fixed inset-0 bg-gray-600 bg-opacity-20 backdrop-blur-sm"
             onClick={() => setShowQrCode(false)}
           ></div>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 z-10">

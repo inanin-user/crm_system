@@ -565,7 +565,7 @@ export default function AttendancePage() {
       {/* 確認更新彈窗 */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0"></div>
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-20 backdrop-blur-sm"></div>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 z-10">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800">確認更新記錄</h3>
@@ -603,7 +603,7 @@ export default function AttendancePage() {
       {/* 確認刪除彈窗 */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0"></div>
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-20 backdrop-blur-sm"></div>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 z-10">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800">確認刪除記錄</h3>

@@ -20,19 +20,37 @@ export async function GET(
       );
     }
     
+    // 準備返回的基本數據
+    const accountData: Record<string, unknown> = {
+      _id: account._id,
+      username: account.username,
+      password: account.displayPassword || account.password, // 显示明文密码用于管理
+      role: account.role,
+      isActive: account.isActive,
+      locations: account.locations,
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+      lastLogin: account.lastLogin
+    };
+
+    // 如果是會員，添加會員專用字段
+    const memberRoles = ['member', 'regular-member', 'premium-member'];
+    if (memberRoles.includes(account.role)) {
+      accountData.memberName = account.memberName;
+      accountData.phone = account.phone;
+      accountData.herbalifePCNumber = account.herbalifePCNumber;
+      accountData.joinDate = account.joinDate;
+      accountData.trainerIntroducer = account.trainerIntroducer;
+      if (account.referrer) {
+        accountData.referrer = account.referrer;
+      }
+      accountData.quota = account.quota;
+      accountData.renewalCount = account.renewalCount || 0;
+    }
+
     return NextResponse.json({
       success: true,
-      data: {
-        _id: account._id,
-        username: account.username,
-        password: account.displayPassword || account.password, // 显示明文密码用于管理
-        role: account.role,
-        isActive: account.isActive,
-        locations: account.locations,
-        createdAt: account.createdAt,
-        updatedAt: account.updatedAt,
-        lastLogin: account.lastLogin
-      }
+      data: accountData
     });
   } catch (error) {
     console.error('获取账户详情失败:', error);
@@ -153,20 +171,38 @@ export async function PUT(
     
     await account.save();
     
+    // 準備返回的基本數據
+    const updatedAccountData: Record<string, unknown> = {
+      _id: account._id,
+      username: account.username,
+      password: account.displayPassword || account.password,
+      role: account.role,
+      isActive: account.isActive,
+      locations: account.locations,
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+      lastLogin: account.lastLogin
+    };
+
+    // 如果是會員，添加會員專用字段
+    const memberRoles = ['member', 'regular-member', 'premium-member'];
+    if (memberRoles.includes(account.role)) {
+      updatedAccountData.memberName = account.memberName;
+      updatedAccountData.phone = account.phone;
+      updatedAccountData.herbalifePCNumber = account.herbalifePCNumber;
+      updatedAccountData.joinDate = account.joinDate;
+      updatedAccountData.trainerIntroducer = account.trainerIntroducer;
+      if (account.referrer) {
+        updatedAccountData.referrer = account.referrer;
+      }
+      updatedAccountData.quota = account.quota;
+      updatedAccountData.renewalCount = account.renewalCount || 0;
+    }
+
     return NextResponse.json({
       success: true,
       message: '账户更新成功',
-      data: {
-        _id: account._id,
-        username: account.username,
-        password: account.displayPassword || account.password,
-        role: account.role,
-        isActive: account.isActive,
-        locations: account.locations,
-        createdAt: account.createdAt,
-        updatedAt: account.updatedAt,
-        lastLogin: account.lastLogin
-      }
+      data: updatedAccountData
     });
   } catch (error) {
     console.error('更新账户失败:', error);

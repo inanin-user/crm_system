@@ -459,7 +459,7 @@ export default function Navigation() {
                                 : 'text-gray-600 hover:bg-gray-100'
                             }`}
                           >
-                            會員資料
+                            續卡
                           </Link>
                         </li>
                       </ul>

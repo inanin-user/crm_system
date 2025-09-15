@@ -18,6 +18,7 @@ export interface IAccount extends Document {
   trainerIntroducer?: string; // 教練介紹人 (必选)
   referrer?: string;        // 轉介人 (自由填写)
   quota?: number;           // 剩余配额
+  renewalCount?: number;    // 續卡次數
   
   createdAt: Date;
   updatedAt: Date;
@@ -114,6 +115,12 @@ const AccountSchema: Schema = new Schema({
       return ['member', 'regular-member', 'premium-member'].includes(this.role);
     },
     min: [0, '配额不能为负数'],
+    default: 0
+  },
+  renewalCount: {
+    type: Number,
+    required: false, // 改為可選，因為現有記錄可能沒有這個字段
+    min: [0, '續卡次數不能為負數'],
     default: 0
   }
 }, {

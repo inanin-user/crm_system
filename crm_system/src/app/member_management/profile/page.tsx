@@ -9,8 +9,9 @@ interface Member {
   username: string;
   memberName: string;
   phone: string;
-  email: string;
   quota: number;
+  trainerIntroducer: string;
+  renewalCount: number;
   isActive: boolean;
   createdAt: string;
   lastLogin?: string;
@@ -105,6 +106,12 @@ export default function MemberProfilePage() {
 
     try {
       setIsUpdatingQuota(true);
+      console.log('開始更新配額...', {
+        memberId: selectedMember._id,
+        memberName: selectedMember.memberName,
+        quotaValue
+      });
+
       const response = await fetch(`/api/accounts/${selectedMember._id}/quota`, {
         method: 'PUT',
         headers: {
@@ -113,19 +120,30 @@ export default function MemberProfilePage() {
         body: JSON.stringify({ quota: quotaValue }),
       });
 
+      console.log('響應狀態:', response.status);
       const result = await response.json();
-      
+      console.log('響應結果:', result);
+
       if (result.success) {
         // 更新本地状态
-        const updatedMember = { ...selectedMember, quota: quotaValue };
+        const updatedMember = {
+          ...selectedMember,
+          quota: quotaValue,
+          renewalCount: (selectedMember.renewalCount || 0) + 1
+        };
         setSelectedMember(updatedMember);
         setMembers(members.map(m => m._id === selectedMember._id ? updatedMember : m));
         setSuccessMessage('配额更新成功');
         setError('');
       } else {
+        console.error('API返回錯誤:', result);
         setError(result.message || '更新配额失败');
+        if (result.error) {
+          console.error('詳細錯誤:', result.error);
+        }
       }
     } catch (error) {
+      console.error('網絡錯誤:', error);
       setError('网络错误，请重试');
     } finally {
       setIsUpdatingQuota(false);
@@ -160,8 +178,8 @@ export default function MemberProfilePage() {
     <div className="max-w-7xl mx-auto">
       {/* 页面标题 */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">會員資料管理</h1>
-        <p className="mt-2 text-gray-600">查看和管理會員資料、配額以及出席記錄</p>
+        <h1 className="text-3xl font-bold text-gray-900">續卡管理</h1>
+        <p className="mt-2 text-gray-600">查看和管理會員續卡、配額以及出席記錄</p>
       </div>
 
       {/* 错误和成功提示 */}
@@ -210,7 +228,7 @@ export default function MemberProfilePage() {
                     >
                       <div className="font-medium">{member.memberName}</div>
                       <div className="text-sm text-gray-500">
-                        配額: {member.quota} · {member.isActive ? '活躍' : '已禁用'}
+                        配額: {member.quota} · 續卡: {member.renewalCount || 0}次 · {member.isActive ? '活躍' : '已禁用'}
                       </div>
                       <div className="text-xs text-gray-400">{member.phone}</div>
                     </button>
@@ -248,21 +266,28 @@ export default function MemberProfilePage() {
                       </label>
                       <div className="text-gray-900">{selectedMember.phone}</div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        電子郵箱
+                        教練介紹人
                       </label>
-                      <div className="text-gray-900">{selectedMember.email}</div>
+                      <div className="text-gray-900">{selectedMember.trainerIntroducer}</div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         帳號名
                       </label>
                       <div className="text-gray-900">{selectedMember.username}</div>
                     </div>
-                    
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        續卡次數
+                      </label>
+                      <div className="text-gray-900">{selectedMember.renewalCount || 0} 次</div>
+                    </div>
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         加入時間

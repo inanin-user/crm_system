@@ -12,7 +12,12 @@ export async function GET(request: NextRequest) {
     
     const query: Record<string, unknown> = { isActive: true };
     if (role) {
-      query.role = role;
+      // 如果查詢 member，則查詢所有會員類型
+      if (role === 'member') {
+        query.role = { $in: ['member', 'regular-member', 'premium-member'] };
+      } else {
+        query.role = role;
+      }
     }
     
     const accounts = await Account.find(query)
@@ -99,6 +104,7 @@ export async function POST(request: NextRequest) {
         newAccountData.referrer = referrer;
       }
       newAccountData.quota = quota || 0; // 默认配额为0
+      newAccountData.renewalCount = 0; // 初始續卡次數為0
     }
 
     const newAccount = new Account(newAccountData);
@@ -127,6 +133,7 @@ export async function POST(request: NextRequest) {
         accountData.referrer = newAccount.referrer;
       }
       accountData.quota = newAccount.quota;
+      accountData.renewalCount = newAccount.renewalCount;
     }
     
     return NextResponse.json({
