@@ -91,53 +91,77 @@ export async function GET(request: NextRequest) {
       attendanceQuery.location = location;
     }
 
-    // 查询出席记录
-    const totalCount = await Attendance.countDocuments(attendanceQuery);
-    const attendances = await Attendance.find(attendanceQuery)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    // 並行執行 count 和 find 查詢
+    const [totalCount, attendances] = await Promise.all([
+      Attendance.countDocuments(attendanceQuery),
+      Attendance.find(attendanceQuery)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean() // 使用 lean() 獲取原始 JSON 對象，提升性能
+    ]);
 
-    // 为每个出席记录添加教练信息
-    const attendancesWithTrainer = await Promise.all(
-      attendances.map(async (attendance) => {
-        let trainerName = null;
-        
-        // 如果有activityId，直接通过activityId查找活动
-        if (attendance.activityId) {
-          try {
-            const activity = await Activity.findById(attendance.activityId);
-            if (activity) {
-              trainerName = activity.trainerName;
-            }
-          } catch (error) {
-            console.warn(`无法通过activityId ${attendance.activityId} 查找活动:`, error);
-          }
-        }
-        
-        // 如果通过activityId没找到教练信息，尝试通过活动内容和地点匹配
-        if (!trainerName && attendance.activity && attendance.location) {
-          try {
-            const activity = await Activity.findOne({
-              activityName: attendance.activity,
-              location: attendance.location,
-              isActive: true
-            }).sort({ createdAt: -1 }); // 找最新的匹配活动
-            
-            if (activity) {
-              trainerName = activity.trainerName;
-            }
-          } catch (error) {
-            console.warn(`无法通过活动内容和地点匹配教练信息:`, error);
-          }
-        }
-        
-        return {
-          ...attendance.toObject(),
-          trainerName: trainerName || null
-        };
-      })
+    // 優化：批量獲取所有相關的活動信息
+    const activityIds = attendances
+      .map(a => a.activityId)
+      .filter(Boolean);
+
+    const activityQueries = attendances
+      .filter(a => !a.activityId && a.activity && a.location)
+      .map(a => ({
+        activityName: a.activity,
+        location: a.location,
+        isActive: true
+      }));
+
+    // 批量查詢活動信息
+    const [activitiesByIds, activitiesByNameLocation] = await Promise.all([
+      activityIds.length > 0
+        ? Activity.find({ _id: { $in: activityIds } }).lean()
+        : Promise.resolve([]),
+      activityQueries.length > 0
+        ? Activity.find({ $or: activityQueries }).sort({ createdAt: -1 }).lean()
+        : Promise.resolve([])
+    ]);
+
+    // 建立查找表以提升性能
+    const activityByIdMap = new Map(
+      activitiesByIds.map(activity => [activity._id.toString(), activity])
     );
+
+    const activityByNameLocationMap = new Map(
+      activitiesByNameLocation.map(activity => [
+        `${activity.activityName}-${activity.location}`,
+        activity
+      ])
+    );
+
+    // 為每個出席記錄添加教練信息
+    const attendancesWithTrainer = attendances.map(attendance => {
+      let trainerName = null;
+
+      // 優先通過 activityId 查找
+      if (attendance.activityId) {
+        const activity = activityByIdMap.get(attendance.activityId.toString());
+        if (activity) {
+          trainerName = activity.trainerName;
+        }
+      }
+
+      // 如果沒找到，通過活動名稱和地點查找
+      if (!trainerName && attendance.activity && attendance.location) {
+        const key = `${attendance.activity}-${attendance.location}`;
+        const activity = activityByNameLocationMap.get(key);
+        if (activity) {
+          trainerName = activity.trainerName;
+        }
+      }
+
+      return {
+        ...attendance,
+        trainerName: trainerName || null
+      };
+    });
 
     return NextResponse.json({
       success: true,

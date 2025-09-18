@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface AttendanceRecord {
@@ -54,29 +54,8 @@ export default function AttendanceByNamePage() {
   const [, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  useEffect(() => {
-    fetchAttendanceRecords();
-    fetchMembers();
-
-    // 設置自動刷新（每30秒刷新一次）
-    const interval = setInterval(() => {
-      fetchAttendanceRecords();
-      fetchMembers();
-      setLastRefresh(new Date());
-    }, 30000); // 30秒
-
-    setRefreshInterval(interval);
-
-    // 清理函数
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, []);
-
-  // 獲取會員列表
-  const fetchMembers = async () => {
+  // 獲取會員列表 - 使用 useCallback 優化
+  const fetchMembers = useCallback(async () => {
     try {
       const response = await fetch('/api/accounts?role=member');
       const data = await response.json();
@@ -94,9 +73,9 @@ export default function AttendanceByNamePage() {
     } catch (error) {
       console.error('獲取會員列表失敗:', error);
     }
-  };
+  }, []);
 
-  const fetchAttendanceRecords = async () => {
+  const fetchAttendanceRecords = useCallback(async () => {
     try {
       // 獲取所有記錄（使用更大的limit）
       const response = await fetch('/api/attendance/accessible?limit=5000');
@@ -132,7 +111,29 @@ export default function AttendanceByNamePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // 初始化和自動刷新
+  useEffect(() => {
+    fetchAttendanceRecords();
+    fetchMembers();
+
+    // 設置自動刷新（每30秒刷新一次）
+    const interval = setInterval(() => {
+      fetchAttendanceRecords();
+      fetchMembers();
+      setLastRefresh(new Date());
+    }, 30000); // 30秒
+
+    setRefreshInterval(interval);
+
+    // 清理函数
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [fetchAttendanceRecords, fetchMembers]);
 
   // 當會員數據和出席記錄都加載完成時，處理參與者摘要
   useEffect(() => {
@@ -141,7 +142,18 @@ export default function AttendanceByNamePage() {
     }
   }, [attendanceRecords, members]);
 
-  const processPersonSummaries = (records: AttendanceRecord[]) => {
+  // 創建會員查找表 - 移到組件頂層
+  const memberLookup = useMemo(() => {
+    const lookup = new Map<string, Member>();
+    members.forEach(member => {
+      if (member.memberName) lookup.set(member.memberName, member);
+      if (member.phone) lookup.set(member.phone, member);
+      if (member.email) lookup.set(member.email, member);
+    });
+    return lookup;
+  }, [members]);
+
+  const processPersonSummaries = useCallback((records: AttendanceRecord[]) => {
     const personMap = new Map<string, PersonSummary>();
 
     records.forEach(record => {
@@ -161,12 +173,9 @@ export default function AttendanceByNamePage() {
     });
 
     const summaries = Array.from(personMap.values()).map(person => {
-      // 尋找對應的會員信息
-      const member = members.find(m =>
-        m.memberName === person.name ||
-        m.phone === person.contactInfo ||
-        m.email === person.contactInfo
-      );
+      // 使用查找表快速找到會員信息
+      const member = memberLookup.get(person.name) ||
+                    memberLookup.get(person.contactInfo);
 
       if (member) {
         person.memberInfo = {
@@ -185,16 +194,17 @@ export default function AttendanceByNamePage() {
     }).sort((a, b) => b.count - a.count); // 按参与次数降序排序
 
     setPersonSummaries(summaries);
-  };
+  }, [memberLookup]);
 
-  const filteredPersons = personSummaries.filter(person => {
-    if (!searchTerm.trim()) return true;
+  // 優化搜索結果的計算
+  const filteredPersons = useMemo(() => {
+    if (!searchTerm.trim()) return personSummaries;
     const searchLower = searchTerm.toLowerCase();
-    return (
+    return personSummaries.filter(person =>
       person.name.toLowerCase().includes(searchLower) ||
       person.contactInfo.toLowerCase().includes(searchLower)
     );
-  });
+  }, [personSummaries, searchTerm]);
 
   // 手動刷新數據
   const handleManualRefresh = async () => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode } from 'react';
+import { ReactNode, memo, useMemo } from 'react';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 
 interface MobileTableProps<T = Record<string, unknown>> {
@@ -16,13 +16,18 @@ interface MobileTableProps<T = Record<string, unknown>> {
   className?: string;
 }
 
-export default function MobileTable<T = Record<string, unknown>>({
-  data, 
-  columns, 
+const MobileTable = memo(function MobileTable<T = Record<string, unknown>>({
+  data,
+  columns,
   onRowClick,
   className = ''
 }: MobileTableProps<T>) {
   const { isMobile } = useMobileDetection();
+
+  // 預計算過濾的列以避免重複計算
+  const filteredColumns = useMemo(() => {
+    return columns.filter(column => !column.hideOnMobile);
+  }, [columns]);
 
   if (!isMobile) {
     // 桌面端使用原始表格
@@ -72,9 +77,7 @@ export default function MobileTable<T = Record<string, unknown>>({
             onRowClick ? 'cursor-pointer active:bg-gray-50' : ''
           }`}
         >
-          {columns
-            .filter(column => !column.hideOnMobile)
-            .map((column) => {
+          {filteredColumns.map((column) => {
               const value = column.render ? column.render(item) : (item as Record<string, unknown>)[column.key] as ReactNode;
               const label = column.mobileLabel || column.header;
               
@@ -99,4 +102,6 @@ export default function MobileTable<T = Record<string, unknown>>({
       )}
     </div>
   );
-}
+});
+
+export default MobileTable;

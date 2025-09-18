@@ -17,11 +17,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 查找用户
-    const user = await Account.findOne({ 
+    // 查找用户（選擇必要欄位以提升性能）
+    const user = await Account.findOne({
       username: username.toLowerCase().trim(),
-      isActive: true 
-    });
+      isActive: true
+    }).select('+password'); // 明確選擇密碼欄位
 
     if (!user) {
       return NextResponse.json(
@@ -39,9 +39,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 更新最后登录时间
-    user.lastLogin = new Date();
-    await user.save();
+    // 優化：只更新 lastLogin 欄位，避免整個文檔保存
+    await Account.findByIdAndUpdate(user._id, {
+      lastLogin: new Date()
+    });
 
     // 生成JWT token
     const token = generateToken({

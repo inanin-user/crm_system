@@ -28,9 +28,16 @@ async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      maxPoolSize: 10, // 最大連接池大小
+      serverSelectionTimeoutMS: 5000, // 5秒超時
+      socketTimeoutMS: 45000, // 45秒socket超時
+      connectTimeoutMS: 10000, // 10秒連接超時
+      maxIdleTimeMS: 30000, // 30秒最大空閒時間
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      // 設置查詢默認選項
+      mongoose.set('debug', false); // 生產環境關閉調試
       return mongoose;
     });
   }

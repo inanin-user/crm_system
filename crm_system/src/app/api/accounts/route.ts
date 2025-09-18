@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Account from '@/models/Account';
+import cache from '@/lib/cache';
 
 // 获取账户列表（根据角色筛选）
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
-    
     const { searchParams } = new URL(request.url);
     const role = searchParams.get('role');
-    
+
+    // 生成緩存鍵
+    const cacheKey = `accounts_${role || 'all'}`;
+
+    // 嘗試從緩存獲取
+    const cachedData = cache.get<unknown[]>(cacheKey);
+    if (cachedData) {
+      return NextResponse.json({
+        success: true,
+        data: cachedData,
+        cached: true // 調試用，可以移除
+      });
+    }
+
+    await connectDB();
+
     const query: Record<string, unknown> = { isActive: true };
     if (role) {
       // 如果查詢 member，則查詢所有會員類型
@@ -19,11 +33,15 @@ export async function GET(request: NextRequest) {
         query.role = role;
       }
     }
-    
+
     const accounts = await Account.find(query)
-      .select('-password') // 不返回密码字段
-      .sort({ createdAt: -1 });
-    
+      .select('-password -displayPassword') // 不返回密码字段，節省傳輸
+      .sort({ createdAt: -1 })
+      .lean(); // 使用 lean() 提升性能
+
+    // 緩存結果（2分鐘）
+    cache.set(cacheKey, accounts, 2 * 60 * 1000);
+
     return NextResponse.json({
       success: true,
       data: accounts
@@ -74,8 +92,8 @@ export async function POST(request: NextRequest) {
     
     await connectDB();
     
-    // 检查用户名是否已存在
-    const existingAccount = await Account.findOne({ username });
+    // 检查用户名是否已存在（使用索引查詢）
+    const existingAccount = await Account.findOne({ username }).lean();
     if (existingAccount) {
       return NextResponse.json(
         { success: false, message: '该账号名已存在' },
@@ -114,8 +132,15 @@ export async function POST(request: NextRequest) {
     }
 
     const newAccount = new Account(newAccountData);
-    
+
     await newAccount.save();
+
+    // 清除相關緩存
+    cache.delete('accounts_all');
+    cache.delete(`accounts_${role}`);
+    if (role === 'member') {
+      cache.delete('accounts_member');
+    }
     
     // 返回创建的账户信息（不包含加密密码）
     const accountData: Record<string, unknown> = {
