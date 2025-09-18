@@ -18,13 +18,13 @@ export async function GET(request: NextRequest) {
     }
 
     // 根据姓名和联系方式查找会员
-    // 这里我们同时检查phone和email字段
+    // 包括所有會員類型：member, regular-member, premium-member
+    // 同时检查phone和email字段
     const member = await Account.findOne({
-      role: 'member',
-      memberName: name,
-      $or: [
-        { phone: contact },
-        { email: contact }
+      role: { $in: ['member', 'regular-member', 'premium-member'] },
+      $and: [
+        { memberName: name.trim() },
+        { phone: contact.trim() }
       ]
     });
 
@@ -42,9 +42,12 @@ export async function GET(request: NextRequest) {
         username: member.username,
         memberName: member.memberName,
         phone: member.phone,
-        email: member.email,
         quota: member.quota,
-        isActive: member.isActive
+        isActive: member.isActive,
+        role: member.role,
+        initialTickets: member.initialTickets || 0,
+        addedTickets: member.addedTickets || 0,
+        usedTickets: member.usedTickets || 0
       },
       message: '会员验证成功'
     });

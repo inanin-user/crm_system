@@ -49,18 +49,29 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<Pa
       }, { status: 400 });
     }
 
-    // 使用findByIdAndUpdate而不是save，避免潜在的中间件问题
+    // 累加配额而不是替换
+    const currentAddedTickets = account.addedTickets || 0;
+    const currentInitialTickets = account.initialTickets || 0;
+    const currentUsedTickets = account.usedTickets || 0;
+
+    // 新的累計添加套票 = 原有添加套票 + 新增配额
+    const newAddedTickets = currentAddedTickets + quota;
+
+    // 新的總配额 = 初始套票 + 新的累計添加套票 - 已使用套票
+    const newTotalQuota = currentInitialTickets + newAddedTickets - currentUsedTickets;
+
     const updatedAccount = await Account.findByIdAndUpdate(
       id,
       {
         $set: {
-          quota: quota,
+          quota: newTotalQuota,
+          addedTickets: newAddedTickets,
           renewalCount: (account.renewalCount || 0) + 1
         }
       },
       {
-        new: true, // 返回更新后的文档
-        runValidators: true // 运行验证器
+        new: true,
+        runValidators: true
       }
     );
 
@@ -74,7 +85,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<Pa
     return NextResponse.json({
       success: true,
       data: updatedAccount,
-      message: '配额更新成功'
+      message: `成功添加 ${quota} 個配额，總配额現為 ${newTotalQuota}`
     });
 
   } catch (error: unknown) {

@@ -3,25 +3,25 @@
 import { ReactNode } from 'react';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 
-interface MobileTableProps {
-  data: any[];
+interface MobileTableProps<T = Record<string, unknown>> {
+  data: T[];
   columns: {
     key: string;
     header: string;
-    render?: (item: any) => ReactNode;
+    render?: (item: T) => ReactNode;
     mobileLabel?: string; // 移動端顯示的標籤
     hideOnMobile?: boolean; // 在移動端隱藏此列
   }[];
-  onRowClick?: (item: any) => void;
+  onRowClick?: (item: T) => void;
   className?: string;
 }
 
-export default function MobileTable({ 
+export default function MobileTable<T = Record<string, unknown>>({
   data, 
   columns, 
   onRowClick,
   className = ''
-}: MobileTableProps) {
+}: MobileTableProps<T>) {
   const { isMobile } = useMobileDetection();
 
   if (!isMobile) {
@@ -50,7 +50,7 @@ export default function MobileTable({
               >
                 {columns.map((column) => (
                   <td key={column.key} className="px-6 py-4 whitespace-nowrap">
-                    {column.render ? column.render(item) : item[column.key]}
+                    {column.render ? column.render(item) : (item as Record<string, unknown>)[column.key] as ReactNode}
                   </td>
                 ))}
               </tr>
@@ -75,7 +75,7 @@ export default function MobileTable({
           {columns
             .filter(column => !column.hideOnMobile)
             .map((column) => {
-              const value = column.render ? column.render(item) : item[column.key];
+              const value = column.render ? column.render(item) : (item as Record<string, unknown>)[column.key] as ReactNode;
               const label = column.mobileLabel || column.header;
               
               return (

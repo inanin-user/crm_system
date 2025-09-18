@@ -60,6 +60,9 @@ export async function GET(request: NextRequest) {
     const name = searchParams.get('name');
     const date = searchParams.get('date');
     const location = searchParams.get('location');
+    const limit = parseInt(searchParams.get('limit') || '1000'); // 默认返回1000条记录
+    const page = parseInt(searchParams.get('page') || '1'); // 页码，默认1
+    const skip = (page - 1) * limit;
 
     // 添加额外的过滤条件
     if (name) {
@@ -89,9 +92,11 @@ export async function GET(request: NextRequest) {
     }
 
     // 查询出席记录
+    const totalCount = await Attendance.countDocuments(attendanceQuery);
     const attendances = await Attendance.find(attendanceQuery)
       .sort({ createdAt: -1 })
-      .limit(100); // 限制返回数量
+      .skip(skip)
+      .limit(limit);
 
     // 为每个出席记录添加教练信息
     const attendancesWithTrainer = await Promise.all(
@@ -138,7 +143,13 @@ export async function GET(request: NextRequest) {
       success: true,
       data: attendancesWithTrainer,
       userRole: user.role,
-      userLocations: user.locations || []
+      userLocations: user.locations || [],
+      pagination: {
+        total: totalCount,
+        page: page,
+        limit: limit,
+        pages: Math.ceil(totalCount / limit)
+      }
     });
 
   } catch (error) {

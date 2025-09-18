@@ -98,11 +98,11 @@ export function useDirectClickFix() {
           
           // 保存原始處理函數
           const originalOnClick = el.onclick;
-          const originalHandlers: any = {};
+          const originalHandlers: Record<string, unknown> = {};
           
           // 複製所有事件處理器
           ['click', 'touchstart', 'touchend', 'mousedown', 'mouseup'].forEach(eventType => {
-            const listeners = (el as any)._listeners?.[eventType] || [];
+            const listeners = (el as unknown as { _listeners?: Record<string, unknown[]> })._listeners?.[eventType] || [];
             originalHandlers[eventType] = listeners;
           });
           
@@ -115,7 +115,7 @@ export function useDirectClickFix() {
             }
             
             // 為新元素添加 iPhone 優化的觸摸處理
-            newElement.addEventListener('touchstart', (e) => {
+            newElement.addEventListener('touchstart', () => {
               newElement.style.opacity = '0.8';
             }, { passive: true });
             
@@ -128,7 +128,10 @@ export function useDirectClickFix() {
               // iPhone 專用：直接調用 onclick 而不是派發事件
               if (newElement.onclick) {
                 setTimeout(() => {
-                  newElement.onclick!(e as any);
+                  const clickHandler = newElement.onclick as ((this: GlobalEventHandlers, ev: MouseEvent) => unknown) | null;
+                  if (clickHandler) {
+                    clickHandler.call(newElement, new MouseEvent('click', { bubbles: true }));
+                  }
                 }, 10);
               } else {
                 // 如果沒有 onclick，嘗試派發點擊事件

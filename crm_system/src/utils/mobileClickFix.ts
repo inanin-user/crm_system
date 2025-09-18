@@ -30,10 +30,10 @@ export function initializeMobileClickFix() {
       // 直接設置樣式
       element.style.pointerEvents = 'auto';
       element.style.touchAction = 'manipulation';
-      element.style.webkitTapHighlightColor = 'rgba(0,0,0,0.1)';
+      element.style.setProperty('-webkit-tap-highlight-color', 'rgba(0,0,0,0.1)');
       element.style.cursor = 'pointer';
       element.style.userSelect = 'none';
-      element.style.webkitUserSelect = 'none';
+      element.style.setProperty('-webkit-user-select', 'none');
       
       // 移除舊的事件監聽器
       const newElement = element.cloneNode(true) as HTMLElement;
@@ -81,7 +81,7 @@ export function initializeMobileClickFix() {
   };
 
   // 暴露清理函數到全局（調試用）
-  (window as any).mobileClickCleanup = cleanup;
+  (window as Window & { mobileClickCleanup?: () => void }).mobileClickCleanup = cleanup;
 
   isInitialized = true;
   console.log('移動端點擊修復初始化完成（簡化版）');

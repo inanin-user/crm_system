@@ -119,8 +119,7 @@ export async function POST(request: NextRequest) {
             {
               $or: [
                 { name: member.memberName },
-                { contactInfo: member.phone },
-                { contactInfo: member.email }
+                { contactInfo: member.phone }
               ]
             }
           ]
@@ -150,7 +149,7 @@ export async function POST(request: NextRequest) {
 
       // 验证会员信息是否匹配
       const isNameMatch = member.memberName === name.trim();
-      const isContactMatch = member.phone === contactInfo.trim() || member.email === contactInfo.trim();
+      const isContactMatch = member.phone === contactInfo.trim();
 
       if (!isNameMatch || !isContactMatch) {
         return NextResponse.json(
@@ -159,8 +158,21 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // 扣除配额（减1）
-      member.quota = (member.quota || 0) - 1;
+      // 扣除配额（更新套票相關字段）
+      const currentUsedTickets = member.usedTickets || 0;
+      const currentInitialTickets = member.initialTickets || 0;
+      const currentAddedTickets = member.addedTickets || 0;
+
+      // 增加已使用套票次數
+      const newUsedTickets = currentUsedTickets + 1;
+
+      // 重新計算剩余配额
+      const newQuota = currentInitialTickets + currentAddedTickets - newUsedTickets;
+
+      // 更新數據
+      member.quota = Math.max(0, newQuota); // 確保不為負數
+      member.usedTickets = newUsedTickets;
+
       await member.save();
     }
     

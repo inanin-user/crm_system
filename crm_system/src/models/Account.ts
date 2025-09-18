@@ -17,8 +17,13 @@ export interface IAccount extends Document {
   joinDate?: Date;          // 入會日期
   trainerIntroducer?: string; // 教練介紹人 (必选)
   referrer?: string;        // 轉介人 (自由填写)
-  quota?: number;           // 剩余配额
+  quota?: number;           // 剩余配额 (將成為累計剩余套票)
   renewalCount?: number;    // 續卡次數
+
+  // 新增套票相關字段
+  initialTickets?: number;   // 初始套票次數 (創建時的配额)
+  addedTickets?: number;     // 累計添加的套票次數 (續卡時增加的總和)
+  usedTickets?: number;      // 已使用套票次數 (參加活動次數)
   
   createdAt: Date;
   updatedAt: Date;
@@ -121,6 +126,26 @@ const AccountSchema: Schema = new Schema({
     type: Number,
     required: false, // 改為可選，因為現有記錄可能沒有這個字段
     min: [0, '續卡次數不能為負數'],
+    default: 0
+  },
+
+  // 新增套票相關字段
+  initialTickets: {
+    type: Number,
+    required: false,
+    min: [0, '初始套票次數不能為負數'],
+    default: 0
+  },
+  addedTickets: {
+    type: Number,
+    required: false,
+    min: [0, '添加套票次數不能為負數'],
+    default: 0
+  },
+  usedTickets: {
+    type: Number,
+    required: false,
+    min: [0, '已使用套票次數不能為負數'],
     default: 0
   }
 }, {

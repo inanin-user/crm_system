@@ -78,7 +78,7 @@ export const getMobileInputClass = (baseClass: string): string => {
 /**
  * 調整視口以處理移動端鍵盤彈出
  */
-export const handleMobileViewport = (): void => {
+export const handleMobileViewport = (): (() => void) | void => {
   if (typeof window === 'undefined' || !isMobileDevice()) return;
 
   const viewport = document.querySelector('meta[name="viewport"]');

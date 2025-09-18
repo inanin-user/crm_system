@@ -103,8 +103,14 @@ export async function POST(request: NextRequest) {
       if (referrer) {
         newAccountData.referrer = referrer;
       }
-      newAccountData.quota = quota || 0; // 默认配额为0
+      const initialQuota = quota || 0;
+      newAccountData.quota = initialQuota; // 剩余配额
       newAccountData.renewalCount = 0; // 初始續卡次數為0
+
+      // 設置套票相關字段
+      newAccountData.initialTickets = initialQuota; // 初始套票次數
+      newAccountData.addedTickets = 0; // 累計添加套票初始為0
+      newAccountData.usedTickets = 0; // 已使用套票初始為0
     }
 
     const newAccount = new Account(newAccountData);
@@ -134,6 +140,10 @@ export async function POST(request: NextRequest) {
       }
       accountData.quota = newAccount.quota;
       accountData.renewalCount = newAccount.renewalCount;
+      // 新增套票相關字段
+      accountData.initialTickets = newAccount.initialTickets;
+      accountData.addedTickets = newAccount.addedTickets;
+      accountData.usedTickets = newAccount.usedTickets;
     }
     
     return NextResponse.json({

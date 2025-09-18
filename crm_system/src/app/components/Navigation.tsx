@@ -382,7 +382,7 @@ export default function Navigation() {
                               : 'text-gray-600 hover:bg-gray-100'
                           }`}
                         >
-                          按姓名分類
+                          按教練分類
                         </Link>
                       </li>
                       {/* 會員掃描簽到 */}

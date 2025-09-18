@@ -33,7 +33,6 @@ export async function GET(request: NextRequest) {
         username: member.username,
         memberName: member.memberName,
         phone: member.phone,
-        email: member.email,
         quota: member.quota,
         isActive: member.isActive
       },

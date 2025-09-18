@@ -7,7 +7,7 @@ import AuthLoadingScreen from '@/app/components/AuthLoadingScreen';
 interface User {
   id: string;
   username: string;
-  role: 'admin' | 'user' | 'trainer' | 'member';
+  role: 'admin' | 'user' | 'trainer' | 'member' | 'regular-member' | 'premium-member';
   locations?: string[];
   lastLogin?: string;
 }
