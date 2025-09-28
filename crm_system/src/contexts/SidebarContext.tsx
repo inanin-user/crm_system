@@ -18,7 +18,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   // 检测屏幕尺寸
   useEffect(() => {
     const checkMobile = () => {
-      const mobile = window.innerWidth < 1024;
+      const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
       // 在移动端默认折叠侧边栏
       if (mobile) {

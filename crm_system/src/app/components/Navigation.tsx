@@ -173,15 +173,15 @@ export default function Navigation() {
       )}
 
       {/* 侧边导航栏 */}
-      <nav 
+      <nav
         className={`fixed left-0 top-0 h-full bg-white shadow-2xl border-r border-gray-200 z-50 transition-all duration-300 ease-in-out ${
-          isCollapsed ? 'w-16' : 'w-64'
-        } ${
-          isMobile 
-            ? isCollapsed 
-              ? '-translate-x-full' 
-              : 'translate-x-0' 
-            : 'translate-x-0'
+          isMobile
+            ? isCollapsed
+              ? '-translate-x-full w-64'
+              : 'translate-x-0 w-72 sm:w-64'
+            : isCollapsed
+              ? 'w-16'
+              : 'w-64'
         }`}
         style={{ 
           transform: 'translateZ(0)',
@@ -730,8 +730,9 @@ export default function Navigation() {
                         ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
+                    title={isCollapsed ? "補簽到" : ""}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                     {!isCollapsed && <span>補簽到</span>}
@@ -774,6 +775,12 @@ export default function Navigation() {
         <button
           onClick={toggleCollapse}
           className="fixed top-4 left-4 z-50 p-3 bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl active:scale-95 transition-all duration-200"
+          style={{
+            minHeight: '48px',
+            minWidth: '48px',
+            touchAction: 'manipulation',
+            WebkitTapHighlightColor: 'rgba(0,0,0,0.1)'
+          }}
           aria-label={isCollapsed ? "打開菜單" : "關閉菜單"}
         >
           <div className="relative w-6 h-6 flex flex-col justify-center items-center">
