@@ -43,7 +43,8 @@ export default function AddAttendancePage() {
     contactInfo: '',
     location: '',
     activityId: '',
-    activityName: ''
+    activityName: '',
+    other: ''
   });
   const [memberValidation, setMemberValidation] = useState<{
     isValidating: boolean;
@@ -177,33 +178,41 @@ export default function AddAttendancePage() {
 
   // 生成簽到二維碼
   const generateQrCode = async () => {
-    if (!formData.activityId || !formData.activityName || !formData.location) {
-      alert('請先選擇活動才能生成二維碼');
-      return;
-    }
-
     setIsGeneratingQr(true);
-    
-    try {
-      const selectedActivity = activities.find(a => a._id === formData.activityId);
-      if (!selectedActivity) {
-        throw new Error('找不到選擇的活動');
-      }
 
-      // 創建 QR code 數據
-      const qrData = {
-        type: 'attendance_checkin', // 標識這是簽到用的 QR code
-        activityId: formData.activityId,
-        activityName: formData.activityName,
-        location: formData.location,
-        trainerId: selectedActivity.trainerId,
-        trainerName: selectedActivity.trainerName,
-        startTime: selectedActivity.startTime,
-        endTime: selectedActivity.endTime,
-        duration: selectedActivity.duration,
-        generatedAt: new Date().toISOString(),
-        generatedBy: user?.username || 'unknown'
-      };
+    try {
+      let qrData;
+
+      if (formData.activityId && formData.activityName && formData.location) {
+        // 如果已選擇活動，生成特定活動的 QR code
+        const selectedActivity = activities.find(a => a._id === formData.activityId);
+        if (!selectedActivity) {
+          throw new Error('找不到選擇的活動');
+        }
+
+        qrData = {
+          type: 'attendance_checkin',
+          activityId: formData.activityId,
+          activityName: formData.activityName,
+          location: formData.location,
+          trainerId: selectedActivity.trainerId,
+          trainerName: selectedActivity.trainerName,
+          startTime: selectedActivity.startTime,
+          endTime: selectedActivity.endTime,
+          duration: selectedActivity.duration,
+          generatedAt: new Date().toISOString(),
+          generatedBy: user?.username || 'unknown'
+        };
+      } else {
+        // 如果未選擇活動，生成通用的 QR code 展示功能
+        qrData = {
+          type: 'attendance_checkin_demo',
+          message: '這是簽到二維碼功能展示',
+          description: '選擇活動後可生成對應的簽到二維碼',
+          generatedAt: new Date().toISOString(),
+          generatedBy: user?.username || 'unknown'
+        };
+      }
 
       // 生成 QR code
       const qrCodeDataUrl = await QRCode.toDataURL(JSON.stringify(qrData), {
@@ -415,7 +424,7 @@ export default function AddAttendancePage() {
           </div>
 
           {/* QR 碼生成按鈕 */}
-          {(user?.role === 'admin' || user?.role === 'trainer') && formData.activityId && (
+          {(user?.role === 'admin' || user?.role === 'trainer') && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 className="text-sm font-medium text-blue-800 mb-2">快速簽到功能</h3>
               <p className="text-xs text-blue-600 mb-3">
@@ -446,6 +455,21 @@ export default function AddAttendancePage() {
               </button>
             </div>
           )}
+
+          <div>
+            <label htmlFor="other" className="block text-sm font-medium text-gray-700 mb-2">
+              其他
+            </label>
+            <textarea
+              id="other"
+              name="other"
+              value={formData.other}
+              onChange={handleChange}
+              placeholder="請輸入其他相關資訊或備註"
+              rows={3}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            />
+          </div>
 
           <div className="flex gap-4 pt-4">
             <button
@@ -504,11 +528,23 @@ export default function AddAttendancePage() {
                 />
               </div>
               <div className="text-sm text-gray-600 space-y-1">
-                <p><strong>活動:</strong> {formData.activityName}</p>
-                <p><strong>地點:</strong> {formData.location}</p>
-                <p className="text-xs text-gray-500 mt-3">
-                  請讓會員使用手機掃描此二維碼進行自動簽到
-                </p>
+                {formData.activityName && formData.location ? (
+                  <>
+                    <p><strong>活動:</strong> {formData.activityName}</p>
+                    <p><strong>地點:</strong> {formData.location}</p>
+                    <p className="text-xs text-gray-500 mt-3">
+                      請讓會員使用手機掃描此二維碼進行自動簽到
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-blue-600 font-medium">簽到二維碼功能展示</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      這是簽到二維碼的功能展示。選擇活動後可生成對應的簽到二維碼，
+                      讓會員掃描後自動完成簽到流程。
+                    </p>
+                  </>
+                )}
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-between gap-3">

@@ -254,7 +254,7 @@ export default function Navigation() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    <span>注销</span>
+                    <span>登出</span>
                   </button>
                 </div>
               ) : (
@@ -267,7 +267,7 @@ export default function Navigation() {
                   <button
                     onClick={handleLogout}
                     className="w-full p-2 text-gray-700 hover:bg-red-50 hover:text-red-700 rounded-md transition-colors"
-                    title="注销"
+                    title="登出"
                   >
                     <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -438,18 +438,6 @@ export default function Navigation() {
                     {/* 会员管理子菜单 */}
                     {(isMemberManagementOpen && !isCollapsed) && (
                       <ul className="mt-1 ml-8 space-y-1">
-                        <li>
-                          <Link
-                            href="/attendance/add"
-                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                              pathname === '/attendance/add'
-                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            補簽到
-                          </Link>
-                        </li>
                         <li>
                           <Link
                             href="/member_management/profile"
@@ -729,6 +717,25 @@ export default function Navigation() {
                       </ul>
                     )}
                   </div>
+                </li>
+              )}
+
+              {/* 補簽到 - 獨立菜單項，只有管理員可以看到 */}
+              {user?.role === 'admin' && (
+                <li>
+                  <Link
+                    href="/attendance/add"
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${
+                      pathname === '/attendance/add'
+                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    {!isCollapsed && <span>補簽到</span>}
+                  </Link>
                 </li>
               )}
             </ul>
