@@ -16,6 +16,7 @@ export default function Navigation() {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isActivityManagementOpen, setIsActivityManagementOpen] = useState(false);
   const [isFinancialManagementOpen, setIsFinancialManagementOpen] = useState(false);
+  const [isQRCodeOpen, setIsQRCodeOpen] = useState(false);
   
   // 防止快速鼠标移动造成的闪烁
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -98,6 +99,12 @@ export default function Navigation() {
     } else {
       setIsFinancialManagementOpen(false);
     }
+
+    if (pathname.startsWith('/qrcode')) {
+      setIsQRCodeOpen(true);
+    } else {
+      setIsQRCodeOpen(false);
+    }
   }, [pathname]);
 
   const isActive = (href: string) => {
@@ -129,6 +136,10 @@ export default function Navigation() {
 
   const isFinancialManagementActive = () => {
     return pathname.startsWith('/financial_management');
+  };
+
+  const isQRCodeActive = () => {
+    return pathname.startsWith('/qrcode');
   };
 
   // 检查用户是否有权限访问账号管理
@@ -720,23 +731,66 @@ export default function Navigation() {
                 </li>
               )}
 
-              {/* 補簽到 - 獨立菜單項，只有管理員可以看到 */}
+              {/* 二維碼管理 - 只有管理員可以看到 */}
               {user?.role === 'admin' && (
                 <li>
-                  <Link
-                    href="/attendance/add"
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${
-                      pathname === '/attendance/add'
-                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                    title={isCollapsed ? "補簽到" : ""}
-                  >
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    {!isCollapsed && <span>補簽到</span>}
-                  </Link>
+                  <div>
+                    <button
+                      onClick={() => setIsQRCodeOpen(!isQRCodeOpen)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
+                        isQRCodeActive()
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h-1m-9-1H7a2 2 0 01-2-2V7a2 2 0 012-2h1m0 0V4a1 1 0 011-1h4a1 1 0 011 1v1m0 0h1a2 2 0 012 2v6a2 2 0 01-2 2h-1m-9 0v1m4-4h.01m3-3h.01" />
+                        </svg>
+                        {!isCollapsed && <span>二維碼</span>}
+                      </div>
+                      {!isCollapsed && (
+                        <svg
+                          className={`w-4 h-4 transition-transform duration-200 ${isQRCodeOpen ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* 二維碼管理子菜单 */}
+                    {(isQRCodeOpen && !isCollapsed) && (
+                      <ul className="mt-1 ml-8 space-y-1">
+                        <li>
+                          <Link
+                            href="/qrcode/checkin"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/qrcode/checkin'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            補簽到
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href="/qrcode/milkshake"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/qrcode/milkshake'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            奶昔
+                          </Link>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
                 </li>
               )}
             </ul>
