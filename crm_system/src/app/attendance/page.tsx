@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 import { useDirectClickFix } from '@/hooks/useDirectClickFix';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
+import MobileTable from '@/app/components/MobileTable';
 
 interface AttendanceRecord {
   _id: string;
@@ -19,10 +21,11 @@ interface AttendanceRecord {
 
 export default function AttendancePage() {
   const router = useRouter();
+  const { isMobile } = useMobileDetection();
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // 启用滚动性能优化
   useScrollOptimization();
   // 啟用直接點擊修復
@@ -269,7 +272,7 @@ export default function AttendancePage() {
 
   const filteredRecords = attendanceRecords.filter(record => {
     if (!searchTerm.trim()) return true;
-    
+
     const searchTermLower = searchTerm.toLowerCase();
     return (
       record.name.toLowerCase().includes(searchTermLower) ||
@@ -278,6 +281,165 @@ export default function AttendancePage() {
       record.activity.toLowerCase().includes(searchTermLower) ||
       (record.trainerName && record.trainerName.toLowerCase().includes(searchTermLower))
     );
+  });
+
+  // 定義表格列配置
+  const tableColumns = [
+    {
+      key: 'checkbox',
+      header: '',
+      hideOnMobile: false,
+      render: (record: AttendanceRecord) => {
+        if (!isUpdateMode) return null;
+        return (
+          <input
+            type="checkbox"
+            checked={selectedRecords.includes(record._id)}
+            onChange={() => handleRecordSelect(record._id)}
+            className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+          />
+        );
+      }
+    },
+    {
+      key: 'name',
+      header: '參加者姓名',
+      mobileLabel: '姓名',
+      render: (record: AttendanceRecord) => {
+        if (!isUpdateMode) {
+          return <div className="text-sm font-medium text-gray-900">{record.name}</div>;
+        }
+        const editIndex = editedRecords.findIndex(r => r._id === record._id);
+        const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
+        return (
+          <input
+            type="text"
+            value={editedRecord.name}
+            onChange={(e) => handleRecordEdit(editIndex, 'name', e.target.value)}
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        );
+      }
+    },
+    {
+      key: 'contactInfo',
+      header: '聯絡方式',
+      mobileLabel: '聯絡方式',
+      hideOnMobile: isMobile && isUpdateMode, // 編輯模式時在手機上隱藏以節省空間
+      render: (record: AttendanceRecord) => {
+        if (!isUpdateMode) {
+          return <div className="text-sm text-gray-900">{record.contactInfo}</div>;
+        }
+        const editIndex = editedRecords.findIndex(r => r._id === record._id);
+        const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
+        return (
+          <input
+            type="text"
+            value={editedRecord.contactInfo}
+            onChange={(e) => handleRecordEdit(editIndex, 'contactInfo', e.target.value)}
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        );
+      }
+    },
+    {
+      key: 'location',
+      header: '地點',
+      mobileLabel: '地點',
+      render: (record: AttendanceRecord) => {
+        if (!isUpdateMode) {
+          return <div className="text-sm text-gray-900">{record.location}</div>;
+        }
+        const editIndex = editedRecords.findIndex(r => r._id === record._id);
+        const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
+        return (
+          <input
+            type="text"
+            value={editedRecord.location}
+            onChange={(e) => handleRecordEdit(editIndex, 'location', e.target.value)}
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        );
+      }
+    },
+    {
+      key: 'activity',
+      header: '活動內容',
+      mobileLabel: '活動',
+      render: (record: AttendanceRecord) => {
+        if (!isUpdateMode) {
+          return (
+            <div className="text-sm text-gray-500 max-w-xs truncate" title={record.activity}>
+              {record.activity}
+            </div>
+          );
+        }
+        const editIndex = editedRecords.findIndex(r => r._id === record._id);
+        const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
+        return (
+          <textarea
+            value={editedRecord.activity}
+            onChange={(e) => handleRecordEdit(editIndex, 'activity', e.target.value)}
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            rows={2}
+          />
+        );
+      }
+    },
+    {
+      key: 'trainerName',
+      header: '負責教練',
+      mobileLabel: '教練',
+      hideOnMobile: isMobile && isUpdateMode,
+      render: (record: AttendanceRecord) => (
+        <div className="text-sm text-gray-900">
+          {record.trainerName ? (
+            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+              {record.trainerName}
+            </span>
+          ) : (
+            <span className="text-gray-400 text-xs">未知</span>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'quota',
+      header: '剩餘配額',
+      mobileLabel: '配額',
+      hideOnMobile: isMobile && isUpdateMode,
+      render: (record: AttendanceRecord) => (
+        <div className="text-sm font-medium text-gray-900">
+          {record.quota !== undefined ? (
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              record.quota > 0
+                ? 'bg-green-100 text-green-800'
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {record.quota}
+            </span>
+          ) : (
+            <span className="text-gray-400 text-xs">未知</span>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'createdAt',
+      header: '日期',
+      mobileLabel: '日期',
+      render: (record: AttendanceRecord) => (
+        <div className="text-sm text-gray-500">
+          {formatDate(record.createdAt)}
+        </div>
+      )
+    }
+  ];
+
+  // 過濾列：在更新模式時移除 checkbox 列（如果不在更新模式）
+  const visibleColumns = tableColumns.filter(col => {
+    if (col.key === 'checkbox') return isUpdateMode;
+    return true;
   });
 
   if (loading) {
@@ -403,162 +565,53 @@ export default function AttendancePage() {
             </div>
           </div>
         </div>
-        
-        {/* 滑動窗口的表格容器 */}
-        <div className="overflow-x-auto max-h-96 overflow-y-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 sticky top-0">
-              <tr>
-                {isUpdateMode && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <input
-                      type="checkbox"
-                      checked={selectedRecords.length === filteredRecords.length && filteredRecords.length > 0}
-                      onChange={handleSelectAll}
-                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                    />
-                  </th>
-                )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  參加者姓名
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  聯絡方式
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  地點
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  活動內容
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  負責教練
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  剩餘配額
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  日期
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredRecords.length === 0 ? (
-                <tr>
-                  <td colSpan={isUpdateMode ? 8 : 7} className="px-6 py-8 text-center text-gray-500">
-                    {searchTerm ? '未找到符合條件的記錄' : '暫無運動班記錄'}
-                  </td>
-                </tr>
-              ) : (
-                filteredRecords.map((record, index) => {
-                  const editedRecord = isUpdateMode ? editedRecords.find(r => r._id === record._id) || record : record;
-                  const editIndex = isUpdateMode ? editedRecords.findIndex(r => r._id === record._id) : -1;
-                  
-                  return (
-                    <tr key={record._id} className="hover:bg-gray-50">
-                      {isUpdateMode && (
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <input
-                            type="checkbox"
-                            checked={selectedRecords.includes(record._id)}
-                            onChange={() => handleRecordSelect(record._id)}
-                            className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                          />
-                        </td>
-                      )}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {isUpdateMode ? (
-                          <input
-                            type="text"
-                            value={editedRecord.name}
-                            onChange={(e) => handleRecordEdit(editIndex, 'name', e.target.value)}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        ) : (
-                          <div className="text-sm font-medium text-gray-900">
-                            {record.name}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {isUpdateMode ? (
-                          <input
-                            type="text"
-                            value={editedRecord.contactInfo}
-                            onChange={(e) => handleRecordEdit(editIndex, 'contactInfo', e.target.value)}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        ) : (
-                          <div className="text-sm text-gray-900">
-                            {record.contactInfo}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {isUpdateMode ? (
-                          <input
-                            type="text"
-                            value={editedRecord.location}
-                            onChange={(e) => handleRecordEdit(editIndex, 'location', e.target.value)}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        ) : (
-                          <div className="text-sm text-gray-900">
-                            {record.location}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        {isUpdateMode ? (
-                          <textarea
-                            value={editedRecord.activity}
-                            onChange={(e) => handleRecordEdit(editIndex, 'activity', e.target.value)}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                            rows={2}
-                          />
-                        ) : (
-                          <div className="text-sm text-gray-500 max-w-xs truncate" title={record.activity}>
-                            {record.activity}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {record.trainerName ? (
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                              {record.trainerName}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400 text-xs">未知</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {record.quota !== undefined ? (
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              record.quota > 0 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {record.quota}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400 text-xs">未知</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
-                          {formatDate(record.createdAt)}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+
+        {/* 響應式表格/卡片容器 */}
+        <div className={isMobile ? '' : 'max-h-96 overflow-y-auto'}>
+          {/* 桌面端：全選複選框 */}
+          {!isMobile && isUpdateMode && (
+            <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
+              <label className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <input
+                  type="checkbox"
+                  checked={selectedRecords.length === filteredRecords.length && filteredRecords.length > 0}
+                  onChange={handleSelectAll}
+                  className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 mr-2"
+                />
+                全選
+              </label>
+            </div>
+          )}
+
+          {/* 使用響應式表格組件 */}
+          {filteredRecords.length === 0 ? (
+            <div className="px-6 py-8 text-center text-gray-500">
+              {searchTerm ? '未找到符合條件的記錄' : '暫無運動班記錄'}
+            </div>
+          ) : (
+            <MobileTable
+              data={filteredRecords}
+              columns={visibleColumns}
+              className={isMobile ? '' : 'rounded-b-lg'}
+            />
+          )}
+
+          {/* 移動端：全選按鈕 */}
+          {isMobile && isUpdateMode && filteredRecords.length > 0 && (
+            <div className="mt-4 flex justify-center">
+              <button
+                onClick={handleSelectAll}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  selectedRecords.length === filteredRecords.length
+                    ? 'bg-gray-600 text-white'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {selectedRecords.length === filteredRecords.length ? '取消全選' : '全選'}
+                {selectedRecords.length > 0 && ` (${selectedRecords.length})`}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
