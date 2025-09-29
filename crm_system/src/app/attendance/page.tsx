@@ -289,7 +289,8 @@ export default function AttendancePage() {
       key: 'checkbox',
       header: '',
       hideOnMobile: false,
-      render: (record: AttendanceRecord) => {
+      render: (item: unknown) => {
+        const record = item as AttendanceRecord;
         if (!isUpdateMode) return null;
         return (
           <input
@@ -305,7 +306,8 @@ export default function AttendancePage() {
       key: 'name',
       header: '參加者姓名',
       mobileLabel: '姓名',
-      render: (record: AttendanceRecord) => {
+      render: (item: unknown) => {
+        const record = item as AttendanceRecord;
         if (!isUpdateMode) {
           return <div className="text-sm font-medium text-gray-900">{record.name}</div>;
         }
@@ -326,7 +328,8 @@ export default function AttendancePage() {
       header: '聯絡方式',
       mobileLabel: '聯絡方式',
       hideOnMobile: isMobile && isUpdateMode, // 編輯模式時在手機上隱藏以節省空間
-      render: (record: AttendanceRecord) => {
+      render: (item: unknown) => {
+        const record = item as AttendanceRecord;
         if (!isUpdateMode) {
           return <div className="text-sm text-gray-900">{record.contactInfo}</div>;
         }
@@ -346,7 +349,8 @@ export default function AttendancePage() {
       key: 'location',
       header: '地點',
       mobileLabel: '地點',
-      render: (record: AttendanceRecord) => {
+      render: (item: unknown) => {
+        const record = item as AttendanceRecord;
         if (!isUpdateMode) {
           return <div className="text-sm text-gray-900">{record.location}</div>;
         }
@@ -366,7 +370,8 @@ export default function AttendancePage() {
       key: 'activity',
       header: '活動內容',
       mobileLabel: '活動',
-      render: (record: AttendanceRecord) => {
+      render: (item: unknown) => {
+        const record = item as AttendanceRecord;
         if (!isUpdateMode) {
           return (
             <div className="text-sm text-gray-500 max-w-xs truncate" title={record.activity}>
@@ -391,48 +396,57 @@ export default function AttendancePage() {
       header: '負責教練',
       mobileLabel: '教練',
       hideOnMobile: isMobile && isUpdateMode,
-      render: (record: AttendanceRecord) => (
-        <div className="text-sm text-gray-900">
-          {record.trainerName ? (
-            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-              {record.trainerName}
-            </span>
-          ) : (
-            <span className="text-gray-400 text-xs">未知</span>
-          )}
-        </div>
-      )
+      render: (item: unknown) => {
+        const record = item as AttendanceRecord;
+        return (
+          <div className="text-sm text-gray-900">
+            {record.trainerName ? (
+              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                {record.trainerName}
+              </span>
+            ) : (
+              <span className="text-gray-400 text-xs">未知</span>
+            )}
+          </div>
+        );
+      }
     },
     {
       key: 'quota',
       header: '剩餘配額',
       mobileLabel: '配額',
       hideOnMobile: isMobile && isUpdateMode,
-      render: (record: AttendanceRecord) => (
-        <div className="text-sm font-medium text-gray-900">
-          {record.quota !== undefined ? (
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              record.quota > 0
-                ? 'bg-green-100 text-green-800'
-                : 'bg-red-100 text-red-800'
-            }`}>
-              {record.quota}
-            </span>
-          ) : (
-            <span className="text-gray-400 text-xs">未知</span>
-          )}
-        </div>
-      )
+      render: (item: unknown) => {
+        const record = item as AttendanceRecord;
+        return (
+          <div className="text-sm font-medium text-gray-900">
+            {record.quota !== undefined ? (
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                record.quota > 0
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {record.quota}
+              </span>
+            ) : (
+              <span className="text-gray-400 text-xs">未知</span>
+            )}
+          </div>
+        );
+      }
     },
     {
       key: 'createdAt',
       header: '日期',
       mobileLabel: '日期',
-      render: (record: AttendanceRecord) => (
-        <div className="text-sm text-gray-500">
-          {formatDate(record.createdAt)}
-        </div>
-      )
+      render: (item: unknown) => {
+        const record = item as AttendanceRecord;
+        return (
+          <div className="text-sm text-gray-500">
+            {formatDate(record.createdAt)}
+          </div>
+        );
+      }
     }
   ];
 
