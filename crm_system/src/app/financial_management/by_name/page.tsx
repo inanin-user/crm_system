@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import EditFinancialRecordModal from '@/app/components/EditFinancialRecordModal';
+import MobileTable from '@/app/components/MobileTable';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
 
 interface FinancialRecord {
   _id: string;
@@ -28,6 +30,7 @@ interface FinancialStats {
 
 export default function FinancialByName() {
   const { user } = useAuth();
+  const { isMobile } = useMobileDetection();
   const [records, setRecords] = useState<FinancialRecord[]>([]);
   const [stats, setStats] = useState<FinancialStats>({
     totalIncome: 0,
@@ -255,97 +258,133 @@ export default function FinancialByName() {
             <p className="text-gray-500">暫無財務記錄</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    時間
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    成員
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    項目
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    詳情
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    地點
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    單價
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    數量
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    總額
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    類型
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    操作
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {records.map((record) => (
-                  <tr key={record._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatDate(record.recordDate)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {record.memberName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {record.item}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-xs truncate">
-                      {record.details || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {record.location}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(record.unitPrice)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {record.quantity}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {formatCurrency(record.totalAmount)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        record.recordType === 'income' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {record.recordType === 'income' ? '收入' : '支出'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button 
+          <MobileTable
+            data={records}
+            columns={[
+              {
+                key: 'recordDate',
+                header: '時間',
+                mobileLabel: '時間',
+                render: (item: unknown) => {
+                  const record = item as FinancialRecord;
+                  return <span className="text-sm text-gray-900">{formatDate(record.recordDate)}</span>;
+                }
+              },
+              {
+                key: 'memberName',
+                header: '成員',
+                mobileLabel: '成員',
+                render: (item: unknown) => {
+                  const record = item as FinancialRecord;
+                  return <span className="text-sm font-medium text-gray-900">{record.memberName}</span>;
+                }
+              },
+              {
+                key: 'item',
+                header: '項目',
+                mobileLabel: '項目',
+                render: (item: unknown) => {
+                  const record = item as FinancialRecord;
+                  return <span className="text-sm text-gray-900">{record.item}</span>;
+                }
+              },
+              {
+                key: 'details',
+                header: '詳情',
+                mobileLabel: '詳情',
+                hideOnMobile: isMobile,
+                render: (item: unknown) => {
+                  const record = item as FinancialRecord;
+                  return <span className="text-sm text-gray-500">{record.details || '-'}</span>;
+                }
+              },
+              {
+                key: 'location',
+                header: '地點',
+                mobileLabel: '地點',
+                hideOnMobile: isMobile,
+                render: (item: unknown) => {
+                  const record = item as FinancialRecord;
+                  return <span className="text-sm text-gray-900">{record.location}</span>;
+                }
+              },
+              {
+                key: 'unitPrice',
+                header: '單價',
+                mobileLabel: '單價',
+                hideOnMobile: isMobile,
+                render: (item: unknown) => {
+                  const record = item as FinancialRecord;
+                  return <span className="text-sm text-gray-900">{formatCurrency(record.unitPrice)}</span>;
+                }
+              },
+              {
+                key: 'quantity',
+                header: '數量',
+                mobileLabel: '數量',
+                hideOnMobile: isMobile,
+                render: (item: unknown) => {
+                  const record = item as FinancialRecord;
+                  return <span className="text-sm text-gray-900">{record.quantity}</span>;
+                }
+              },
+              {
+                key: 'totalAmount',
+                header: '總額',
+                mobileLabel: '總額',
+                render: (item: unknown) => {
+                  const record = item as FinancialRecord;
+                  return (
+                    <span className={`text-sm font-medium ${record.recordType === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                      {record.recordType === 'income' ? '+' : '-'}{formatCurrency(record.totalAmount)}
+                    </span>
+                  );
+                }
+              },
+              {
+                key: 'recordType',
+                header: '類型',
+                mobileLabel: '類型',
+                render: (item: unknown) => {
+                  const record = item as FinancialRecord;
+                  return (
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      record.recordType === 'income'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {record.recordType === 'income' ? '收入' : '支出'}
+                    </span>
+                  );
+                }
+              },
+              {
+                key: 'actions',
+                header: '操作',
+                mobileLabel: '操作',
+                render: (item: unknown) => {
+                  const record = item as FinancialRecord;
+                  return (
+                    <div className="flex space-x-3">
+                      <button
                         onClick={() => handleEdit(record)}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
+                        className="text-blue-600 hover:text-blue-900 text-sm font-medium"
                       >
                         修改
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(record._id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 text-sm font-medium"
                       >
                         刪除
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  );
+                }
+              }
+            ]}
+            className={isMobile ? '' : 'rounded-b-lg'}
+          />
         )}
       </div>
 

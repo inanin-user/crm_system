@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
 import AddAccountModal from '@/app/components/AddAccountModal';
 import DeleteAccountModal from '@/app/components/DeleteAccountModal';
 import EditAccountModal from '@/app/components/EditAccountModal';

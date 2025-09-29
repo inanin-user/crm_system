@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
+import { useMobileDetection } from '@/hooks/useMobileDetection';
 import AddAccountModal from '@/app/components/AddAccountModal';
 import DeleteAccountModal from '@/app/components/DeleteAccountModal';
 import EditAccountModal from '@/app/components/EditAccountModal';
@@ -24,6 +25,7 @@ interface AccountDetail extends Account {
 
 export default function MemberManagementPage() {
   const { } = useAuth();
+  const { isMobile } = useMobileDetection();
   useScrollOptimization();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -36,6 +38,7 @@ export default function MemberManagementPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [accountToEdit, setAccountToEdit] = useState<AccountDetail | null>(null);
   const [error, setError] = useState('');
+  const [showDetails, setShowDetails] = useState(!isMobile); // 移动端默认显示列表，桌面端默认显示详情
 
   // 获取會員列表
   const fetchMemberAccounts = async () => {
@@ -69,6 +72,10 @@ export default function MemberManagementPage() {
       
       if (result.success) {
         setSelectedAccount(result.data);
+        // 在移动端选择账户后切换到详情视图
+        if (isMobile) {
+          setShowDetails(true);
+        }
       } else {
         setError('获取账户详情失败');
       }
@@ -176,13 +183,35 @@ export default function MemberManagementPage() {
 
         {/* 主要内容区域 */}
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          {/* 移动端标题栏 */}
+          {isMobile && (
+            <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {showDetails ? '帳戶詳情' : '會員列表'}
+              </h2>
+              {showDetails && selectedAccount && (
+                <button
+                  onClick={() => setShowDetails(false)}
+                  className="text-gray-600 hover:text-gray-900 flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  返回列表
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-col lg:flex-row min-h-96">
             {/* 左侧 - 會員列表 */}
-            <div className="w-full lg:w-1/3 lg:border-r border-gray-200">
-            <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">會員列表</h2>
-              <p className="text-sm text-gray-600">共 {accounts.length} 個會員</p>
-            </div>
+            <div className={`w-full lg:w-1/3 lg:border-r border-gray-200 ${isMobile ? (showDetails ? 'hidden' : 'block') : 'block'}`}>
+            {!isMobile && (
+              <div className="p-4 bg-gray-50 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">會員列表</h2>
+                <p className="text-sm text-gray-600">共 {accounts.length} 個會員</p>
+              </div>
+            )}
             
             <div className="overflow-y-auto max-h-80 lg:h-80">
               {isLoadingAccounts ? (
@@ -217,10 +246,12 @@ export default function MemberManagementPage() {
           </div>
 
             {/* 右侧 - 账户详情 */}
-            <div className="flex-1 border-t lg:border-t-0 lg:border-l border-gray-200">
-            <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">帳戶詳情</h2>
-            </div>
+            <div className={`flex-1 border-t lg:border-t-0 lg:border-l border-gray-200 ${isMobile ? (showDetails ? 'block' : 'hidden') : 'block'}`}>
+            {!isMobile && (
+              <div className="p-4 bg-gray-50 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">帳戶詳情</h2>
+              </div>
+            )}
             
             <div className="p-6">
               {!selectedAccount ? (
