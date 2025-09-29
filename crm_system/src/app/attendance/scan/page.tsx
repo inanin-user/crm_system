@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDirectClickFix } from '@/hooks/useDirectClickFix';
 import QrScanner from 'qr-scanner';
 
 interface QrData {
@@ -36,8 +35,6 @@ export default function ScanAttendancePage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const qrScannerRef = useRef<QrScanner | null>(null);
 
-  // 啟用直接點擊修復
-  useDirectClickFix();
 
   // 状态管理
   const [isScanning, setIsScanning] = useState(false);

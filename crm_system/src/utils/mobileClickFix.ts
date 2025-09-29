@@ -15,41 +15,52 @@ export function initializeMobileClickFix() {
 
   console.log('初始化移動端點擊修復（簡化版）...');
 
-  // 強制修復點擊事件
+  // 強制修復點擊事件（移除危險的元素替換）
   const forceEnableClicks = () => {
-    // 移除所有可能阻擋的事件監聽器
-    document.removeEventListener('touchstart', () => {});
-    document.removeEventListener('touchend', () => {});
-    
     // 確保所有按鈕可點擊
     const elements = document.querySelectorAll('button, a, [role="button"], input[type="button"], input[type="submit"]');
-    
+
     elements.forEach((el) => {
       const element = el as HTMLElement;
-      
-      // 直接設置樣式
+
+      // 只設置安全的樣式，不破壞React事件綁定
       element.style.pointerEvents = 'auto';
       element.style.touchAction = 'manipulation';
       element.style.setProperty('-webkit-tap-highlight-color', 'rgba(0,0,0,0.1)');
       element.style.cursor = 'pointer';
       element.style.userSelect = 'none';
       element.style.setProperty('-webkit-user-select', 'none');
-      
-      // 移除舊的事件監聽器
-      const newElement = element.cloneNode(true) as HTMLElement;
-      element.parentNode?.replaceChild(newElement, element);
+
+      // 添加標記，避免重複處理
+      if (!element.dataset.mobileOptimized) {
+        element.dataset.mobileOptimized = 'true';
+
+        // 添加觸摸事件優化（不替換元素）
+        element.addEventListener('touchstart', (e) => {
+          element.style.opacity = '0.8';
+        }, { passive: true });
+
+        element.addEventListener('touchend', (e) => {
+          element.style.opacity = '';
+        }, { passive: true });
+      }
     });
-    
-    console.log(`修復了 ${elements.length} 個可點擊元素`);
+
+    console.log(`優化了 ${elements.length} 個可點擊元素`);
   };
 
   // 立即修復現有按鈕
   forceEnableClicks();
 
-  // 定期重新修復（簡單但有效）
-  const intervalId = setInterval(() => {
-    forceEnableClicks();
-  }, 2000); // 每2秒重新檢查一次
+  // 減少頻繁檢查，改為只在需要時執行
+  let intervalId: NodeJS.Timeout | null = null;
+
+  // 延遲啟動定期檢查，且頻率降低
+  setTimeout(() => {
+    intervalId = setInterval(() => {
+      forceEnableClicks();
+    }, 5000); // 每5秒檢查一次，減少性能影響
+  }, 1000);
 
   // 頁面可見性變化時重新修復
   document.addEventListener('visibilitychange', () => {
@@ -76,7 +87,7 @@ export function initializeMobileClickFix() {
 
   // 清理函數（當需要時）
   const cleanup = () => {
-    clearInterval(intervalId);
+    if (intervalId) clearInterval(intervalId);
     observer.disconnect();
   };
 

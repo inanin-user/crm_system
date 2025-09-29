@@ -1,14 +1,11 @@
 'use client'
 
 import { useState } from 'react';
-import { useDirectClickFix } from '@/hooks/useDirectClickFix';
 
 export default function TestClickPage() {
   const [clickCount, setClickCount] = useState(0);
   const [touchCount, setTouchCount] = useState(0);
   
-  // 啟用點擊修復
-  useDirectClickFix();
 
   const handleClick = () => {
     setClickCount(prev => prev + 1);
