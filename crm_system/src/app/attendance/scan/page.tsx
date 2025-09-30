@@ -19,6 +19,19 @@ interface QrData {
   generatedBy: string;
 }
 
+interface ProductQrData {
+  number: string;
+  regionCode: string;
+  regionName: string;
+  productDescription: string;
+  price: number;
+  timestamp: string;
+  formattedDisplay?: {
+    line1: string;
+    line2: string;
+  };
+}
+
 interface Member {
   _id: string;
   username: string;
@@ -39,6 +52,7 @@ export default function ScanAttendancePage() {
   // 状态管理
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<QrData | null>(null);
+  const [productScanResult, setProductScanResult] = useState<ProductQrData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [memberInfo, setMemberInfo] = useState<Member | null>(null);
   const [error, setError] = useState<string>('');
@@ -46,7 +60,7 @@ export default function ScanAttendancePage() {
 
   // 檢查用戶權限
   useEffect(() => {
-    if (user && user.role !== 'member') {
+    if (user && !['member', 'regular-member', 'premium-member', 'trainer'].includes(user.role)) {
       router.push('/unauthorized');
     }
   }, [user, router]);
@@ -98,31 +112,62 @@ export default function ScanAttendancePage() {
       // 創建 QR 掃描器
       qrScannerRef.current = new QrScanner(
         videoRef.current,
-        (result) => {
+        async (result) => {
           try {
-            const qrData: QrData = JSON.parse(result.data);
-            
-            // 驗證是否為簽到 QR code
-            if (qrData.type !== 'attendance_checkin') {
-              setError('無效的二維碼，請掃描簽到專用二維碼');
-              return;
-            }
-            
-            // 檢查二維碼是否過期 (例如：24小時內有效)
-            const generatedTime = new Date(qrData.generatedAt).getTime();
-            const now = new Date().getTime();
-            const hoursDiff = (now - generatedTime) / (1000 * 60 * 60);
-            
-            if (hoursDiff > 24) {
-              setError('二維碼已過期，請要求管理員生成新的二維碼');
+            // 嘗試解析為 JSON
+            const parsedData = JSON.parse(result.data);
+
+            // 檢查是否為簽到二維碼
+            if (parsedData.type === 'attendance_checkin') {
+              // 檢查二維碼是否過期 (例如：24小時內有效)
+              const generatedTime = new Date(parsedData.generatedAt).getTime();
+              const now = new Date().getTime();
+              const hoursDiff = (now - generatedTime) / (1000 * 60 * 60);
+
+              if (hoursDiff > 24) {
+                setError('二維碼已過期，請要求管理員生成新的二維碼');
+                return;
+              }
+
+              setScanResult(parsedData as QrData);
+              stopScanning();
               return;
             }
 
-            setScanResult(qrData);
-            stopScanning();
-            
+            // 檢查是否為產品二維碼
+            if (parsedData.number && parsedData.regionCode && parsedData.productDescription) {
+              // 調用API獲取產品信息
+              try {
+                const response = await fetch('/api/qrcode/scan', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ qrCodeData: result.data }),
+                });
+
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.success) {
+                    setProductScanResult(data.data);
+                    stopScanning();
+                    return;
+                  }
+                }
+              } catch (apiError) {
+                console.error('API調用失敗:', apiError);
+              }
+
+              // 如果API調用失敗，直接顯示解析的數據
+              setProductScanResult(parsedData as ProductQrData);
+              stopScanning();
+              return;
+            }
+
+            setError('無效的二維碼類型');
+
           } catch {
-            setError('無法解析二維碼內容，請確保掃描正確的簽到二維碼');
+            setError('無法解析二維碼內容');
           }
         },
         {
@@ -215,17 +260,18 @@ export default function ScanAttendancePage() {
   // 重置狀態
   const resetScan = () => {
     setScanResult(null);
+    setProductScanResult(null);
     setError('');
     setSuccess('');
     setMemberInfo(null);
   };
 
-  if (!user || user.role !== 'member') {
+  if (!user || !['member', 'regular-member', 'premium-member', 'trainer'].includes(user.role)) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">權限不足</h1>
-          <p className="text-gray-600">只有會員可以使用掃描簽到功能</p>
+          <p className="text-gray-600">只有會員和教練可以使用掃描功能</p>
         </div>
       </div>
     );
@@ -276,7 +322,7 @@ export default function ScanAttendancePage() {
         )}
 
         {/* 掃描區域 */}
-        {!scanResult && (
+        {!scanResult && !productScanResult && (
           <div className="text-center">
             <div className="relative mb-4">
               <video
@@ -377,6 +423,40 @@ export default function ScanAttendancePage() {
                 ) : (
                   '確認簽到'
                 )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 產品二維碼顯示 */}
+        {productScanResult && (
+          <div>
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">產品二維碼信息</h3>
+              <div className="space-y-2 text-sm text-blue-700">
+                <p><strong>編號:</strong> {productScanResult.number}</p>
+                <p><strong>地區:</strong> {
+                  typeof productScanResult.formattedDisplay !== 'undefined'
+                    ? productScanResult.formattedDisplay.line1
+                    : `地區：${productScanResult.regionName || productScanResult.regionCode}`
+                }</p>
+                <p><strong>產品信息:</strong> {
+                  typeof productScanResult.formattedDisplay !== 'undefined'
+                    ? productScanResult.formattedDisplay.line2
+                    : `${productScanResult.productDescription}：$${productScanResult.price}`
+                }</p>
+                {productScanResult.timestamp && (
+                  <p><strong>生成時間:</strong> {new Date(productScanResult.timestamp).toLocaleString('zh-TW')}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                onClick={resetScan}
+                className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
+              >
+                重新掃描
               </button>
             </div>
           </div>
