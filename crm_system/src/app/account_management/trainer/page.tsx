@@ -35,7 +35,7 @@ export default function TrainerManagementPage() {
   const [accountToEdit, setAccountToEdit] = useState<AccountDetail | null>(null);
   const [error, setError] = useState('');
 
-  // 获取教練列表
+  // 獲取教練列表
   const fetchTrainerAccounts = async () => {
     try {
       setIsLoadingAccounts(true);
@@ -44,21 +44,21 @@ export default function TrainerManagementPage() {
       
       if (result.success) {
         setAccounts(result.data);
-        // 如果有账户且没有选中的账户，默认选中第一个
+        // 如果有帳戶且没有选中的帳戶，默认选中第一个
         if (result.data.length > 0 && !selectedAccount) {
           handleSelectAccount(result.data[0]._id);
         }
       } else {
-        setError('获取教練列表失败');
+        setError('獲取教練列表失敗');
       }
     } catch {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsLoadingAccounts(false);
     }
   };
 
-  // 获取账户详细信息
+  // 獲取帳戶详细信息
   const handleSelectAccount = async (accountId: string) => {
     try {
       setIsLoadingDetail(true);
@@ -68,21 +68,21 @@ export default function TrainerManagementPage() {
       if (result.success) {
         setSelectedAccount(result.data);
       } else {
-        setError('获取账户详情失败');
+        setError('獲取帳戶詳情失敗');
       }
     } catch {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsLoadingDetail(false);
     }
   };
 
-  // 添加账户成功回调
+  // 添加帳戶成功回调
   const handleAddSuccess = () => {
-    fetchTrainerAccounts(); // 重新获取列表
+    fetchTrainerAccounts(); // 重新獲取列表
   };
 
-  // 删除账户处理
+  // 刪除帳戶处理
   const handleDeleteClick = () => {
     if (selectedAccount) {
       setAccountToDelete(selectedAccount);
@@ -90,13 +90,13 @@ export default function TrainerManagementPage() {
     }
   };
 
-  // 删除账户成功回调
+  // 刪除帳戶成功回调
   const handleDeleteSuccess = () => {
-    fetchTrainerAccounts(); // 重新获取列表
-    setSelectedAccount(null); // 清空选中的账户
+    fetchTrainerAccounts(); // 重新獲取列表
+    setSelectedAccount(null); // 清空选中的帳戶
   };
 
-  // 修改账户处理
+  // 修改帳戶处理
   const handleEditClick = () => {
     if (selectedAccount) {
       setAccountToEdit(selectedAccount);
@@ -104,18 +104,18 @@ export default function TrainerManagementPage() {
     }
   };
 
-  // 修改账户成功回调
+  // 修改帳戶成功回调
   const handleEditSuccess = () => {
-    fetchTrainerAccounts(); // 重新获取列表
+    fetchTrainerAccounts(); // 重新獲取列表
     if (selectedAccount) {
-      // 重新获取选中账户的详细信息
+      // 重新獲取选中帳戶的详细信息
       handleSelectAccount(selectedAccount._id);
     }
   };
 
   // 格式化日期
   const formatDate = (dateString: string) => {
-    if (!dateString) return '从未登录';
+    if (!dateString) return '從未登錄';
     return new Date(dateString).toLocaleString('zh-CN');
   };
 
@@ -125,7 +125,7 @@ export default function TrainerManagementPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* 页面标题和添加按钮 */}
+      {/* 頁面標題和添加按钮 */}
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">教練帳號管理</h1>
@@ -155,7 +155,7 @@ export default function TrainerManagementPage() {
         </div>
       </div>
 
-      {/* 错误提示 */}
+      {/* 錯誤提示 */}
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
           <p className="text-sm text-red-600">{error}</p>
@@ -204,7 +204,7 @@ export default function TrainerManagementPage() {
             </div>
           </div>
 
-          {/* 右侧 - 账户详情 */}
+          {/* 右侧 - 帳戶詳情 */}
           <div className="flex-1">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">帳戶詳情</h2>
@@ -296,7 +296,7 @@ export default function TrainerManagementPage() {
         </div>
       </div>
 
-      {/* 添加账户弹窗 */}
+      {/* 添加帳戶弹窗 */}
       <AddAccountModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

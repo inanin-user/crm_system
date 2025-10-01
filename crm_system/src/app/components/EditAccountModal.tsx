@@ -38,7 +38,7 @@ export default function EditAccountModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 当账户信息改变时，更新表单数据
+  // 当帳戶信息改变时，更新表单資料
   useEffect(() => {
     if (account) {
       setFormData({
@@ -72,10 +72,10 @@ export default function EditAccountModal({
         onClose();
         handleClose();
       } else {
-        setError(result.message || '更新账户失败');
+        setError(result.message || '更新帳戶失敗');
       }
     } catch (error) {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +138,7 @@ export default function EditAccountModal({
           )}
 
           <div className="space-y-4">
-            {/* 显示只读信息 */}
+            {/* 顯示只读信息 */}
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
               <h3 className="text-sm font-medium text-gray-700 mb-2">帳戶資訊</h3>
               <div>
@@ -154,7 +154,7 @@ export default function EditAccountModal({
 
             </div>
 
-            {/* 可编辑字段 */}
+            {/* 可編輯字段 */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                 帳戶名稱 *
@@ -190,7 +190,7 @@ export default function EditAccountModal({
               <p className="text-xs text-gray-500 mt-1">密碼至少需要 6 個字符</p>
             </div>
 
-            {/* 地区权限编辑器 - 仅对教练显示 */}
+            {/* 地区權限編輯器 - 仅对教练顯示 */}
             {account?.role === 'trainer' && (
               <div>
                 <LocationPermissionEditor

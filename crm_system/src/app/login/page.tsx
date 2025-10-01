@@ -15,7 +15,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const { user, login } = useAuth();
 
-  // 获取重定向URL
+  // 獲取重定向URL
   const redirectUrl = searchParams.get('redirect') || '/';
 
   // 檢查是否有會話過期消息
@@ -63,10 +63,10 @@ function LoginForm() {
         // 跳转到重定向URL
         router.push(redirectUrl);
       } else {
-        setError(data.message || '登录失败');
+        setError(data.message || '登录失敗');
       }
     } catch {
-      setError('登录失败，请稍后重试');
+      setError('登录失敗，請稍后重试');
     } finally {
       setLoading(false);
     }
@@ -77,18 +77,15 @@ function LoginForm() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            登录您的账号
+            Welcome
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            CRM 系统管理平台
-          </p>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="username" className="sr-only">
-                用户名
+                使用者名稱
               </label>
               <input
                 id="username"
@@ -96,7 +93,7 @@ function LoginForm() {
                 type="text"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="用户名"
+                placeholder="使用者名稱"
                 value={formData.username}
                 onChange={handleChange}
                 disabled={loading}
@@ -104,7 +101,7 @@ function LoginForm() {
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
-                密码
+                密碼
               </label>
               <input
                 id="password"
@@ -112,7 +109,7 @@ function LoginForm() {
                 type="password"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="密码"
+                placeholder="密碼"
                 value={formData.password}
                 onChange={handleChange}
                 disabled={loading}
@@ -130,15 +127,15 @@ function LoginForm() {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed"
             >
-              {loading ? '登录中...' : '登录'}
+              {loading ? '登錄中...' : '登錄'}
             </button>
           </div>
 
           <div className="text-center">
             <div className="text-sm text-gray-600">
-              <div className="font-medium">测试账号：</div>
-              <div>用户名：admin</div>
-              <div>密码：password123</div>
+              <div className="font-medium">測試帳號：</div>
+              <div>使用者名稱：admin</div>
+              <div>密碼：password123</div>
             </div>
           </div>
         </form>

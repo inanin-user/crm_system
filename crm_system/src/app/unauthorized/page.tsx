@@ -13,7 +13,7 @@ export default function UnauthorizedPage() {
       case 'admin': return '管理員';
       case 'trainer': return '教練';
       case 'member': return '會員';
-      case 'user': return '普通用户';
+      case 'user': return '普通使用者';
       default: return role;
     }
   };

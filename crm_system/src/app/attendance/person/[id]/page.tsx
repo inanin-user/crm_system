@@ -45,10 +45,10 @@ export default function PersonDetailPage() {
           });
         }
       } else {
-        console.error('获取数据失败:', data.error);
+        console.error('獲取資料失敗:', data.error);
       }
     } catch (error) {
-      console.error('获取数据失败:', error);
+      console.error('獲取資料失敗:', error);
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export default function PersonDetailPage() {
 
   return (
     <div>
-      {/* 返回按钮和页面标题 */}
+      {/* 返回按鈕和頁面標題 */}
       <div className="flex items-center mb-6">
         <button
           onClick={() => router.push('/attendance/by_name')}
@@ -150,7 +150,7 @@ export default function PersonDetailPage() {
         </div>
       </div>
 
-      {/* 记录列表 */}
+      {/* 記錄列表 */}
       <div className="bg-white rounded-lg shadow-lg">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800 mb-1">

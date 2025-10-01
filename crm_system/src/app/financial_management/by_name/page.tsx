@@ -151,15 +151,9 @@ export default function FinancialByName() {
     });
   };
 
+  // 認證和權限檢查 - 讓 AuthContext 處理重定向
   if (!user || user.role !== 'admin') {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">無權限訪問</h1>
-          <p className="text-gray-600">您沒有權限訪問此頁面</p>
-        </div>
-      </div>
-    );
+    return null; // AuthContext 會自動重定向
   }
 
   return (

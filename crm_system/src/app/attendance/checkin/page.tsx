@@ -62,7 +62,7 @@ export default function AddAttendancePage() {
   // 所有可用的地区
   const ALL_LOCATIONS = useMemo(() => ['灣仔', '黃大仙', '石門'], []);
 
-  // 获取活动列表
+  // 獲取活动列表
   const fetchActivities = async () => {
     try {
       setIsLoadingActivities(true);
@@ -73,7 +73,7 @@ export default function AddAttendancePage() {
         setActivities(result.data);
       }
     } catch {
-      console.error('获取活动列表失败');
+      console.error('獲取活动列表失敗');
     } finally {
       setIsLoadingActivities(false);
     }
@@ -82,18 +82,18 @@ export default function AddAttendancePage() {
   useEffect(() => {
     if (user) {
       if (user.role === 'admin') {
-        // 管理员可以选择所有地区
+        // 管理员可以選擇所有地区
         setAvailableLocations(ALL_LOCATIONS);
       } else if (user.role === 'trainer') {
-        // 教练只能选择他们有权限的地区
+        // 教练只能選擇他们有權限的地区
         setAvailableLocations(user.locations || []);
       }
     }
-    // 获取活动列表
+    // 獲取活动列表
     fetchActivities();
   }, [user, ALL_LOCATIONS]);
 
-  // 验证会员信息
+  // 验证會員信息
   const validateMember = async (name: string, contactInfo: string) => {
     if (!name.trim() || !contactInfo.trim()) {
       setMemberValidation({
@@ -150,7 +150,7 @@ export default function AddAttendancePage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // 特殊处理活动选择
+    // 特殊处理活动選擇
     if (name === 'activityId') {
       const selectedActivity = activities.find(activity => activity._id === value);
       setFormData(prev => ({
@@ -166,7 +166,7 @@ export default function AddAttendancePage() {
       }));
     }
 
-    // 当姓名或联系方式改变时，重新验证会员
+    // 当姓名或联系方式改变时，重新验证會員
     if (name === 'name' || name === 'contactInfo') {
       const newFormData = { ...formData, [name]: value };
       validateMember(newFormData.name, newFormData.contactInfo);
@@ -234,7 +234,7 @@ export default function AddAttendancePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 检查会员验证状态
+    // 檢查會員验证状态
     if (!memberValidation.member) {
       alert('❌ 請先確認會員信息有效');
       return;
@@ -261,7 +261,7 @@ export default function AddAttendancePage() {
           location: formData.location,
           activity: formData.activityName,
           activityId: formData.activityId,
-          memberId: memberValidation.member._id // 添加会员ID用于quota扣除
+          memberId: memberValidation.member._id // 添加會員ID用于quota扣除
         }),
       });
 
@@ -288,7 +288,7 @@ export default function AddAttendancePage() {
 
   return (
     <div>
-      {/* 返回按钮和页面标题 */}
+      {/* 返回按鈕和頁面標題 */}
       <div className="flex items-center mb-6">
         <button
           onClick={() => router.push('/attendance')}
@@ -340,7 +340,7 @@ export default function AddAttendancePage() {
             />
           </div>
 
-          {/* 会员验证状态显示 */}
+          {/* 會員验证状态顯示 */}
           {(formData.name.trim() && formData.contactInfo.trim()) && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <h3 className="text-sm font-medium text-gray-700 mb-2">會員驗證狀態</h3>

@@ -104,26 +104,21 @@ export default function QRCodeGeneratePage() {
       setIsGenerating(true);
 
       // 調用API創建二維碼記錄
-      const requestBody = {
-        regionCode,
-        productDescription: finalProductDescription.trim(),
-        price: Number(price),
-        createdBy: user.username,
-      };
-
-      console.log('發送請求:', requestBody); // 調試信息
-
       const response = await fetch('/api/qrcode', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          regionCode,
+          productDescription: finalProductDescription.trim(),
+          price: Number(price),
+          createdBy: user.username,
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('API 錯誤:', errorData); // 調試信息
         throw new Error(errorData.message || '創建二維碼失敗');
       }
 
@@ -264,26 +259,14 @@ export default function QRCodeGeneratePage() {
     setSelectedRecord(record);
   };
 
+  // 認證檢查 - 讓 AuthContext 處理重定向
   if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">需要登錄</h1>
-          <p className="text-gray-600">請先登錄以訪問此頁面</p>
-        </div>
-      </div>
-    );
+    return null; // AuthContext 會自動重定向到登錄頁面
   }
 
+  // 權限檢查
   if (!['admin'].includes(user.role)) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">無權限訪問</h1>
-          <p className="text-gray-600">您沒有權限訪問此頁面</p>
-        </div>
-      </div>
-    );
+    return null; // AuthContext 會自動重定向到 unauthorized 頁面
   }
 
   return (

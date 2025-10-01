@@ -38,7 +38,7 @@ export default function ActivityManagementPage() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // 添加活动表单数据
+  // 添加活动表单資料
   const [addFormData, setAddFormData] = useState({
     activityName: '',
     trainerId: '',
@@ -49,7 +49,7 @@ export default function ActivityManagementPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 获取活动列表
+  // 獲取活动列表
   const fetchActivities = async () => {
     try {
       setIsLoadingActivities(true);
@@ -62,16 +62,16 @@ export default function ActivityManagementPage() {
           setSelectedActivity(result.data[0]);
         }
       } else {
-        setError('获取活动列表失败');
+        setError('獲取活动列表失敗');
       }
     } catch {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsLoadingActivities(false);
     }
   };
 
-  // 获取教练列表
+  // 獲取教练列表
   const fetchTrainers = async () => {
     try {
       setIsLoadingTrainers(true);
@@ -81,16 +81,16 @@ export default function ActivityManagementPage() {
       if (result.success) {
         setTrainers(result.data);
       } else {
-        setError('获取教练列表失败');
+        setError('獲取教练列表失敗');
       }
     } catch {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsLoadingTrainers(false);
     }
   };
 
-  // 选择活动
+  // 選擇活动
   const handleSelectActivity = (activity: Activity) => {
     setSelectedActivity(activity);
     setError('');
@@ -111,7 +111,7 @@ export default function ActivityManagementPage() {
     e.preventDefault();
     
     if (!addFormData.trainerId) {
-      setError('请选择负责教练');
+      setError('請選擇负责教练');
       return;
     }
 
@@ -152,18 +152,18 @@ export default function ActivityManagementPage() {
           location: '',
           description: ''
         });
-        fetchActivities(); // 重新获取活动列表
+        fetchActivities(); // 重新獲取活动列表
       } else {
-        setError(result.message || '添加活动失败');
+        setError(result.message || '添加活动失敗');
       }
     } catch {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // 格式化时间显示
+  // 格式化时间顯示
   const formatDateTime = (dateString: string) => {
     if (!dateString) return '无时间';
     const date = new Date(dateString);
@@ -193,7 +193,7 @@ export default function ActivityManagementPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* 页面标题和添加按钮 */}
+      {/* 頁面標題和添加按钮 */}
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">活動管理</h1>
@@ -207,7 +207,7 @@ export default function ActivityManagementPage() {
         </button>
       </div>
 
-      {/* 错误和成功提示 */}
+      {/* 錯誤和成功提示 */}
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
           <p className="text-sm text-red-600">{error}</p>
@@ -265,7 +265,7 @@ export default function ActivityManagementPage() {
             </div>
           </div>
 
-          {/* 右侧 - 活动详情 */}
+          {/* 右侧 - 活动詳情 */}
           <div className="flex-1 flex flex-col">
             {!selectedActivity ? (
               <div className="flex items-center justify-center h-96 text-gray-500">
@@ -508,7 +508,7 @@ export default function ActivityManagementPage() {
                   className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? '添加中...' : '确认添加'}
+                  {isSubmitting ? '添加中...' : '確認添加'}
                 </button>
               </div>
             </form>

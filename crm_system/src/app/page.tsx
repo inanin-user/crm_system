@@ -22,7 +22,7 @@ export default function Home() {
               欢迎回来，{user.username}！
             </p>
             <p className="text-sm text-gray-500">
-              您的身份：{user.role === 'admin' ? '系统管理员' : user.role === 'trainer' ? '教练' : user.role === 'member' ? '会员' : '普通用户'}
+              您的身份：{user.role === 'admin' ? '系统管理员' : user.role === 'trainer' ? '教练' : user.role === 'member' ? '會員' : '普通使用者'}
             </p>
           </div>
         )}

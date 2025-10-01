@@ -142,7 +142,7 @@ export default function Navigation() {
     return pathname.startsWith('/qrcode');
   };
 
-  // 检查用户是否有权限访问账号管理
+  // 檢查用户是否有權限訪問帳號管理
   const hasAccountManagementAccess = () => {
     return user?.role === 'admin';
   };
@@ -235,7 +235,7 @@ export default function Navigation() {
             </button>
           </div>
 
-          {/* 用户信息和注销按钮区域 */}
+          {/* 使用者資訊和登出按鈕区域 */}
           {!isLoading && user && (
             <div className="p-4 border-b border-gray-200">
               {!isCollapsed ? (
@@ -422,7 +422,7 @@ export default function Navigation() {
                 </div>
               </li>
 
-              {/* 会员管理 - 只有管理员可以看到 */}
+              {/* 會員管理 - 只有管理员可以看到 */}
               {user?.role === 'admin' && (
                 <li>
                   <div>
@@ -454,7 +454,7 @@ export default function Navigation() {
                       )}
                     </button>
 
-                    {/* 会员管理子菜单 */}
+                    {/* 會員管理子菜单 */}
                     {(isMemberManagementOpen && !isCollapsed) && (
                       <ul className="mt-1 ml-8 space-y-1">
                         <li>
@@ -670,7 +670,7 @@ export default function Navigation() {
                 </li>
               )}
 
-              {/* 账号管理 - 只有管理员可以看到 */}
+              {/* 帳號管理 - 只有管理员可以看到 */}
               {hasAccountManagementAccess() && (
                 <li>
                   <div>
@@ -702,7 +702,7 @@ export default function Navigation() {
                       )}
                     </button>
 
-                    {/* 账号管理子菜单 */}
+                    {/* 帳號管理子菜单 */}
                     {(isAccountOpen && !isCollapsed) && (
                       <ul className="mt-1 ml-8 space-y-1">
                         <li>

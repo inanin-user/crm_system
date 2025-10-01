@@ -18,7 +18,7 @@ export default function ConditionalMain({ children }: ConditionalMainProps) {
     '/unauthorized'
   ];
   
-  // 检查当前页面是否需要全屏布局
+  // 檢查当前页面是否需要全屏布局
   const isFullScreenPage = fullScreenPages.some(page => 
     pathname === page || pathname.startsWith(page + '/')
   );

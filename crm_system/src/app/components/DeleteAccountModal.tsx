@@ -47,10 +47,10 @@ export default function DeleteAccountModal({
         onSuccess();
         onClose();
       } else {
-        setError(result.message || '删除账户失败');
+        setError(result.message || '刪除帳戶失敗');
       }
     } catch (error) {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsLoading(false);
     }

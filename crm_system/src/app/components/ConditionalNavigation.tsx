@@ -6,13 +6,13 @@ import Navigation from './Navigation';
 export default function ConditionalNavigation() {
   const pathname = usePathname();
   
-  // 不显示导航栏的页面列表
+  // 不顯示导航栏的页面列表
   const hideNavigationPages = [
     '/login',
     '/unauthorized'
   ];
   
-  // 检查当前页面是否应该隐藏导航栏
+  // 檢查当前页面是否应该隐藏导航栏
   const shouldHideNavigation = hideNavigationPages.some(page => 
     pathname === page || pathname.startsWith(page + '/')
   );
@@ -22,6 +22,6 @@ export default function ConditionalNavigation() {
     return null;
   }
   
-  // 否则显示导航栏
+  // 否则顯示导航栏
   return <Navigation />;
 } 

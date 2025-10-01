@@ -28,10 +28,10 @@ export default function MyActivityPage() {
   const [isLoadingActivities, setIsLoadingActivities] = useState(true);
   const [error, setError] = useState('');
 
-  // 获取教练的活动列表
+  // 獲取教练的活动列表
   const fetchMyActivities = async () => {
     if (!user || user.role !== 'trainer') {
-      setError('您没有权限访问此页面');
+      setError('您没有權限訪問此页面');
       return;
     }
 
@@ -46,22 +46,22 @@ export default function MyActivityPage() {
           setSelectedActivity(result.data[0]);
         }
       } else {
-        setError('获取活动列表失败');
+        setError('獲取活动列表失敗');
       }
     } catch {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsLoadingActivities(false);
     }
   };
 
-  // 选择活动
+  // 選擇活动
   const handleSelectActivity = (activity: Activity) => {
     setSelectedActivity(activity);
     setError('');
   };
 
-  // 格式化时间显示
+  // 格式化时间顯示
   const formatDateTime = (dateString: string) => {
     if (!dateString) return '无时间';
     const date = new Date(dateString);
@@ -80,24 +80,24 @@ export default function MyActivityPage() {
     }
   }, [user]);
 
-  // 检查权限
+  // 檢查權限
   if (!user || user.role !== 'trainer') {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">您没有权限访问此页面</p>
+        <p className="text-gray-500">您没有權限訪問此页面</p>
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* 页面标题 */}
+      {/* 頁面標題 */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">我的活動</h1>
         <p className="mt-2 text-gray-600">查看您負責的活動信息和參與者</p>
       </div>
 
-      {/* 错误提示 */}
+      {/* 錯誤提示 */}
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
           <p className="text-sm text-red-600">{error}</p>
@@ -149,7 +149,7 @@ export default function MyActivityPage() {
             </div>
           </div>
 
-          {/* 右侧 - 活动详情 */}
+          {/* 右侧 - 活动詳情 */}
           <div className="flex-1 flex flex-col">
             {!selectedActivity ? (
               <div className="flex items-center justify-center h-96 text-gray-500">

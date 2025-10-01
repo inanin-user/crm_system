@@ -64,14 +64,10 @@ export async function GET(request: NextRequest) {
 // 创建新的二维码
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { regionCode, productDescription, price, createdBy } = body;
-
-    console.log('收到二維碼創建請求:', body); // 調試信息
+    const { regionCode, productDescription, price, createdBy } = await request.json();
 
     // 验证必填字段
     if (!regionCode || !productDescription || price === undefined || !createdBy) {
-      console.log('必填字段驗證失敗:', { regionCode, productDescription, price, createdBy });
       return NextResponse.json(
         { success: false, message: '地区编号、产品描述、价格和创建者都是必填项' },
         { status: 400 }
@@ -96,7 +92,6 @@ export async function POST(request: NextRequest) {
 
     // 验证产品描述（允许自定义输入，只需要非空字符串）
     if (typeof productDescription !== 'string' || productDescription.trim().length === 0) {
-      console.log('產品描述驗證失敗 - 空字符串:', productDescription);
       return NextResponse.json(
         { success: false, message: '产品描述不能为空' },
         { status: 400 }
@@ -105,14 +100,11 @@ export async function POST(request: NextRequest) {
 
     // 验证产品描述长度（防止过长）
     if (productDescription.length > 100) {
-      console.log('產品描述驗證失敗 - 過長:', productDescription.length);
       return NextResponse.json(
         { success: false, message: '产品描述不能超过100个字符' },
         { status: 400 }
       );
     }
-
-    console.log('所有驗證通過，準備創建二維碼');
 
     await connectDB();
 

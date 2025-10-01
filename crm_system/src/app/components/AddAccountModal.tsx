@@ -14,7 +14,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
     username: '',
     password: '',
     role: defaultRole === 'member' ? 'regular-member' : defaultRole,
-    // 会员专用字段
+    // 會員专用字段
     memberName: '',
     phone: '',
     herbalifePCNumber: '',
@@ -27,7 +27,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 获取教练列表
+  // 獲取教练列表
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
@@ -37,7 +37,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
           setTrainers(result.data);
         }
       } catch (error) {
-        console.error('获取教练列表失败:', error);
+        console.error('獲取教练列表失敗:', error);
       }
     };
 
@@ -52,7 +52,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
     setIsLoading(true);
 
     try {
-      // 为会员角色准备完整的数据
+      // 为會員角色准备完整的資料
       const submitData = ['member', 'regular-member', 'premium-member'].includes(defaultRole) ? formData : {
         username: formData.username,
         password: formData.password,
@@ -85,10 +85,10 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
         onSuccess();
         onClose();
       } else {
-        setError(result.message || '添加账户失败');
+        setError(result.message || '添加帳戶失敗');
       }
     } catch (error) {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsLoading(false);
     }
@@ -120,7 +120,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
       <div className={`bg-white rounded-lg shadow-2xl w-full max-h-[90vh] overflow-y-auto ${isMember ? 'max-w-2xl' : 'max-w-md'}`}>
         {/* 標題欄 */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">添加新{isMember ? '會員' : '账户'}</h2>
+          <h2 className="text-xl font-semibold text-gray-800">添加新{isMember ? '會員' : '帳戶'}</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"

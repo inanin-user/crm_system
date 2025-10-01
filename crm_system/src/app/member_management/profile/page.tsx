@@ -41,7 +41,7 @@ export default function MemberProfilePage() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // 获取会员列表
+  // 獲取會員列表
   const fetchMembers = async () => {
     try {
       setIsLoadingMembers(true);
@@ -50,26 +50,26 @@ export default function MemberProfilePage() {
       
       if (result.success) {
         setMembers(result.data);
-        // 如果有会员且没有选中的会员，默认选中第一个
+        // 如果有會員且没有选中的會員，默认选中第一个
         if (result.data.length > 0 && !selectedMember) {
           setSelectedMember(result.data[0]);
           fetchMemberAttendance(result.data[0]);
         }
       } else {
-        setError('获取会员列表失败');
+        setError('獲取會員列表失敗');
       }
     } catch (error) {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsLoadingMembers(false);
     }
   };
 
-  // 获取会员出席记录
+  // 獲取會員出席記錄
   const fetchMemberAttendance = async (member: Member) => {
     try {
       setIsLoadingRecords(true);
-      // 通过姓名和联系方式查找出席记录
+      // 通过姓名和联系方式查找出席記錄
       const response = await fetch(`/api/attendance/by-member?name=${encodeURIComponent(member.memberName)}&contact=${encodeURIComponent(member.phone)}`);
       const result = await response.json();
       
@@ -85,7 +85,7 @@ export default function MemberProfilePage() {
     }
   };
 
-  // 选择会员
+  // 選擇會員
   const handleSelectMember = (member: Member) => {
     setSelectedMember(member);
     setNewQuota(member.quota.toString());
@@ -100,7 +100,7 @@ export default function MemberProfilePage() {
     
     const quotaValue = parseInt(newQuota);
     if (isNaN(quotaValue) || quotaValue < 0) {
-      setError('请输入有效的配额数值（不能为负数）');
+      setError('請輸入有效的配额数值（不能为负数）');
       return;
     }
 
@@ -137,14 +137,14 @@ export default function MemberProfilePage() {
         setError('');
       } else {
         console.error('API返回錯誤:', result);
-        setError(result.message || '更新配额失败');
+        setError(result.message || '更新配额失敗');
         if (result.error) {
           console.error('詳細錯誤:', result.error);
         }
       }
     } catch (error) {
       console.error('網絡錯誤:', error);
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsUpdatingQuota(false);
     }
@@ -152,13 +152,13 @@ export default function MemberProfilePage() {
 
   // 格式化日期
   const formatDate = (dateString: string) => {
-    if (!dateString) return '无记录';
+    if (!dateString) return '无記錄';
     return new Date(dateString).toLocaleString('zh-CN');
   };
 
   // 格式化日期（仅日期）
   const formatDateOnly = (dateString: string) => {
-    if (!dateString) return '无记录';
+    if (!dateString) return '无記錄';
     return new Date(dateString).toLocaleDateString('zh-CN');
   };
 
@@ -176,13 +176,13 @@ export default function MemberProfilePage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* 页面标题 */}
+      {/* 頁面標題 */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">續卡管理</h1>
         <p className="mt-2 text-gray-600">查看和管理會員續卡、配額以及出席記錄</p>
       </div>
 
-      {/* 错误和成功提示 */}
+      {/* 錯誤和成功提示 */}
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
           <p className="text-sm text-red-600">{error}</p>
@@ -198,7 +198,7 @@ export default function MemberProfilePage() {
       {/* 主要内容区域 */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="flex h-auto min-h-96">
-          {/* 左侧 - 会员列表 */}
+          {/* 左侧 - 會員列表 */}
           <div className="w-1/3 border-r border-gray-200">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">會員列表</h2>
@@ -238,7 +238,7 @@ export default function MemberProfilePage() {
             </div>
           </div>
 
-          {/* 右侧 - 会员详情和配额管理 */}
+          {/* 右侧 - 會員詳情和配额管理 */}
           <div className="flex-1 flex flex-col">
             {!selectedMember ? (
               <div className="flex items-center justify-center h-96 text-gray-500">
@@ -246,7 +246,7 @@ export default function MemberProfilePage() {
               </div>
             ) : (
               <>
-                {/* 会员基本信息 */}
+                {/* 會員基本信息 */}
                 <div className="p-6 border-b border-gray-200">
                   <div className="flex justify-between items-start mb-6">
                     <h2 className="text-xl font-semibold text-gray-900">{selectedMember.memberName}</h2>
@@ -325,7 +325,7 @@ export default function MemberProfilePage() {
                   </div>
                 </div>
 
-                {/* 出席记录 */}
+                {/* 出席記錄 */}
                 <div className="flex-1 p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">出席記錄</h3>

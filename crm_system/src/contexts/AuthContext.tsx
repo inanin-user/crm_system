@@ -29,6 +29,10 @@ const PROTECTED_ROUTES = [
   '/account_management',
   '/admin',
   '/financial_management',
+  '/qrcode',
+  '/member_management',
+  '/trainer_management',
+  '/activity_management',
 ];
 
 // PUBLIC_ROUTES removed as it's not used

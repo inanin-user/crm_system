@@ -88,7 +88,7 @@ export default function AttendanceByNamePage() {
         const uniqueNames = new Set(data.data.map((r: AttendanceRecord) => r.name));
         console.log(`獨特參與者: ${uniqueNames.size} 人`);
         
-        // 如果用户是教练且没有地区权限，显示提示信息
+        // 如果用户是教练且没有地区權限，顯示提示信息
         if (data.data.length === 0 && data.message) {
           console.info(data.message);
         }
@@ -101,13 +101,13 @@ export default function AttendanceByNamePage() {
           }
         }
       } else {
-        console.error('获取数据失败:', data.message || data.error);
+        console.error('獲取資料失敗:', data.message || data.error);
         if (response.status === 403) {
           alert('您沒有權限查看出席記錄');
         }
       }
     } catch (error) {
-      console.error('获取数据失败:', error);
+      console.error('獲取資料失敗:', error);
     } finally {
       setLoading(false);
     }

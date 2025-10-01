@@ -50,7 +50,7 @@ export default function TrainerProfilePage() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // 获取教练列表
+  // 獲取教练列表
   const fetchTrainers = async () => {
     try {
       setIsLoadingTrainers(true);
@@ -66,16 +66,16 @@ export default function TrainerProfilePage() {
           fetchTrainerProfile(firstTrainer._id);
         }
       } else {
-        setError('获取教练列表失败');
+        setError('獲取教练列表失敗');
       }
     } catch (error) {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsLoadingTrainers(false);
     }
   };
 
-  // 获取教练的活动记录
+  // 獲取教练的活动記錄
   const fetchTrainerActivities = async (trainerId: string) => {
     try {
       setIsLoadingActivities(true);
@@ -94,7 +94,7 @@ export default function TrainerProfilePage() {
     }
   };
 
-  // 获取教练档案信息
+  // 獲取教练档案信息
   const fetchTrainerProfile = async (trainerId: string) => {
     try {
       setIsLoadingProfile(true);
@@ -130,7 +130,7 @@ export default function TrainerProfilePage() {
     }
   };
 
-  // 选择教练
+  // 選擇教练
   const handleSelectTrainer = (trainer: Trainer) => {
     setSelectedTrainer(trainer);
     fetchTrainerActivities(trainer._id);
@@ -145,7 +145,7 @@ export default function TrainerProfilePage() {
     
     const workHours = parseFloat(otherWorkHours);
     if (isNaN(workHours) || workHours < 0) {
-      setError('请输入有效的工作时间（不能为负数）');
+      setError('請輸入有效的工作时间（不能为负数）');
       return;
     }
 
@@ -170,10 +170,10 @@ export default function TrainerProfilePage() {
         setSuccessMessage('工作时间更新成功');
         setError('');
       } else {
-        setError(result.message || '更新工作时间失败');
+        setError(result.message || '更新工作时间失敗');
       }
     } catch (error) {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsUpdatingWorkHours(false);
     }
@@ -191,7 +191,7 @@ export default function TrainerProfilePage() {
     return teachingHours + otherHours;
   };
 
-  // 格式化时间显示
+  // 格式化时间顯示
   const formatDateTime = (dateString: string) => {
     if (!dateString) return '无时间';
     const date = new Date(dateString);
@@ -204,7 +204,7 @@ export default function TrainerProfilePage() {
     });
   };
 
-  // 格式化日期显示
+  // 格式化日期顯示
   const formatDateOnly = (dateString: string) => {
     if (!dateString) return '无日期';
     return new Date(dateString).toLocaleDateString('zh-CN');
@@ -224,13 +224,13 @@ export default function TrainerProfilePage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* 页面标题 */}
+      {/* 頁面標題 */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">教練資料管理</h1>
         <p className="mt-2 text-gray-600">查看和管理教練資料、帶隊記錄以及工作時間</p>
       </div>
 
-      {/* 错误和成功提示 */}
+      {/* 錯誤和成功提示 */}
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
           <p className="text-sm text-red-600">{error}</p>
@@ -288,7 +288,7 @@ export default function TrainerProfilePage() {
             </div>
           </div>
 
-          {/* 右侧 - 教练详情和工作时间 */}
+          {/* 右侧 - 教练詳情和工作时间 */}
           <div className="flex-1 flex flex-col">
             {!selectedTrainer ? (
               <div className="flex items-center justify-center h-96 text-gray-500">
@@ -358,7 +358,7 @@ export default function TrainerProfilePage() {
                       </div>
                     </div>
 
-                    {/* 其他工作时间编辑 */}
+                    {/* 其他工作时间編輯 */}
                     <div className="space-y-3">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -399,7 +399,7 @@ export default function TrainerProfilePage() {
                   </div>
                 </div>
 
-                {/* 带队记录 */}
+                {/* 带队記錄 */}
                 <div className="flex-1 p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">帶隊記錄</h3>

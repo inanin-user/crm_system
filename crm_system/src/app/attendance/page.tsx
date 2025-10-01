@@ -33,7 +33,7 @@ export default function AttendancePage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [updatedCount, setUpdatedCount] = useState(0);
   const [isUpdating, setIsUpdating] = useState(false);
-  // 新增状态：删除功能相关
+  // 新增状态：刪除功能相关
   const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -81,7 +81,7 @@ export default function AttendancePage() {
           setAttendanceRecords(records);
         }
         
-        // 如果用户是教练且没有地区权限，显示提示信息
+        // 如果用户是教练且没有地区權限，顯示提示信息
         if (records.length === 0 && data.message) {
           console.info(data.message);
         }
@@ -129,7 +129,7 @@ export default function AttendancePage() {
     setSelectedRecords([]);
   };
 
-  // 新增函数：处理记录编辑
+  // 新增函数：处理記錄編輯
   const handleRecordEdit = (index: number, field: string, value: string) => {
     const newEditedRecords = [...editedRecords];
     newEditedRecords[index] = {
@@ -138,7 +138,7 @@ export default function AttendancePage() {
     };
     setEditedRecords(newEditedRecords);
     
-    // 计算修改的记录数量
+    // 计算修改的記錄数量
     const changedCount = newEditedRecords.filter((record) => {
       const original = attendanceRecords.find(orig => orig._id === record._id);
       return original && (
@@ -151,7 +151,7 @@ export default function AttendancePage() {
     setUpdatedCount(changedCount);
   };
 
-  // 新增函数：处理记录选择
+  // 新增函数：处理記錄選擇
   const handleRecordSelect = (recordId: string) => {
     setSelectedRecords(prev => {
       if (prev.includes(recordId)) {
@@ -171,14 +171,14 @@ export default function AttendancePage() {
     }
   };
 
-  // 新增函数：确认删除
+  // 新增函数：確認刪除
   const confirmDelete = () => {
     if (selectedRecords.length > 0) {
       setShowDeleteModal(true);
     }
   };
 
-  // 新增函数：执行删除操作
+  // 新增函数：执行刪除操作
   const executeDelete = async () => {
     setIsDeleting(true);
     try {
@@ -195,7 +195,7 @@ export default function AttendancePage() {
 
       await Promise.all(deletePromises);
       
-      // 重新获取数据
+      // 重新獲取資料
       await fetchAttendanceRecords();
       
       // 退出更新模式
@@ -211,7 +211,7 @@ export default function AttendancePage() {
     }
   };
 
-  // 新增函数：确认更新
+  // 新增函数：確認更新
   const confirmUpdate = () => {
     setShowConfirmModal(true);
   };
@@ -251,7 +251,7 @@ export default function AttendancePage() {
 
       await Promise.all(updatePromises);
       
-      // 重新获取数据
+      // 重新獲取資料
       await fetchAttendanceRecords();
       
       // 退出更新模式

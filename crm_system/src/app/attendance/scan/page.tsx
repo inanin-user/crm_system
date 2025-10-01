@@ -279,7 +279,7 @@ export default function ScanAttendancePage() {
 
   return (
     <div className="max-w-md mx-auto px-4 sm:px-0">
-      {/* 返回按钮和页面标题 */}
+      {/* 返回按鈕和頁面標題 */}
       <div className="flex items-center mb-6">
         <button
           onClick={() => router.push('/attendance')}

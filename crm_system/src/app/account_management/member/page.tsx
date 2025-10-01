@@ -38,9 +38,9 @@ export default function MemberManagementPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [accountToEdit, setAccountToEdit] = useState<AccountDetail | null>(null);
   const [error, setError] = useState('');
-  const [showDetails, setShowDetails] = useState(!isMobile); // 移动端默认显示列表，桌面端默认显示详情
+  const [showDetails, setShowDetails] = useState(!isMobile); // 移动端默认顯示列表，桌面端默认顯示詳情
 
-  // 获取會員列表
+  // 獲取會員列表
   const fetchMemberAccounts = async () => {
     try {
       setIsLoadingAccounts(true);
@@ -49,21 +49,21 @@ export default function MemberManagementPage() {
       
       if (result.success) {
         setAccounts(result.data);
-        // 如果有账户且没有选中的账户，默认选中第一个
+        // 如果有帳戶且没有选中的帳戶，默认选中第一个
         if (result.data.length > 0 && !selectedAccount) {
           handleSelectAccount(result.data[0]._id);
         }
       } else {
-        setError('获取會員列表失败');
+        setError('獲取會員列表失敗');
       }
     } catch {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsLoadingAccounts(false);
     }
   };
 
-  // 获取账户详细信息
+  // 獲取帳戶详细信息
   const handleSelectAccount = async (accountId: string) => {
     try {
       setIsLoadingDetail(true);
@@ -72,26 +72,26 @@ export default function MemberManagementPage() {
       
       if (result.success) {
         setSelectedAccount(result.data);
-        // 在移动端选择账户后切换到详情视图
+        // 在移动端選擇帳戶后切换到詳情视图
         if (isMobile) {
           setShowDetails(true);
         }
       } else {
-        setError('获取账户详情失败');
+        setError('獲取帳戶詳情失敗');
       }
     } catch {
-      setError('网络错误，请重试');
+      setError('網絡錯誤，請重试');
     } finally {
       setIsLoadingDetail(false);
     }
   };
 
-  // 添加账户成功回调
+  // 添加帳戶成功回调
   const handleAddSuccess = () => {
-    fetchMemberAccounts(); // 重新获取列表
+    fetchMemberAccounts(); // 重新獲取列表
   };
 
-  // 删除账户处理
+  // 刪除帳戶处理
   const handleDeleteClick = () => {
     if (selectedAccount) {
       setAccountToDelete(selectedAccount);
@@ -99,13 +99,13 @@ export default function MemberManagementPage() {
     }
   };
 
-  // 删除账户成功回调
+  // 刪除帳戶成功回调
   const handleDeleteSuccess = () => {
-    fetchMemberAccounts(); // 重新获取列表
-    setSelectedAccount(null); // 清空选中的账户
+    fetchMemberAccounts(); // 重新獲取列表
+    setSelectedAccount(null); // 清空选中的帳戶
   };
 
-  // 修改账户处理
+  // 修改帳戶处理
   const handleEditClick = () => {
     if (selectedAccount) {
       setAccountToEdit(selectedAccount);
@@ -113,18 +113,18 @@ export default function MemberManagementPage() {
     }
   };
 
-  // 修改账户成功回调
+  // 修改帳戶成功回调
   const handleEditSuccess = () => {
-    fetchMemberAccounts(); // 重新获取列表
+    fetchMemberAccounts(); // 重新獲取列表
     if (selectedAccount) {
-      // 重新获取选中账户的详细信息
+      // 重新獲取选中帳戶的详细信息
       handleSelectAccount(selectedAccount._id);
     }
   };
 
   // 格式化日期
   const formatDate = (dateString: string) => {
-    if (!dateString) return '从未登录';
+    if (!dateString) return '從未登錄';
     return new Date(dateString).toLocaleString('zh-CN');
   };
 
@@ -135,7 +135,7 @@ export default function MemberManagementPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 页面标题和添加按钮 */}
+        {/* 頁面標題和添加按钮 */}
         <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">會員帳號管理</h1>
@@ -174,7 +174,7 @@ export default function MemberManagementPage() {
           </div>
         </div>
 
-        {/* 错误提示 */}
+        {/* 錯誤提示 */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
             <p className="text-sm text-red-600">{error}</p>
@@ -245,7 +245,7 @@ export default function MemberManagementPage() {
             </div>
           </div>
 
-            {/* 右侧 - 账户详情 */}
+            {/* 右侧 - 帳戶詳情 */}
             <div className={`flex-1 border-t lg:border-t-0 lg:border-l border-gray-200 ${isMobile ? (showDetails ? 'block' : 'hidden') : 'block'}`}>
             {!isMobile && (
               <div className="p-4 bg-gray-50 border-b border-gray-200">
@@ -320,7 +320,7 @@ export default function MemberManagementPage() {
         </div>
       </div>
 
-      {/* 添加账户弹窗 */}
+      {/* 添加帳戶弹窗 */}
       <AddAccountModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

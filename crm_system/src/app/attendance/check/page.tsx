@@ -15,7 +15,7 @@ interface AttendanceRecord {
 
 export default function CheckPage() {
   const [selectedDate, setSelectedDate] = useState(() => {
-    // 获取本地今天的日期，避免时区问题
+    // 獲取本地今天的日期，避免时区问题
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -27,7 +27,7 @@ export default function CheckPage() {
   const [error, setError] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
-  // 格式化时间，只显示时:分
+  // 格式化时间，只顯示时:分
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('zh-TW', {
@@ -37,7 +37,7 @@ export default function CheckPage() {
     });
   };
 
-  // 获取指定日期的记录
+  // 獲取指定日期的記錄
   const fetchRecordsByDate = async (date: string) => {
     setLoading(true);
     setError(null);
@@ -88,7 +88,7 @@ export default function CheckPage() {
 
       const updatedRecord = await response.json();
       
-      // 确认更新成功，再次更新状态确保数据一致性
+      // 確認更新成功，再次更新状态确保資料一致性
       setRecords(prevRecords => 
         prevRecords.map(record => 
           record._id === recordId 
@@ -112,14 +112,14 @@ export default function CheckPage() {
     }
   };
 
-  // 当选择的日期改变时，获取对应的记录
+  // 当選擇的日期改变时，獲取对应的記錄
   useEffect(() => {
     if (selectedDate) {
       fetchRecordsByDate(selectedDate);
     }
   }, [selectedDate]);
 
-  // 格式化显示日期
+  // 格式化顯示日期
   const formatDisplayDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('zh-TW', {
@@ -133,13 +133,13 @@ export default function CheckPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        {/* 页面标题 */}
+        {/* 頁面標題 */}
         <div className="px-6 py-4 border-b border-gray-200">
           <h1 className="text-2xl font-bold text-gray-900">點名記錄</h1>
           <p className="text-sm text-gray-600 mt-1">查看指定日期的出席記錄</p>
         </div>
 
-        {/* 日期选择器 */}
+        {/* 日期選擇器 */}
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center space-x-4">
             <label htmlFor="date-picker" className="text-sm font-medium text-gray-700">
@@ -160,7 +160,7 @@ export default function CheckPage() {
           </div>
         </div>
 
-        {/* 记录内容 */}
+        {/* 記錄内容 */}
         <div className="p-6">
           {loading && (
             <div className="flex justify-center items-center py-8">
