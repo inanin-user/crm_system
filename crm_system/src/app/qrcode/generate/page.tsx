@@ -22,6 +22,7 @@ export default function QRCodeGeneratePage() {
   const [currentNumber, setCurrentNumber] = useState('0001');
   const [regionCode, setRegionCode] = useState('');
   const [productDescription, setProductDescription] = useState('');
+  const [customProductDescription, setCustomProductDescription] = useState('');
   const [price, setPrice] = useState<number | ''>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -68,7 +69,10 @@ export default function QRCodeGeneratePage() {
 
   // 生成二維碼
   const generateQRCode = async () => {
-    if (!regionCode || !productDescription || price === '' || price < 0) {
+    // 確定最終的產品描述（如果選擇"其他"，使用自定義輸入）
+    const finalProductDescription = productDescription === '其他' ? customProductDescription : productDescription;
+
+    if (!regionCode || !finalProductDescription || price === '' || price < 0) {
       alert('請填寫所有必填字段，且價格不能為負數');
       return;
     }
@@ -89,7 +93,7 @@ export default function QRCodeGeneratePage() {
         },
         body: JSON.stringify({
           regionCode,
-          productDescription,
+          productDescription: finalProductDescription,
           price: Number(price),
           createdBy: user.username,
         }),
@@ -259,9 +263,9 @@ export default function QRCodeGeneratePage() {
                 required
               >
                 <option value="">請選擇地區</option>
-                <option value="WC">WC</option>
-                <option value="WTS">WTS</option>
-                <option value="SM">SM</option>
+                <option value="WC">WC-灣仔</option>
+                <option value="WTS">WTS-黃大仙</option>
+                <option value="SM">SM-石門</option>
               </select>
             </div>
 
@@ -272,14 +276,30 @@ export default function QRCodeGeneratePage() {
               </label>
               <select
                 value={productDescription}
-                onChange={(e) => setProductDescription(e.target.value)}
+                onChange={(e) => {
+                  setProductDescription(e.target.value);
+                  if (e.target.value !== '其他') {
+                    setCustomProductDescription('');
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               >
                 <option value="">請選擇產品</option>
                 <option value="奶昔">奶昔</option>
                 <option value="跳舞">跳舞</option>
+                <option value="其他">其他</option>
               </select>
+              {productDescription === '其他' && (
+                <input
+                  type="text"
+                  value={customProductDescription}
+                  onChange={(e) => setCustomProductDescription(e.target.value)}
+                  placeholder="請輸入產品描述"
+                  className="w-full px-3 py-2 mt-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              )}
             </div>
 
             {/* 價格 */}
