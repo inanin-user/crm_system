@@ -2,13 +2,13 @@ import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IAccount extends Document {
-  username: string;          // 用户名
-  password: string;          // 密码 (加密后，用于验证)
-  displayPassword: string;   // 明文密码 (用于管理界面显示)
-  role: 'admin' | 'user' | 'trainer' | 'member' | 'regular-member' | 'premium-member';    // 角色：管理员、普通用户、教练、会员、普通会员、星级会员
-  isActive: boolean;         // 账号是否激活
-  locations: string[];       // 地区权限：['灣仔', '黃大仙', '石門']
-  lastLogin?: Date;          // 最后登录时间
+  username: string;          // 用戶名
+  password: string;          // 密碼 (加密後，用於驗證)
+  displayPassword: string;   // 明文密碼 (用於管理界面顯示)
+  role: 'admin' | 'user' | 'trainer' | 'member' | 'regular-member' | 'premium-member';    // 角色：管理員、普通用戶、教練、會員、普通會員、星級會員
+  isActive: boolean;         // 賬號是否激活
+  locations: string[];       // 地區權限：['灣仔', '黃大仙', '石門']
+  lastLogin?: Date;          // 最後登錄時間
   
   // 会员专用字段
   memberName?: string;       // 会员真实姓名

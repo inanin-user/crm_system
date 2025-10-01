@@ -1,8 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ICounter extends Document {
-  _id: string;                  // 计数器名称（例如: 'qrcode_number'）
-  seq: number;                  // 当前序列号
+  _id: string;                  // 計數器名稱（例如: 'qrcode_number'）
+  seq: number;                  // 當前序列號
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,8 +16,8 @@ const CounterSchema: Schema = new Schema({
     type: Number,
     required: true,
     default: 0,
-    min: [0, '序列号不能为负数'],
-    max: [9999, '序列号不能超过9999']
+    min: [0, '序列號不能為負數'],
+    max: [9999, '序列號不能超過9999']
   }
 }, {
   timestamps: true,
@@ -30,7 +30,7 @@ interface ICounterModel extends mongoose.Model<ICounter> {
   getCurrentSequence(name: string): Promise<number>;
 }
 
-// 静态方法：获取下一个序列号
+// 靜態方法：獲取下一個序列號
 CounterSchema.statics.getNextSequence = async function(name: string): Promise<number> {
   const counter = await this.findByIdAndUpdate(
     name,
@@ -38,7 +38,7 @@ CounterSchema.statics.getNextSequence = async function(name: string): Promise<nu
     { new: true, upsert: true }
   );
 
-  // 如果超过9999，重置为1
+  // 如果超過9999，重置為1
   if (counter.seq > 9999) {
     await this.findByIdAndUpdate(name, { seq: 1 });
     return 1;
@@ -47,13 +47,13 @@ CounterSchema.statics.getNextSequence = async function(name: string): Promise<nu
   return counter.seq;
 };
 
-// 静态方法：获取当前序列号（不增加）
+// 靜態方法：獲取當前序列號（不增加）
 CounterSchema.statics.getCurrentSequence = async function(name: string): Promise<number> {
   const counter = await this.findById(name);
   return counter ? counter.seq : 0;
 };
 
-// 删除现有模型（如果存在）并重新创建
+// 刪除現有模型（如果存在）並重新創建
 if (mongoose.models.Counter) {
   delete mongoose.models.Counter;
 }
