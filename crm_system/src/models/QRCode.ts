@@ -4,7 +4,7 @@ export interface IQRCode extends Document {
   qrCodeNumber: string;         // 二維碼編號 (格式: 0001-9999)
   regionCode: 'WC' | 'WTS' | 'SM';     // 地區編號
   regionName: 'WC' | 'WTS' | 'SM';     // 地區名稱（對應中文）
-  productDescription: '奶昔' | '跳舞';   // 產品描述
+  productDescription: string;   // 產品描述（允許自定義）
   price: number;                // 價格
   qrCodeData: string;           // 二維碼的數據內容
   qrCodeImage?: string;         // 二維碼圖片的Base64編碼或URL
@@ -34,8 +34,9 @@ const QRCodeSchema: Schema = new Schema({
   },
   productDescription: {
     type: String,
-    enum: ['奶昔', '跳舞'],
-    required: [true, '請選擇產品描述']
+    required: [true, '請提供產品描述'],
+    trim: true,
+    maxlength: [100, '產品描述不能超過100個字符']
   },
   price: {
     type: Number,

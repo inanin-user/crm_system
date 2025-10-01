@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface QRCodeRecord {
   _id: string;
@@ -72,8 +73,25 @@ export default function QRCodeGeneratePage() {
     // 確定最終的產品描述（如果選擇"其他"，使用自定義輸入）
     const finalProductDescription = productDescription === '其他' ? customProductDescription : productDescription;
 
-    if (!regionCode || !finalProductDescription || price === '' || price < 0) {
-      alert('請填寫所有必填字段，且價格不能為負數');
+    // 驗證必填字段
+    if (!regionCode) {
+      alert('請選擇地區編號');
+      return;
+    }
+
+    if (!productDescription) {
+      alert('請選擇產品描述');
+      return;
+    }
+
+    // 如果選擇了"其他"，檢查是否有輸入自定義內容
+    if (productDescription === '其他' && !customProductDescription.trim()) {
+      alert('請輸入自定義的產品描述');
+      return;
+    }
+
+    if (price === '' || price < 0) {
+      alert('請輸入有效的價格（不能為負數）');
       return;
     }
 
@@ -86,21 +104,26 @@ export default function QRCodeGeneratePage() {
       setIsGenerating(true);
 
       // 調用API創建二維碼記錄
+      const requestBody = {
+        regionCode,
+        productDescription: finalProductDescription.trim(),
+        price: Number(price),
+        createdBy: user.username,
+      };
+
+      console.log('發送請求:', requestBody); // 調試信息
+
       const response = await fetch('/api/qrcode', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          regionCode,
-          productDescription: finalProductDescription,
-          price: Number(price),
-          createdBy: user.username,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('API 錯誤:', errorData); // 調試信息
         throw new Error(errorData.message || '創建二維碼失敗');
       }
 
@@ -108,7 +131,7 @@ export default function QRCodeGeneratePage() {
       if (data.success) {
         // 生成二維碼圖片並直接下載PDF
         const qrCodeDataURL = await QRCode.toDataURL(data.data.qrCodeData, {
-          width: 256,
+          width: 512,
           margin: 2,
           color: {
             dark: '#000000',
@@ -116,8 +139,8 @@ export default function QRCodeGeneratePage() {
           }
         });
 
-        // 直接下載PDF
-        downloadPDF(qrCodeDataURL);
+        // 直接下載PDF (現在是異步的)
+        await downloadPDF(qrCodeDataURL);
 
         // 更新當前編號
         await fetchCurrentNumber();
@@ -132,23 +155,76 @@ export default function QRCodeGeneratePage() {
     }
   };
 
+  // 獲取校區標題
+  const getCampusTitle = (code: string) => {
+    const campusTitles: Record<string, string> = {
+      'WC': '灣仔校區',
+      'WTS': '黃大仙校區',
+      'SM': '石門校區'
+    };
+    return campusTitles[code] || '校區';
+  };
+
   // 下載PDF
-  const downloadPDF = (qrCodeImage: string, record?: QRCodeRecord) => {
-    const pdf = new jsPDF();
+  const downloadPDF = async (qrCodeImage: string, record?: QRCodeRecord) => {
+    // 獲取當前的地區編號和產品描述
+    const currentRegionCode = record ? record.regionCode : regionCode;
+    const currentProductDesc = record ? record.productDescription : (productDescription === '其他' ? customProductDescription : productDescription);
+    const title = getCampusTitle(currentRegionCode);
 
-    // 添加二維碼圖片 (大幅放大尺寸，移除所有文字)
-    const imgWidth = 160; // 大幅增加到160mm
-    const imgHeight = 160; // 大幅增加到160mm
-    const x = (210 - imgWidth) / 2; // A4頁面寬度210mm，居中
-    const y = (297 - imgHeight) / 2; // A4頁面高度297mm，垂直居中
+    // 創建臨時的 HTML 容器
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.width = '794px'; // A4 width in pixels at 96 DPI
+    container.style.height = '1123px'; // A4 height in pixels at 96 DPI
+    container.style.backgroundColor = 'white';
+    container.style.padding = '60px';
+    container.style.fontFamily = 'Arial, "Microsoft JhengHei", "微軟正黑體", sans-serif';
 
-    pdf.addImage(qrCodeImage, 'PNG', x, y, imgWidth, imgHeight);
+    container.innerHTML = `
+      <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center;">
+        <h1 style="font-size: 48px; font-weight: bold; margin: 0 0 40px 0; text-align: center; color: #333;">${title}</h1>
+        <div style="width: 520px; height: 520px; margin: 0 0 40px 0;">
+          <img src="${qrCodeImage}" style="width: 100%; height: 100%; object-fit: contain;" />
+        </div>
+        <p style="font-size: 32px; margin: 0; text-align: center; color: #333;">產品：${currentProductDesc}</p>
+      </div>
+    `;
 
-    // 下載PDF (不包含任何文字內容)
-    const filename = record
-      ? `QRCode_${record.qrCodeNumber}.pdf`
-      : `QRCode_${currentNumber}.pdf`;
-    pdf.save(filename);
+    document.body.appendChild(container);
+
+    try {
+      // 使用 html2canvas 渲染容器
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+
+      // 創建 PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // 將 canvas 轉換為圖片並添加到 PDF
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+      // 下載PDF
+      const filename = record
+        ? `QRCode_${record.qrCodeNumber}.pdf`
+        : `QRCode_${currentNumber}.pdf`;
+      pdf.save(filename);
+    } finally {
+      // 清理臨時容器
+      document.body.removeChild(container);
+    }
   };
 
 
