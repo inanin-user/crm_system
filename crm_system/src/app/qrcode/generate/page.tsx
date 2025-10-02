@@ -69,6 +69,14 @@ export default function QRCodeGeneratePage() {
     fetchCurrentNumber();
   }, []);
 
+  // 重置表單
+  const resetForm = () => {
+    setRegionCode('');
+    setProductDescription('');
+    setCustomProductDescription('');
+    setPrice('');
+  };
+
   // 生成二維碼
   const generateQRCode = async () => {
     // 確定最終的產品描述（如果選擇"其他"，使用自定義輸入）
@@ -394,7 +402,13 @@ export default function QRCodeGeneratePage() {
           </div>
 
           {/* 生成按鈕 */}
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex justify-center gap-4">
+            <button
+              onClick={resetForm}
+              className="px-6 py-2 rounded-lg font-medium transition-colors bg-gray-600 text-white hover:bg-gray-700"
+            >
+              重置
+            </button>
             <button
               onClick={generateQRCode}
               disabled={isGenerating}
