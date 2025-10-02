@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { getPDFConfig } from '@/config/pdfTemplateConfig';
 
 interface QRCodeRecord {
   _id: string;
@@ -167,23 +168,34 @@ export default function QRCodeGeneratePage() {
     const currentProductDesc = record ? record.productDescription : (productDescription === '其他' ? customProductDescription : productDescription);
     const title = getCampusTitle(currentRegionCode);
 
+    // 獲取 PDF 配置
+    const config = getPDFConfig('default');
+
     // 創建臨時的 HTML 容器
     const container = document.createElement('div');
     container.style.position = 'absolute';
     container.style.left = '-9999px';
-    container.style.width = '794px'; // A4 width in pixels at 96 DPI
-    container.style.height = '1123px'; // A4 height in pixels at 96 DPI
-    container.style.backgroundColor = 'white';
-    container.style.padding = '60px';
-    container.style.fontFamily = 'Arial, "Microsoft JhengHei", "微軟正黑體", sans-serif';
+    container.style.width = config.page.width;
+    container.style.height = config.page.height;
+    container.style.backgroundColor = config.page.backgroundColor;
+    container.style.padding = config.page.padding;
+    container.style.fontFamily = config.fonts.family;
+
+    // 生成副標題 HTML
+    const subtitlesHTML = config.content.subtitles
+      .map(text => `<p style="font-size: ${config.fonts.subtitle.size}; font-weight: ${config.fonts.subtitle.weight}; color: ${config.fonts.subtitle.color}; margin: 0; text-align: center; line-height: ${config.fonts.subtitle.lineHeight};">${text}</p>`)
+      .join('');
 
     container.innerHTML = `
       <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center;">
-        <h1 style="font-size: 48px; font-weight: bold; margin: 0 0 40px 0; text-align: center; color: #333;">${title}</h1>
-        <div style="width: 520px; height: 520px; margin: 0 0 40px 0;">
+        <h1 style="font-size: ${config.fonts.title.size}; font-weight: ${config.fonts.title.weight}; margin: 0 0 ${config.fonts.title.marginBottom}; text-align: center; color: ${config.fonts.title.color};">${title}</h1>
+        <div style="margin-bottom: ${config.fonts.subtitle.marginBottom};">
+          ${subtitlesHTML}
+        </div>
+        <div style="width: ${config.qrCode.width}; height: ${config.qrCode.height}; margin: 0 0 ${config.qrCode.marginBottom} 0;">
           <img src="${qrCodeImage}" style="width: 100%; height: 100%; object-fit: contain;" />
         </div>
-        <p style="font-size: 32px; margin: 0; text-align: center; color: #333;">產品：${currentProductDesc}</p>
+        <p style="font-size: ${config.fonts.product.size}; font-weight: ${config.fonts.product.weight}; margin: 0; text-align: center; color: ${config.fonts.product.color};">${config.content.productPrefix}${currentProductDesc}</p>
       </div>
     `;
 
