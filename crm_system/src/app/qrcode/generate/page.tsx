@@ -166,6 +166,7 @@ export default function QRCodeGeneratePage() {
     // 獲取當前的地區編號和產品描述
     const currentRegionCode = record ? record.regionCode : regionCode;
     const currentProductDesc = record ? record.productDescription : (productDescription === '其他' ? customProductDescription : productDescription);
+    const currentPrice = record ? record.price : (price === '' ? 0 : Number(price));
     const title = getCampusTitle(currentRegionCode);
 
     // 獲取 PDF 配置
@@ -196,6 +197,7 @@ export default function QRCodeGeneratePage() {
           <img src="${qrCodeImage}" style="width: 100%; height: 100%; object-fit: contain;" />
         </div>
         <p style="font-size: ${config.fonts.product.size}; font-weight: ${config.fonts.product.weight}; margin: 0; text-align: center; color: ${config.fonts.product.color};">${config.content.productPrefix}${currentProductDesc}</p>
+        <p style="font-size: ${config.fonts.product.size}; font-weight: ${config.fonts.product.weight}; margin: 0; text-align: center; color: ${config.fonts.product.color};">價格：$${currentPrice.toFixed(2)}</p>
       </div>
     `;
 
