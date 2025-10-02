@@ -85,7 +85,7 @@ export const defaultPDFConfig: PDFTemplateConfig = {
   },
   content: {
     subtitles: [
-      '歡迎使用自助落單會自動計算',
+      '自動計算閣下之代幣',
       '落單前請先掃二維碼'
     ],
     productPrefix: '產品：',

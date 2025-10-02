@@ -154,9 +154,9 @@ export default function QRCodeGeneratePage() {
   // 獲取校區標題
   const getCampusTitle = (code: string) => {
     const campusTitles: Record<string, string> = {
-      'WC': '灣仔校區',
-      'WTS': '黃大仙校區',
-      'SM': '石門校區'
+      'WC': '灣仔校舍',
+      'WTS': '黃大仙校舍',
+      'SM': '石門校舍'
     };
     return campusTitles[code] || '校區';
   };
