@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import QRCode from 'qrcode';
+import CustomSelect from '@/app/components/CustomSelect';
 
 interface Member {
   _id: string;
@@ -403,21 +404,19 @@ export default function AddAttendancePage() {
             <label htmlFor="activity" className="block text-sm font-medium text-gray-700 mb-2">
               運動班選項 <span className="text-red-500">*</span>
             </label>
-            <select
-              id="activityId"
-              name="activityId"
+            <CustomSelect
               value={formData.activityId}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              onChange={(value) => handleChange({ target: { name: 'activityId', value } } as any)}
+              options={[
+                { value: '', label: '請選擇運動班' },
+                ...activities.map((activity) => ({
+                  value: activity._id,
+                  label: `${activity.activityName} - ${activity.trainerName} (${new Date(activity.startTime).toLocaleDateString('zh-CN')})`,
+                })),
+              ]}
+              placeholder="請選擇運動班"
               required
-            >
-              <option value="">請選擇運動班</option>
-              {activities.map((activity) => (
-                <option key={activity._id} value={activity._id}>
-                  {activity.activityName} - {activity.trainerName} ({new Date(activity.startTime).toLocaleDateString('zh-CN')})
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           {/* QR 碼生成按鈕 */}

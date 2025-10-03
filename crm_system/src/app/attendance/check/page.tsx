@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
+import CustomSelect from '@/app/components/CustomSelect';
 
 interface AttendanceRecord {
   _id: string;
@@ -245,52 +246,31 @@ export default function CheckPage() {
                           {record.location}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <div className="relative inline-block">
-                            <select
+                          <div className="relative inline-block w-20">
+                            <CustomSelect
                               value={record.status || '出席'}
-                              onChange={(e) => updateStatus(record._id, e.target.value)}
+                              onChange={(value) => updateStatus(record._id, value)}
+                              options={[
+                                { value: '出席', label: '出席' },
+                                { value: '早退', label: '早退' },
+                              ]}
                               disabled={updatingStatus === record._id}
                               className={`
-                                appearance-none
-                                relative
-                                w-16
-                                pl-2
-                                pr-5
-                                py-2
-                                border
-                                rounded-lg
-                                text-sm
-                                font-medium
-                                transition-all
-                                duration-200
-                                cursor-pointer
-                                focus:outline-none
-                                focus:ring-2
-                                focus:ring-offset-1
-                                ${record.status === '早退' 
-                                  ? 'border-orange-200 bg-orange-50 text-orange-700 focus:ring-orange-500 hover:bg-orange-100' 
-                                  : 'border-green-200 bg-green-50 text-green-700 focus:ring-green-500 hover:bg-green-100'
+                                ${record.status === '早退'
+                                  ? '[&_button]:border-orange-200 [&_button]:bg-orange-50 [&_button]:text-orange-700 [&_button]:hover:bg-orange-100'
+                                  : '[&_button]:border-green-200 [&_button]:bg-green-50 [&_button]:text-green-700 [&_button]:hover:bg-green-100'
                                 }
-                                ${updatingStatus === record._id 
-                                  ? 'opacity-60 cursor-wait' 
-                                  : 'hover:shadow-sm'
+                                ${updatingStatus === record._id
+                                  ? '[&_button]:opacity-60 [&_button]:cursor-wait'
+                                  : '[&_button]:hover:shadow-sm'
                                 }
                               `}
-                            >
-                              <option value="出席">出席</option>
-                              <option value="早退">早退</option>
-                            </select>
-                            
-                            {/* 自定义下拉箭头 */}
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                              {updatingStatus === record._id ? (
+                            />
+                            {updatingStatus === record._id && (
+                              <div className="absolute inset-y-0 right-8 flex items-center pointer-events-none">
                                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
-                              ) : (
-                                <svg className="h-4 w-4 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>

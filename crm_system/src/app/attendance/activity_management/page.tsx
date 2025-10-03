@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
+import CustomSelect from '@/app/components/CustomSelect';
 
 interface Activity {
   _id: string;
@@ -410,21 +411,19 @@ export default function ActivityManagementPage() {
                   <label htmlFor="trainerId" className="block text-sm font-medium text-gray-700 mb-1">
                     負責教練 <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    id="trainerId"
-                    name="trainerId"
+                  <CustomSelect
                     value={addFormData.trainerId}
-                    onChange={handleAddFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(value) => handleAddFormChange({ target: { name: 'trainerId', value } } as any)}
+                    options={[
+                      { value: '', label: '選擇教練' },
+                      ...trainers.map((trainer) => ({
+                        value: trainer._id,
+                        label: trainer.username,
+                      })),
+                    ]}
+                    placeholder="選擇教練"
                     required
-                  >
-                    <option value="">選擇教練</option>
-                    {trainers.map((trainer) => (
-                      <option key={trainer._id} value={trainer._id}>
-                        {trainer.username}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               </div>
 
@@ -464,19 +463,18 @@ export default function ActivityManagementPage() {
                 <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
                   活動地點 <span className="text-red-500">*</span>
                 </label>
-                <select
-                  id="location"
-                  name="location"
+                <CustomSelect
                   value={addFormData.location}
-                  onChange={handleAddFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(value) => handleAddFormChange({ target: { name: 'location', value } } as any)}
+                  options={[
+                    { value: '', label: '選擇地點' },
+                    { value: '灣仔', label: '灣仔' },
+                    { value: '黃大仙', label: '黃大仙' },
+                    { value: '石門', label: '石門' },
+                  ]}
+                  placeholder="選擇地點"
                   required
-                >
-                  <option value="">選擇地點</option>
-                  <option value="灣仔">灣仔</option>
-                  <option value="黃大仙">黃大仙</option>
-                  <option value="石門">石門</option>
-                </select>
+                />
               </div>
 
               <div>

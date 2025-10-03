@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import CustomSelect from '@/app/components/CustomSelect';
 
 interface AddAccountModalProps {
   isOpen: boolean;
@@ -242,20 +243,19 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
                   <label htmlFor="trainerIntroducer" className="block text-sm font-medium text-gray-700 mb-2">
                     教練介紹人 <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    id="trainerIntroducer"
+                  <CustomSelect
                     value={formData.trainerIntroducer}
-                    onChange={(e) => setFormData({ ...formData, trainerIntroducer: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onChange={(value) => setFormData({ ...formData, trainerIntroducer: value })}
+                    options={[
+                      { value: '', label: '請選擇教練介紹人' },
+                      ...trainers.map((trainer) => ({
+                        value: trainer.username,
+                        label: trainer.username,
+                      })),
+                    ]}
+                    placeholder="請選擇教練介紹人"
                     required
-                  >
-                    <option value="">請選擇教練介紹人</option>
-                    {trainers.map((trainer) => (
-                      <option key={trainer._id} value={trainer.username}>
-                        {trainer.username}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
                 <div>
@@ -299,16 +299,16 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
               角色 <span className="text-red-500">*</span>
             </label>
             {isMember ? (
-              <select
-                id="role"
+              <CustomSelect
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(value) => setFormData({ ...formData, role: value })}
+                options={[
+                  { value: 'regular-member', label: '會員-普通會員' },
+                  { value: 'premium-member', label: '會員-星級會員' },
+                ]}
+                placeholder="請選擇會員類型"
                 required
-              >
-                <option value="regular-member">會員-普通會員</option>
-                <option value="premium-member">會員-星級會員</option>
-              </select>
+              />
             ) : (
               <input
                 type="text"

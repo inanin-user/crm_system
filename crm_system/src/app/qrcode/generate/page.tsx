@@ -7,6 +7,7 @@ import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { getPDFConfig } from '@/config/pdfTemplateConfig';
+import CustomSelect from '@/app/components/CustomSelect';
 
 interface QRCodeRecord {
   _id: string;
@@ -399,17 +400,18 @@ export default function QRCodeGeneratePage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 地區編號 <span className="text-red-500">*</span>
               </label>
-              <select
+              <CustomSelect
                 value={regionCode}
-                onChange={(e) => setRegionCode(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={setRegionCode}
+                options={[
+                  { value: '', label: '請選擇地區' },
+                  { value: 'WC', label: 'WC-灣仔' },
+                  { value: 'WTS', label: 'WTS-黃大仙' },
+                  { value: 'SM', label: 'SM-石門' },
+                ]}
+                placeholder="請選擇地區"
                 required
-              >
-                <option value="">請選擇地區</option>
-                <option value="WC">WC-灣仔</option>
-                <option value="WTS">WTS-黃大仙</option>
-                <option value="SM">SM-石門</option>
-              </select>
+              />
             </div>
 
             {/* 產品描述 */}
