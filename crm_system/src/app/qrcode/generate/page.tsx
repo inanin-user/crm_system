@@ -31,6 +31,8 @@ export default function QRCodeGeneratePage() {
   const [qrCodeHistory, setQRCodeHistory] = useState<QRCodeRecord[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<QRCodeRecord | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [customProducts, setCustomProducts] = useState<string[]>([]);
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
 
   // 獲取當前編號
   const fetchCurrentNumber = async () => {
@@ -67,7 +69,59 @@ export default function QRCodeGeneratePage() {
 
   useEffect(() => {
     fetchCurrentNumber();
+    // 從 localStorage 讀取自定義產品選項
+    const savedProducts = localStorage.getItem('customProducts');
+    if (savedProducts) {
+      try {
+        setCustomProducts(JSON.parse(savedProducts));
+      } catch (error) {
+        console.error('讀取自定義產品失敗:', error);
+      }
+    }
   }, []);
+
+  // 點擊外部關閉下拉選單
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showProductDropdown && !target.closest('.product-dropdown-container')) {
+        setShowProductDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProductDropdown]);
+
+  // 刪除自定義產品選項
+  const deleteCustomProduct = (productToDelete: string) => {
+    const updatedProducts = customProducts.filter(p => p !== productToDelete);
+    setCustomProducts(updatedProducts);
+    localStorage.setItem('customProducts', JSON.stringify(updatedProducts));
+
+    // 如果當前選中的是被刪除的選項，則重置選擇
+    if (productDescription === productToDelete) {
+      setProductDescription('');
+    }
+  };
+
+  // 添加新的自定義產品選項
+  const addCustomProduct = (newProduct: string) => {
+    const trimmedProduct = newProduct.trim();
+    if (!trimmedProduct) return;
+
+    // 檢查是否已存在（包括預設選項和自定義選項）
+    const defaultProducts = ['奶昔', '跳舞'];
+    if (defaultProducts.includes(trimmedProduct) || customProducts.includes(trimmedProduct)) {
+      return;
+    }
+
+    const updatedProducts = [...customProducts, trimmedProduct];
+    setCustomProducts(updatedProducts);
+    localStorage.setItem('customProducts', JSON.stringify(updatedProducts));
+  };
 
   // 重置表單
   const resetForm = () => {
@@ -133,6 +187,11 @@ export default function QRCodeGeneratePage() {
 
       const data = await response.json();
       if (data.success) {
+        // 如果使用了"其他"選項，將新產品添加到自定義列表
+        if (productDescription === '其他' && customProductDescription.trim()) {
+          addCustomProduct(customProductDescription.trim());
+        }
+
         // 生成二維碼圖片並直接下載PDF
         const qrCodeDataURL = await QRCode.toDataURL(data.data.qrCodeData, {
           width: 512,
@@ -148,6 +207,9 @@ export default function QRCodeGeneratePage() {
 
         // 更新當前編號
         await fetchCurrentNumber();
+
+        // 重置表單（但保留自定義產品列表）
+        resetForm();
 
         alert('二維碼PDF已下載！');
       }
@@ -351,26 +413,113 @@ export default function QRCodeGeneratePage() {
             </div>
 
             {/* 產品描述 */}
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 產品描述 <span className="text-red-500">*</span>
               </label>
-              <select
-                value={productDescription}
-                onChange={(e) => {
-                  setProductDescription(e.target.value);
-                  if (e.target.value !== '其他') {
-                    setCustomProductDescription('');
-                  }
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              >
-                <option value="">請選擇產品</option>
-                <option value="奶昔">奶昔</option>
-                <option value="跳舞">跳舞</option>
-                <option value="其他">其他</option>
-              </select>
+              <div className="relative product-dropdown-container">
+                <button
+                  type="button"
+                  onClick={() => setShowProductDropdown(!showProductDropdown)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left bg-white flex items-center justify-between"
+                >
+                  <span className={productDescription ? 'text-gray-900' : 'text-gray-500'}>
+                    {productDescription || '請選擇產品'}
+                  </span>
+                  <svg
+                    className={`w-5 h-5 text-gray-400 transition-transform ${showProductDropdown ? 'transform rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showProductDropdown && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-gray-500"
+                      onClick={() => {
+                        setProductDescription('');
+                        setCustomProductDescription('');
+                        setShowProductDropdown(false);
+                      }}
+                    >
+                      請選擇產品
+                    </div>
+                    <div
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        setProductDescription('奶昔');
+                        setCustomProductDescription('');
+                        setShowProductDropdown(false);
+                      }}
+                    >
+                      奶昔
+                    </div>
+                    <div
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        setProductDescription('跳舞');
+                        setCustomProductDescription('');
+                        setShowProductDropdown(false);
+                      }}
+                    >
+                      跳舞
+                    </div>
+                    {customProducts.map((product) => (
+                      <div
+                        key={product}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between group"
+                      >
+                        <span
+                          onClick={() => {
+                            setProductDescription(product);
+                            setCustomProductDescription('');
+                            setShowProductDropdown(false);
+                          }}
+                          className="flex-1"
+                        >
+                          {product}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteCustomProduct(product);
+                          }}
+                          className="flex items-center justify-center w-5 h-5 rounded-full hover:bg-red-100 transition-colors ml-2"
+                          title="刪除此選項"
+                        >
+                          <svg
+                            className="w-3.5 h-3.5 text-gray-400 hover:text-red-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                    <div
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-t border-gray-200"
+                      onClick={() => {
+                        setProductDescription('其他');
+                        setShowProductDropdown(false);
+                      }}
+                    >
+                      其他
+                    </div>
+                  </div>
+                )}
+              </div>
               {productDescription === '其他' && (
                 <input
                   type="text"
