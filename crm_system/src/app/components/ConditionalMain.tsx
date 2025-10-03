@@ -42,7 +42,7 @@ export default function ConditionalMain({ children }: ConditionalMainProps) {
     if (isMobile) {
       return 'ml-0'; // 移动端不需要边距
     }
-    return isCollapsed ? 'ml-16' : 'ml-48';
+    return isCollapsed ? 'ml-16' : 'ml-56';
   };
   
   // 普通页面：使用容器约束并添加侧边栏边距

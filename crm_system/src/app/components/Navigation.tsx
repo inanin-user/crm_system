@@ -192,7 +192,7 @@ export default function Navigation() {
               : 'translate-x-0 w-72 sm:w-64'
             : isCollapsed
               ? 'w-16'
-              : 'w-48'
+              : 'w-56'
         }`}
         style={{ 
           transform: 'translateZ(0)',
