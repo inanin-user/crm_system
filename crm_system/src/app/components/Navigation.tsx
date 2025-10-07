@@ -22,67 +22,6 @@ export default function Navigation() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const accountTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 觸摸手勢支持
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const [touchStartTime, setTouchStartTime] = useState<number | null>(null);
-
-  // 處理觸摸開始
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isMobile) return;
-
-    // 如果觸摸的是按鈕或連結，不處理滑動手勢
-    const target = e.target as HTMLElement;
-    if (target.closest('button, a, [role="button"], input, select, textarea')) {
-      return;
-    }
-
-    setTouchStart(e.targetTouches[0].clientX);
-    setTouchStartTime(Date.now());
-  };
-
-  // 處理觸摸移動
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isMobile || !touchStart) return;
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  // 處理觸摸結束，檢測滑動手勢
-  const handleTouchEnd = () => {
-    if (!isMobile || !touchStart || !touchEnd || !touchStartTime) return;
-
-    const distance = touchStart - touchEnd;
-    const timeDiff = Date.now() - touchStartTime;
-
-    // 只有在快速滑動時才算作手勢（小於 300ms）
-    // 並且移動距離足夠大（超過 80px）
-    if (timeDiff > 300) {
-      // 重置觸摸狀態
-      setTouchStart(null);
-      setTouchEnd(null);
-      setTouchStartTime(null);
-      return;
-    }
-
-    const isLeftSwipe = distance > 80;
-    const isRightSwipe = distance < -80;
-
-    // 如果在屏幕左邊緣開始滑動且向右滑動，打開菜單
-    if (touchStart < 50 && isRightSwipe && isCollapsed) {
-      toggleCollapse();
-    }
-
-    // 如果菜單打開且向左滑動，關閉菜單
-    if (isLeftSwipe && !isCollapsed) {
-      toggleCollapse();
-    }
-
-    // 重置觸摸狀態
-    setTouchStart(null);
-    setTouchEnd(null);
-    setTouchStartTime(null);
-  };
-
   // 监听路径变化
   useEffect(() => {
     // 当路径变化时，自动展开相关的菜单
@@ -227,43 +166,22 @@ export default function Navigation() {
         </div>
       )}
 
-      {/* 移動端觸摸手勢檢測區域 - 只在左邊緣 */}
-      {isMobile && isCollapsed && (
-        <div
-          className="fixed left-0 top-0 bottom-0 z-30"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          style={{
-            width: '50px',
-            pointerEvents: 'auto'
-          }}
-        />
-      )}
-
       {/* 侧边导航栏 */}
       <nav
-        className={`fixed left-0 top-0 h-full bg-white shadow-2xl border-r border-gray-200 z-50 transition-all duration-300 ease-in-out ${
+        className={`fixed z-50 transition-all duration-300 ease-in-out bg-white ${
           isMobile
             ? isCollapsed
-              ? '-translate-x-full w-64'
-              : 'translate-x-0 w-72 sm:w-64'
+              ? 'hidden'
+              : 'inset-0 top-16 overflow-y-auto'
             : isCollapsed
-              ? 'w-16'
-              : 'w-56'
+              ? 'left-0 top-0 h-full w-16 shadow-2xl border-r border-gray-200'
+              : 'left-0 top-0 h-full w-56 shadow-2xl border-r border-gray-200'
         }`}
-        style={{ 
+        style={{
           transform: 'translateZ(0)',
           backfaceVisibility: 'hidden',
-          WebkitBackfaceVisibility: 'hidden',
-          // 移動端時添加更強的陰影效果
-          ...(isMobile && !isCollapsed && {
-            boxShadow: '4px 0 20px rgba(0, 0, 0, 0.15), 0 0 40px rgba(0, 0, 0, 0.1)'
-          })
+          WebkitBackfaceVisibility: 'hidden'
         }}
-        onTouchStart={isMobile ? handleTouchStart : undefined}
-        onTouchMove={isMobile ? handleTouchMove : undefined}
-        onTouchEnd={isMobile ? handleTouchEnd : undefined}
       >
         <div className="flex flex-col h-full">
           {/* 顶部区域 - Logo和折叠按钮 */}
@@ -886,41 +804,6 @@ export default function Navigation() {
           </div>
         </div>
       </nav>
-
-      {/* 移动端遮罩层 - 變暗半透明背景，凸顯菜單欄 */}
-      {isMobile && !isCollapsed && (
-        <div
-          className="fixed inset-0 z-40 transition-all duration-300"
-          onClick={(e) => {
-            // 只在點擊遮罩層本身時關閉，不處理來自側邊欄的事件
-            if (e.target === e.currentTarget) {
-              toggleCollapse();
-            }
-          }}
-          onTouchStart={(e) => {
-            // 添加觸摸回饋 - 稍微加深
-            if (e.target === e.currentTarget) {
-              e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-            }
-          }}
-          onTouchEnd={(e) => {
-            // 恢復原色
-            if (e.target === e.currentTarget) {
-              e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
-            }
-          }}
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            // 移除模糊效果，保持內容清晰可見
-            // backdropFilter: 移除
-            // WebkitBackdropFilter: 移除
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            // 確保在所有設備上顯示
-            opacity: 1,
-            visibility: 'visible',
-          }}
-        />
-      )}
     </>
   );
 } 
