@@ -413,7 +413,7 @@ export default function ActivityManagementPage() {
                   </label>
                   <CustomSelect
                     value={addFormData.trainerId}
-                    onChange={(value) => handleAddFormChange({ target: { name: 'trainerId', value } } as any)}
+                    onChange={(value) => handleAddFormChange({ target: { name: 'trainerId', value } } as React.ChangeEvent<HTMLSelectElement>)}
                     options={[
                       { value: '', label: '選擇教練' },
                       ...trainers.map((trainer) => ({
@@ -465,7 +465,7 @@ export default function ActivityManagementPage() {
                 </label>
                 <CustomSelect
                   value={addFormData.location}
-                  onChange={(value) => handleAddFormChange({ target: { name: 'location', value } } as any)}
+                  onChange={(value) => handleAddFormChange({ target: { name: 'location', value } } as React.ChangeEvent<HTMLSelectElement>)}
                   options={[
                     { value: '', label: '選擇地點' },
                     { value: '灣仔', label: '灣仔' },

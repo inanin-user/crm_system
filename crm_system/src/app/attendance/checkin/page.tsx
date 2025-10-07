@@ -406,7 +406,7 @@ export default function AddAttendancePage() {
             </label>
             <CustomSelect
               value={formData.activityId}
-              onChange={(value) => handleChange({ target: { name: 'activityId', value } } as any)}
+              onChange={(value) => handleChange({ target: { name: 'activityId', value } } as React.ChangeEvent<HTMLSelectElement>)}
               options={[
                 { value: '', label: '請選擇運動班' },
                 ...activities.map((activity) => ({
