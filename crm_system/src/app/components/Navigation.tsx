@@ -180,36 +180,56 @@ export default function Navigation() {
         style={{
           transform: 'translateZ(0)',
           backfaceVisibility: 'hidden',
-          WebkitBackfaceVisibility: 'hidden'
+          WebkitBackfaceVisibility: 'hidden',
+          // 確保手機端滾動流暢，不會觸發任何關閉事件
+          ...(isMobile && !isCollapsed && {
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            touchAction: 'pan-y' // 只允許垂直滾動
+          })
+        }}
+        onTouchStart={(e) => {
+          // 阻止事件冒泡，避免觸發其他觸摸處理器
+          if (isMobile) {
+            e.stopPropagation();
+          }
+        }}
+        onClick={(e) => {
+          // 阻止事件冒泡到可能的全局點擊處理器
+          if (isMobile) {
+            e.stopPropagation();
+          }
         }}
       >
         <div className="flex flex-col h-full">
-          {/* 顶部区域 - Logo和折叠按钮 */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            {!isCollapsed && (
-              <Link href="/" className="flex items-center space-x-3">
-                <div>
-                  <span className="text-lg font-bold text-gray-800">CRM 系統</span>
-                  <div className="text-xs text-gray-500">管理系統</div>
-                </div>
-              </Link>
-            )}
-            <button
-              onClick={toggleCollapse}
-              className="p-2 rounded-md hover:bg-gray-100 transition-colors"
-            >
-              <svg 
-                className={`w-5 h-5 text-gray-600 transition-transform duration-300 ${
-                  isCollapsed ? 'rotate-180' : ''
-                }`}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
+          {/* 顶部区域 - Logo和折叠按钮（只在電腦端顯示） */}
+          {!isMobile && (
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              {!isCollapsed && (
+                <Link href="/" className="flex items-center space-x-3">
+                  <div>
+                    <span className="text-lg font-bold text-gray-800">CRM 系統</span>
+                    <div className="text-xs text-gray-500">管理系統</div>
+                  </div>
+                </Link>
+              )}
+              <button
+                onClick={toggleCollapse}
+                className="p-2 rounded-md hover:bg-gray-100 transition-colors"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-            </button>
-          </div>
+                <svg
+                  className={`w-5 h-5 text-gray-600 transition-transform duration-300 ${
+                    isCollapsed ? 'rotate-180' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+              </button>
+            </div>
+          )}
 
           {/* 使用者資訊和登出按鈕区域 */}
           {!isLoading && user && (
