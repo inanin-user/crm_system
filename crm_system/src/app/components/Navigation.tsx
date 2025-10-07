@@ -168,7 +168,7 @@ export default function Navigation() {
     <>
       {/* 手機端頂部導航欄 */}
       {isMobile && (
-        <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center px-4">
+        <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-[60] flex items-center px-4">
           {/* 漢堡按鈕 */}
           <button
             onClick={toggleCollapse}
@@ -205,19 +205,16 @@ export default function Navigation() {
         </div>
       )}
 
-      {/* 移動端觸摸手勢檢測區域 */}
-      {isMobile && (
+      {/* 移動端觸摸手勢檢測區域 - 只在左邊緣 */}
+      {isMobile && isCollapsed && (
         <div
-          className="fixed inset-0 z-30 pointer-events-none"
+          className="fixed left-0 top-0 bottom-0 z-30"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           style={{
-            pointerEvents: isCollapsed ? 'auto' : 'none',
-            // 只在左邊緣 50px 內響應觸摸
-            background: isCollapsed
-              ? 'linear-gradient(to right, transparent 0px, transparent 50px, transparent 100%)'
-              : 'transparent'
+            width: '50px',
+            pointerEvents: 'auto'
           }}
         />
       )}
