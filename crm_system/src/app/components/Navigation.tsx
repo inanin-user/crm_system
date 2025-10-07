@@ -25,32 +25,53 @@ export default function Navigation() {
   // 觸摸手勢支持
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [touchStartTime, setTouchStartTime] = useState<number | null>(null);
 
   // 處理觸摸開始
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!isMobile) return;
+
+    // 如果觸摸的是按鈕或連結，不處理滑動手勢
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, [role="button"], input, select, textarea')) {
+      return;
+    }
+
     setTouchStart(e.targetTouches[0].clientX);
+    setTouchStartTime(Date.now());
   };
 
   // 處理觸摸移動
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isMobile) return;
+    if (!isMobile || !touchStart) return;
     setTouchEnd(e.targetTouches[0].clientX);
   };
 
   // 處理觸摸結束，檢測滑動手勢
   const handleTouchEnd = () => {
-    if (!isMobile || !touchStart || !touchEnd) return;
-    
+    if (!isMobile || !touchStart || !touchEnd || !touchStartTime) return;
+
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
+    const timeDiff = Date.now() - touchStartTime;
+
+    // 只有在快速滑動時才算作手勢（小於 300ms）
+    // 並且移動距離足夠大（超過 80px）
+    if (timeDiff > 300) {
+      // 重置觸摸狀態
+      setTouchStart(null);
+      setTouchEnd(null);
+      setTouchStartTime(null);
+      return;
+    }
+
+    const isLeftSwipe = distance > 80;
+    const isRightSwipe = distance < -80;
 
     // 如果在屏幕左邊緣開始滑動且向右滑動，打開菜單
     if (touchStart < 50 && isRightSwipe && isCollapsed) {
       toggleCollapse();
     }
-    
+
     // 如果菜單打開且向左滑動，關閉菜單
     if (isLeftSwipe && !isCollapsed) {
       toggleCollapse();
@@ -59,6 +80,7 @@ export default function Navigation() {
     // 重置觸摸狀態
     setTouchStart(null);
     setTouchEnd(null);
+    setTouchStartTime(null);
   };
 
   // 监听路径变化
@@ -869,14 +891,23 @@ export default function Navigation() {
       {isMobile && !isCollapsed && (
         <div
           className="fixed inset-0 z-40 transition-all duration-300"
-          onClick={toggleCollapse}
+          onClick={(e) => {
+            // 只在點擊遮罩層本身時關閉，不處理來自側邊欄的事件
+            if (e.target === e.currentTarget) {
+              toggleCollapse();
+            }
+          }}
           onTouchStart={(e) => {
             // 添加觸摸回饋 - 稍微加深
-            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            if (e.target === e.currentTarget) {
+              e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            }
           }}
           onTouchEnd={(e) => {
             // 恢復原色
-            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+            if (e.target === e.currentTarget) {
+              e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+            }
           }}
           style={{
             backgroundColor: 'rgba(0, 0, 0, 0.4)',
