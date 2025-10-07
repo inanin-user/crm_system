@@ -54,7 +54,7 @@ export default function ConditionalMain({ children }: ConditionalMainProps) {
         willChange: 'scroll-position'
       }}
     >
-      <div className={`container mx-auto px-4 py-6 ${isMobile ? 'pt-20' : ''}`}>
+      <div className={`container mx-auto px-4 py-6 ${isMobile ? 'pt-24' : ''}`}>
         {children}
       </div>
     </main>

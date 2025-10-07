@@ -166,6 +166,45 @@ export default function Navigation() {
 
   return (
     <>
+      {/* 手機端頂部導航欄 */}
+      {isMobile && (
+        <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center px-4">
+          {/* 漢堡按鈕 */}
+          <button
+            onClick={toggleCollapse}
+            className="p-2 rounded-lg hover:bg-gray-100 active:scale-95 transition-all duration-200"
+            style={{
+              minHeight: '44px',
+              minWidth: '44px',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'rgba(0,0,0,0.1)'
+            }}
+            aria-label={isCollapsed ? "打開菜單" : "關閉菜單"}
+          >
+            <div className="relative w-6 h-6 flex flex-col justify-center items-center">
+              {/* 漢堡包菜單動畫圖標 */}
+              <span className={`block absolute h-0.5 w-6 bg-gray-700 transform transition duration-300 ease-in-out ${
+                isCollapsed ? 'rotate-0 -translate-y-2' : 'rotate-45 translate-y-0'
+              }`} />
+              <span className={`block absolute h-0.5 w-6 bg-gray-700 transform transition duration-300 ease-in-out ${
+                isCollapsed ? 'opacity-100' : 'opacity-0'
+              }`} />
+              <span className={`block absolute h-0.5 w-6 bg-gray-700 transform transition duration-300 ease-in-out ${
+                isCollapsed ? 'rotate-0 translate-y-2' : '-rotate-45 translate-y-0'
+              }`} />
+            </div>
+          </button>
+
+          {/* 品牌標誌 */}
+          <div className="flex-1 flex items-center justify-center">
+            <span className="text-lg font-bold text-gray-800">CRM 系統</span>
+          </div>
+
+          {/* 右側佔位（保持對稱） */}
+          <div style={{ minWidth: '44px' }} />
+        </div>
+      )}
+
       {/* 移動端觸摸手勢檢測區域 */}
       {isMobile && (
         <div
@@ -176,8 +215,8 @@ export default function Navigation() {
           style={{
             pointerEvents: isCollapsed ? 'auto' : 'none',
             // 只在左邊緣 50px 內響應觸摸
-            background: isCollapsed 
-              ? 'linear-gradient(to right, transparent 0px, transparent 50px, transparent 100%)' 
+            background: isCollapsed
+              ? 'linear-gradient(to right, transparent 0px, transparent 50px, transparent 100%)'
               : 'transparent'
           }}
         />
@@ -831,7 +870,7 @@ export default function Navigation() {
 
       {/* 移动端遮罩层 - 變暗半透明背景，凸顯菜單欄 */}
       {isMobile && !isCollapsed && (
-        <div 
+        <div
           className="fixed inset-0 z-40 transition-all duration-300"
           onClick={toggleCollapse}
           onTouchStart={(e) => {
@@ -853,34 +892,6 @@ export default function Navigation() {
             visibility: 'visible',
           }}
         />
-      )}
-
-      {/* 移动端菜单按钮 - 改進的漢堡包菜單 */}
-      {isMobile && (
-        <button
-          onClick={toggleCollapse}
-          className="fixed top-4 left-4 z-50 p-3 bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl active:scale-95 transition-all duration-200"
-          style={{
-            minHeight: '48px',
-            minWidth: '48px',
-            touchAction: 'manipulation',
-            WebkitTapHighlightColor: 'rgba(0,0,0,0.1)'
-          }}
-          aria-label={isCollapsed ? "打開菜單" : "關閉菜單"}
-        >
-          <div className="relative w-6 h-6 flex flex-col justify-center items-center">
-            {/* 漢堡包菜單動畫圖標 */}
-            <span className={`block absolute h-0.5 w-6 bg-gray-700 transform transition duration-300 ease-in-out ${
-              isCollapsed ? 'rotate-0 translate-y-0' : 'rotate-45 translate-y-0'
-            }`} />
-            <span className={`block absolute h-0.5 w-6 bg-gray-700 transform transition duration-300 ease-in-out ${
-              isCollapsed ? 'opacity-100' : 'opacity-0'
-            }`} style={{ top: '50%', transform: 'translateY(-50%)' }} />
-            <span className={`block absolute h-0.5 w-6 bg-gray-700 transform transition duration-300 ease-in-out ${
-              isCollapsed ? 'rotate-0 translate-y-0' : '-rotate-45 translate-y-0'
-            }`} />
-          </div>
-        </button>
       )}
     </>
   );
