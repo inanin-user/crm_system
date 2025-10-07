@@ -146,21 +146,24 @@ export async function PUT(
       );
     }
     
+    // 统一处理用户名（转小写并去除空格）
+    const normalizedUsername = username.toLowerCase().trim();
+
     // 检查用户名是否已存在（排除当前账户）
-    const existingAccount = await Account.findOne({ 
-      username: username.trim(),
+    const existingAccount = await Account.findOne({
+      username: normalizedUsername,
       _id: { $ne: id }
     });
-    
+
     if (existingAccount) {
       return NextResponse.json(
         { success: false, message: '用户名已存在' },
         { status: 400 }
       );
     }
-    
+
     // 更新账户信息
-    account.username = username.trim();
+    account.username = normalizedUsername;
     account.password = password;
     account.displayPassword = password; // 保存明文密码用于显示
     

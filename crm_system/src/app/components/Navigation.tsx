@@ -332,109 +332,119 @@ export default function Navigation() {
                 </li>
               )}
 
-              {/* 出席管理 */}
+              {/* 出席管理 - 會員角色顯示直接連結，其他角色顯示折疊菜單 */}
               <li>
-                <div>
-                  <button
-                    onClick={() => setIsAttendanceOpen(!isAttendanceOpen)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
-                      isAttendanceActive()
-                        ? 'bg-blue-50 text-blue-700'
+                {/* 會員角色：直接顯示掃描簽到連結 */}
+                {['member', 'regular-member', 'premium-member'].includes(user?.role || '') ? (
+                  <Link
+                    href="/attendance/scan"
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${
+                      pathname === '/attendance/scan'
+                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <div className="flex items-center space-x-3">
-                      {!isCollapsed && (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
-                      )}
-                      {!isCollapsed && <span>運動班管理</span>}
-                    </div>
                     {!isCollapsed && (
-                      <svg 
-                        className={`w-4 h-4 transition-transform duration-200 ${isAttendanceOpen ? 'rotate-180' : ''}`} 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                       </svg>
                     )}
-                  </button>
+                    {!isCollapsed && <span>掃描簽到</span>}
+                  </Link>
+                ) : (
+                  /* 其他角色：顯示折疊菜單 */
+                  <div>
+                    <button
+                      onClick={() => setIsAttendanceOpen(!isAttendanceOpen)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
+                        isAttendanceActive()
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        {!isCollapsed && (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                          </svg>
+                        )}
+                        {!isCollapsed && <span>運動班管理</span>}
+                      </div>
+                      {!isCollapsed && (
+                        <svg
+                          className={`w-4 h-4 transition-transform duration-200 ${isAttendanceOpen ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </button>
 
-                  {/* 出席管理子菜单 */}
-                  {(isAttendanceOpen && !isCollapsed) && (
-                    <ul className="mt-1 ml-8 space-y-1">
-                      <li>
-                        <Link
-                          href="/attendance"
-                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                            pathname === '/attendance'
-                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          運動班
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/attendance/check"
-                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                            pathname === '/attendance/check'
-                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          點名記錄
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/attendance/by_name"
-                          className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                            pathname === '/attendance/by_name'
-                              ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          按教練分類
-                        </Link>
-                      </li>
-                      {/* 會員掃描簽到 */}
-                      {['member', 'regular-member', 'premium-member'].includes(user?.role || '') && (
-                        <li>
-                          <Link
-                            href="/attendance/scan"
-                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                              pathname === '/attendance/scan'
-                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            掃描簽到
-                          </Link>
-                        </li>
-                      )}
-                      {/* 補簽到 */}
-                      {user?.role === 'admin' && (
-                        <li>
-                          <Link
-                            href="/attendance/checkin"
-                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                              pathname === '/attendance/checkin'
-                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            補簽到
-                          </Link>
-                        </li>
-                      )}
-                    </ul>
-                  )}
-                </div>
+                    {/* 出席管理子菜单 */}
+                    {(isAttendanceOpen && !isCollapsed) && (
+                      <ul className="mt-1 ml-8 space-y-1">
+                        {/* 運動班、點名記錄、按教練分類 - 只對管理員和教練顯示 */}
+                        {['admin', 'trainer'].includes(user?.role || '') && (
+                          <>
+                            <li>
+                              <Link
+                                href="/attendance"
+                                className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                                  pathname === '/attendance'
+                                    ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                                }`}
+                              >
+                                運動班
+                              </Link>
+                            </li>
+                            <li>
+                              <Link
+                                href="/attendance/check"
+                                className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                                  pathname === '/attendance/check'
+                                    ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                                }`}
+                              >
+                                點名記錄
+                              </Link>
+                            </li>
+                            <li>
+                              <Link
+                                href="/attendance/by_name"
+                                className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                                  pathname === '/attendance/by_name'
+                                    ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                                }`}
+                              >
+                                按教練分類
+                              </Link>
+                            </li>
+                          </>
+                        )}
+                        {/* 補簽到 */}
+                        {user?.role === 'admin' && (
+                          <li>
+                            <Link
+                              href="/attendance/checkin"
+                              className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                                pathname === '/attendance/checkin'
+                                  ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                  : 'text-gray-600 hover:bg-gray-100'
+                              }`}
+                            >
+                              補簽到
+                            </Link>
+                          </li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </li>
 
               {/* 會員管理 - 只有管理员可以看到 */}

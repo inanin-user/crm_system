@@ -3,16 +3,25 @@
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
+import { useRouter } from 'next/navigation';
 
 export default function UnauthorizedPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const router = useRouter();
   useScrollOptimization();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case 'admin': return '管理員';
       case 'trainer': return '教練';
       case 'member': return '會員';
+      case 'regular-member': return '普通會員';
+      case 'premium-member': return '星級會員';
       case 'user': return '普通使用者';
       default: return role;
     }
@@ -51,6 +60,8 @@ export default function UnauthorizedPage() {
                       user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
                       user.role === 'trainer' ? 'bg-green-100 text-green-800' :
                       user.role === 'member' ? 'bg-orange-100 text-orange-800' :
+                      user.role === 'regular-member' ? 'bg-blue-100 text-blue-800' :
+                      user.role === 'premium-member' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
                       {getRoleDisplayName(user.role)}
@@ -92,7 +103,7 @@ export default function UnauthorizedPage() {
               >
                 返回首頁
               </Link>
-              
+
               {user?.role === 'trainer' && (
                 <Link
                   href="/attendance"
@@ -101,6 +112,13 @@ export default function UnauthorizedPage() {
                   前往出席管理
                 </Link>
               )}
+
+              <button
+                onClick={handleLogout}
+                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                登出
+              </button>
             </div>
 
             <div className="mt-6 text-center">

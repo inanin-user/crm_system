@@ -92,18 +92,21 @@ export async function POST(request: NextRequest) {
     
     await connectDB();
     
+    // 统一处理用户名（转小写并去除空格）
+    const normalizedUsername = username.toLowerCase().trim();
+
     // 检查用户名是否已存在（使用索引查詢）
-    const existingAccount = await Account.findOne({ username }).lean();
+    const existingAccount = await Account.findOne({ username: normalizedUsername }).lean();
     if (existingAccount) {
       return NextResponse.json(
         { success: false, message: '该账号名已存在' },
         { status: 400 }
       );
     }
-    
+
     // 创建新账户
     const newAccountData: Record<string, unknown> = {
-      username,
+      username: normalizedUsername,
       password,
       displayPassword: password, // 保存明文密码用于显示
       role,
@@ -138,7 +141,8 @@ export async function POST(request: NextRequest) {
     // 清除相關緩存
     cache.delete('accounts_all');
     cache.delete(`accounts_${role}`);
-    if (role === 'member') {
+    // 如果是任何會員類型，都清除 accounts_member 緩存
+    if (['member', 'regular-member', 'premium-member'].includes(role)) {
       cache.delete('accounts_member');
     }
     

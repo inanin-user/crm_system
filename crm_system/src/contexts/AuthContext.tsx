@@ -55,7 +55,7 @@ function hasRouteAccess(pathname: string, userRole: string): boolean {
   if (userRole === 'admin') {
     return true;
   }
-  
+
   // 教练只能访问首页和出席管理
   if (userRole === 'trainer') {
     if (pathname === '/' || pathname.startsWith('/attendance')) {
@@ -67,12 +67,12 @@ function hasRouteAccess(pathname: string, userRole: string): boolean {
     }
     return true; // 其他页面暂时允许访问
   }
-  
-  // 普通用户和会员暂时按原来的逻辑
-  if (userRole === 'user' || userRole === 'member') {
+
+  // 普通用户和所有类型的会员暂时按原来的逻辑
+  if (userRole === 'user' || userRole === 'member' || userRole === 'regular-member' || userRole === 'premium-member') {
     return true; // 暂时允许访问所有页面
   }
-  
+
   return false;
 }
 
