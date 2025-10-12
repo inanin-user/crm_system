@@ -33,6 +33,12 @@ export interface PDFTemplateConfig {
       weight: string;       // 產品描述字體粗細
       color: string;        // 產品描述顏色
     };
+    instructions: {
+      size: string;         // 使用說明字體大小
+      weight: string;       // 使用說明字體粗細
+      color: string;        // 使用說明顏色
+      marginTop: string;    // 使用說明上邊距
+    };
   };
 
   // 二維碼設置
@@ -46,6 +52,7 @@ export interface PDFTemplateConfig {
   content: {
     subtitles: string[];    // 副標題文字數組
     productPrefix: string;  // 產品描述前綴
+    instructions: string;   // 使用說明文字
   };
 }
 
@@ -77,6 +84,12 @@ export const defaultPDFConfig: PDFTemplateConfig = {
       weight: 'normal',
       color: '#333',
     },
+    instructions: {
+      size: '24px',         // 使用說明字體大小
+      weight: 'bold',       // 使用說明字體粗細
+      color: '#000',        // 使用說明顏色（黑色）
+      marginTop: '20px',    // 使用說明上邊距
+    },
   },
   qrCode: {
     width: '520px',
@@ -89,6 +102,7 @@ export const defaultPDFConfig: PDFTemplateConfig = {
       '落單前請先掃二維碼'
     ],
     productPrefix: '產品：',
+    instructions: '1.手機掃QRcode\u00A0\u00A0\u00A02.確認付款\u00A0\u00A0\u00A03.Enjoy',
   },
 };
 
