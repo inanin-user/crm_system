@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Prerequisites
+
+**Environment Setup:**
+- Node.js and npm installed
+- MongoDB database (connection URI is in `src/lib/mongodb.ts`)
+- **Note**: MongoDB URI is currently hardcoded in `src/lib/mongodb.ts` - consider moving to environment variables for production
+
 ## Common Development Commands
 
 ### Running the Application
@@ -22,14 +29,20 @@ npm start
 npm run lint
 ```
 
-### Database Initialization
+### Database Setup
 ```bash
-# Initialize admin account
+# Initialize admin account (creates default admin user)
 npm run init-admin
 
-# Initialize test accounts
+# Initialize test accounts (creates sample users for testing)
 npm run init-test-accounts
 ```
+
+**Additional database scripts** (in `scripts/` directory):
+- `fix-quota-fields.js` - Migrate and fix member quota/ticket fields
+- `migrate-renewal-count.js` - Migrate renewal count data
+- `migrate-ticket-fields.js` - Migrate ticket system fields
+- `cleanup-non-member-records.js` - Clean up invalid member records
 
 ## Architecture Overview
 
@@ -45,15 +58,26 @@ npm run init-test-accounts
 crm_system/
 ├── src/
 │   ├── app/                    # Next.js App Router
-│   │   ├── api/               # API routes
+│   │   ├── api/               # API routes (Next.js API Routes)
 │   │   │   ├── auth/          # Authentication endpoints
 │   │   │   ├── attendance/    # Attendance management
-│   │   │   └── users/         # User management
+│   │   │   ├── accounts/      # Account CRUD operations
+│   │   │   ├── qrcode/        # QR code generation/scanning
+│   │   │   ├── activities/    # Activity management
+│   │   │   └── financial-records/ # Financial records
 │   │   ├── components/        # Shared React components
-│   │   ├── attendance/        # Attendance management pages
-│   │   └── account_management/# User account pages
-│   └── contexts/              # React Context providers
-├── scripts/                   # Database initialization scripts
+│   │   ├── attendance/        # Attendance pages (scan, check, by_name, etc.)
+│   │   ├── account_management/# Account pages (admin, trainer, member)
+│   │   ├── financial_management/ # Financial pages
+│   │   ├── qrcode/            # QR code generation page
+│   │   ├── member_management/ # Member profile pages
+│   │   ├── activity_management/ # Activity pages
+│   │   └── page.tsx           # Homepage
+│   ├── contexts/              # React Context providers
+│   ├── models/                # Mongoose schemas
+│   ├── lib/                   # Utilities (mongodb, auth, cache)
+│   └── config/                # Configuration files (PDF templates)
+├── scripts/                   # Database initialization/migration scripts
 └── public/                    # Static assets
 ```
 
@@ -61,14 +85,28 @@ crm_system/
 1. **CRM System**: Customer/member relationship management for training activities
 2. **Attendance Tracking**: QR code scanning, manual check-in, attendance reports
 3. **User Management**: Multi-role system (admin, trainer, member) with different permissions
-4. **Mobile Optimized**: Responsive design with mobile-specific optimizations
+4. **QR Code Generation**: Generate QR codes for payment with PDF export (configurable templates)
+5. **Financial Management**: Track financial records, member payments, and activity costs
+6. **Member Management**: Track member profiles, quotas, tickets, and renewal history
+7. **Mobile Optimized**: Responsive design with mobile-specific optimizations
 
 ### Authentication & Authorization
 - JWT-based authentication with HTTP-only cookies
 - Session timeout after 30 minutes of inactivity
-- Role-based access control (admin, trainer, member, user)
 - Automatic logout on browser close using sessionStorage
-- Protected routes with middleware.ts
+- Protected routes managed by AuthContext (not middleware.ts)
+
+**User Roles:**
+- `admin` - Full system access, can manage all accounts and view all data
+- `trainer` - Can access attendance management and view activities
+- `member` / `regular-member` / `premium-member` - Member-level access
+- `user` - Basic user access
+
+**Role-Based Access:**
+- Admins: Access all pages including account management, QR code generation, financial records
+- Trainers: Access homepage and attendance management only
+- Members/Users: Limited access based on role (currently permissive, can be restricted)
+- Access control logic in `src/contexts/AuthContext.tsx` via `hasRouteAccess()` function
 
 ### Mobile Optimizations
 - Custom mobile layout with sidebar navigation
@@ -80,19 +118,56 @@ crm_system/
 The API follows RESTful conventions with the following main endpoints:
 - `/api/auth/*` - Authentication and session management
 - `/api/attendance/*` - Attendance tracking and reporting
-- `/api/users/*` - User account management
+- `/api/accounts/*` - User account management (CRUD, quota management, member validation)
+- `/api/qrcode/*` - QR code generation, scanning, and tracking
+- `/api/financial-records/*` - Financial records management
+- `/api/activities/*` - Activity management
+- `/api/trainer-profile/*` - Trainer profile management
 
 ### Context Providers
 - **AuthContext**: User authentication state and session management
 - **SidebarContext**: Mobile navigation state and responsive layout control
 
+### Database Models
+- **Account**: User accounts with roles (admin, trainer, member types)
+- **Attendance**: Attendance records with activity linking
+- **Activity**: Training activities with location and trainer info
+- **QRCode**: QR code generation tracking with sequential numbering
+- **FinancialRecord**: Financial transactions and member payments
+- **TrainerProfile**: Extended trainer information
+- **Counter**: Auto-incrementing counters for QR codes and other entities
+
 ### Key Configuration Files
-- `middleware.ts`: Authentication middleware for protected routes
+- `src/config/pdfTemplateConfig.ts`: Configurable PDF templates for QR code export (see README_PDF_CONFIG.md)
+- `src/lib/mongodb.ts`: MongoDB connection with caching
+- `src/lib/auth.ts`: JWT token generation and verification
 - `tsconfig.json`: TypeScript configuration with path aliases (@/*)
 - `package.json`: Dependencies and custom scripts for database initialization
 
+### Important Features
+- **QR Code System**: Sequential numbering (0001, 0002...) with region codes (WC, WTS, SM)
+- **PDF Templates**: Highly configurable templates for QR code printing with custom styling
+- **Member Ticket System**: Track initial tickets, added tickets, used tickets, and remaining quota
+- **Location-Based Access**: Users can be restricted to specific locations (灣仔, 黃大仙, 石門)
+- **Trainer Assignment**: Members must have a trainer introducer, optional referrer field
+- **Session Security**: 30-minute inactivity timeout, automatic logout on browser close
+
+### Location/Region Codes
+The system uses three location codes consistently across the codebase:
+- **WC** - 灣仔 (Wan Chai)
+- **WTS** - 黃大仙 (Wong Tai Sin)
+- **SM** - 石門 (Shek Mun)
+
+These codes are used for:
+- User location permissions (`locations` array in Account model)
+- QR code region identification
+- Activity location tracking
+- Access control for trainers and members
+
 ### Development Notes
 - Uses Turbopack for faster development builds
+- Uses html2canvas and jsPDF for QR code PDF generation
+- Uses `\u00A0` (non-breaking space) for preserving multiple spaces in PDF templates
 - Includes mobile-specific click handling and debug helpers
 - Session security with automatic cleanup mechanisms
 - Comprehensive documentation in MOBILE_OPTIMIZATION.md and SESSION_SECURITY.md
