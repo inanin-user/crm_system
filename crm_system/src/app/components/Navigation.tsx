@@ -185,18 +185,31 @@ export default function Navigation() {
           ...(isMobile && !isCollapsed && {
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
-            touchAction: 'pan-y' // 只允許垂直滾動
+            touchAction: 'pan-y', // 只允許垂直滾動
+            isolation: 'isolate' // 防止觸摸事件冒泡到外層
           })
         }}
         onTouchStart={(e) => {
           // 阻止事件冒泡，避免觸發其他觸摸處理器
-          if (isMobile) {
+          if (isMobile && !isCollapsed) {
+            e.stopPropagation();
+          }
+        }}
+        onTouchMove={(e) => {
+          // 阻止觸摸移動事件冒泡
+          if (isMobile && !isCollapsed) {
+            e.stopPropagation();
+          }
+        }}
+        onTouchEnd={(e) => {
+          // 阻止觸摸結束事件冒泡
+          if (isMobile && !isCollapsed) {
             e.stopPropagation();
           }
         }}
         onClick={(e) => {
-          // 阻止事件冒泡到可能的全局點擊處理器
-          if (isMobile) {
+          // 阻止點擊事件冒泡到可能的全局點擊處理器
+          if (isMobile && !isCollapsed) {
             e.stopPropagation();
           }
         }}
