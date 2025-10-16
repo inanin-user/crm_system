@@ -120,11 +120,34 @@ export function useDirectClickFix() {
             }, { passive: true });
             
             newElement.addEventListener('touchend', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              
+              // 檢查元素是否在導航菜單內（通過檢查父元素鏈）
+              let isInNavigation = false;
+              let checkElement: HTMLElement | null = newElement;
+
+              while (checkElement && checkElement !== document.body) {
+                if (checkElement.tagName === 'NAV' ||
+                    checkElement.getAttribute('role') === 'navigation' ||
+                    checkElement.classList.contains('sidebar') ||
+                    checkElement.closest('nav')) {
+                  isInNavigation = true;
+                  break;
+                }
+                checkElement = checkElement.parentElement;
+              }
+
+              // 如果在導航菜單內，不要阻止默認行為，讓原生滾動正常工作
+              if (!isInNavigation) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+
               newElement.style.opacity = '1';
-              
+
+              // 如果在導航內，不要手動觸發點擊（讓原生處理）
+              if (isInNavigation) {
+                return;
+              }
+
               // iPhone 專用：直接調用 onclick 而不是派發事件
               if (newElement.onclick) {
                 setTimeout(() => {
@@ -154,26 +177,49 @@ export function useDirectClickFix() {
           
           // 添加觸摸事件支持
           el.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
+            // 檢查元素是否在導航菜單內（通過檢查父元素鏈）
+            let isInNavigation = false;
+            let checkElement: HTMLElement | null = el;
+
+            while (checkElement && checkElement !== document.body) {
+              if (checkElement.tagName === 'NAV' ||
+                  checkElement.getAttribute('role') === 'navigation' ||
+                  checkElement.classList.contains('sidebar') ||
+                  checkElement.closest('nav')) {
+                isInNavigation = true;
+                break;
+              }
+              checkElement = checkElement.parentElement;
+            }
+
+            // 如果在導航菜單內，不要阻止默認行為
+            if (!isInNavigation) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+
             // 視覺反饋
             el.style.opacity = '0.7';
             setTimeout(() => {
               el.style.opacity = '1';
             }, 100);
-            
+
+            // 如果在導航內，不要手動觸發點擊（讓原生處理）
+            if (isInNavigation) {
+              return;
+            }
+
             // 強制觸發點擊
             const clickEvent = new MouseEvent('click', {
               bubbles: true,
               cancelable: true,
               view: window
             });
-            
+
             setTimeout(() => {
               el.dispatchEvent(clickEvent);
             }, 50);
-            
+
           }, { passive: false });
         }
         
