@@ -19,7 +19,9 @@ export async function GET(request: NextRequest) {
     // 根據用戶ID查找會員資料
     const member = await Account.findById(authUser.userId);
 
-    if (!member || member.role !== 'member') {
+    // 檢查是否為會員角色（包括 member, regular-member, premium-member）
+    const memberRoles = ['member', 'regular-member', 'premium-member'];
+    if (!member || !memberRoles.includes(member.role)) {
       return NextResponse.json({
         success: false,
         message: '找不到會員資料或權限不足'
@@ -33,7 +35,17 @@ export async function GET(request: NextRequest) {
         username: member.username,
         memberName: member.memberName,
         phone: member.phone,
+        role: member.role,
         quota: member.quota,
+        initialTickets: member.initialTickets || 0,
+        addedTickets: member.addedTickets || 0,
+        usedTickets: member.usedTickets || 0,
+        trainerIntroducer: member.trainerIntroducer,
+        referrer: member.referrer,
+        joinDate: member.joinDate,
+        renewalCount: member.renewalCount || 0,
+        herbalifePCNumber: member.herbalifePCNumber,
+        locations: member.locations || [],
         isActive: member.isActive
       },
       message: '會員資料獲取成功'
