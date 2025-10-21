@@ -86,12 +86,35 @@ export default function MemberProfilePage() {
   };
 
   // 選擇會員
-  const handleSelectMember = (member: Member) => {
+  const handleSelectMember = async (member: Member) => {
     setSelectedMember(member);
-    setNewQuota(member.quota.toString());
+    setNewQuota('');
     fetchMemberAttendance(member);
     setError('');
     setSuccessMessage('');
+    
+    // 獲取會員的最新詳細信息，確保quota是最新的
+    try {
+      const response = await fetch(`/api/accounts/${member._id}`);
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        const updatedMember = {
+          ...member,
+          quota: result.data.quota || 0,
+          renewalCount: result.data.renewalCount || 0,
+          addedTickets: result.data.addedTickets || 0,
+          usedTickets: result.data.usedTickets || 0,
+          initialTickets: result.data.initialTickets || 0
+        };
+        setSelectedMember(updatedMember);
+        // 同時更新會員列表中的數據
+        setMembers(members.map(m => m._id === member._id ? updatedMember : m));
+      }
+    } catch (error) {
+      console.error('獲取會員詳細信息失敗:', error);
+      // 如果獲取失敗，仍然使用原有數據
+    }
   };
 
   // 更新配额
@@ -124,17 +147,22 @@ export default function MemberProfilePage() {
       const result = await response.json();
       console.log('響應結果:', result);
 
-      if (result.success) {
-        // 更新本地状态
+      if (result.success && result.data) {
+        // 使用API返回的實際更新後的數據
         const updatedMember = {
           ...selectedMember,
-          quota: quotaValue,
-          renewalCount: (selectedMember.renewalCount || 0) + 1
+          quota: result.data.quota, // 使用API返回的實際quota值
+          renewalCount: result.data.renewalCount || 0, // 使用API返回的實際renewalCount值
+          addedTickets: result.data.addedTickets || 0,
+          usedTickets: result.data.usedTickets || 0,
+          initialTickets: result.data.initialTickets || 0
         };
         setSelectedMember(updatedMember);
         setMembers(members.map(m => m._id === selectedMember._id ? updatedMember : m));
-        setSuccessMessage('配额更新成功');
+        setSuccessMessage(`配额更新成功！當前剩餘配額: ${result.data.quota}`);
         setError('');
+        // 更新輸入框顯示為新的配額值
+        setNewQuota('');
       } else {
         console.error('API返回錯誤:', result);
         setError(result.message || '更新配额失敗');
