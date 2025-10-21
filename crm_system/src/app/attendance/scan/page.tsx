@@ -57,6 +57,7 @@ export default function ScanAttendancePage() {
   const [memberInfo, setMemberInfo] = useState<Member | null>(null);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // 檢查用戶權限
   useEffect(() => {
@@ -257,6 +258,92 @@ export default function ScanAttendancePage() {
     }
   };
 
+  // 處理產品二維碼扣款
+  const handleProductPayment = async () => {
+    if (!productScanResult || !user) return;
+
+    setIsProcessingPayment(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      // 先獲取會員信息
+      const member = await fetchMemberInfo();
+      if (!member) {
+        setError('無法獲取會員資料，請聯絡管理員');
+        return;
+      }
+
+      // 檢查會員狀態
+      if (!member.isActive) {
+        setError('您的帳戶已被禁用，無法進行交易');
+        return;
+      }
+
+      // 檢查配額是否足夠
+      if (member.quota < productScanResult.price) {
+        setError(`餘額不足！您的剩餘配額為 ${member.quota}，需要 ${productScanResult.price}`);
+        return;
+      }
+
+      // 構建二維碼數據
+      const qrCodeData = JSON.stringify({
+        number: productScanResult.number,
+        regionCode: productScanResult.regionCode,
+        regionName: productScanResult.regionName,
+        productDescription: productScanResult.productDescription,
+        price: productScanResult.price,
+        timestamp: productScanResult.timestamp
+      });
+
+      // 調用扣款 API
+      const response = await fetch('/api/qrcode/deduct', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ qrCodeData }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        // 扣款成功
+        setSuccess(
+          `✅ 扣款成功！已扣除 ${result.data.transaction.deductedAmount} 配額，` +
+          `剩餘配額: ${result.data.transaction.newQuota}`
+        );
+        
+        // 清空產品掃描結果
+        setProductScanResult(null);
+        setMemberInfo(null);
+        
+        // 3秒後自動關閉成功信息
+        setTimeout(() => {
+          setSuccess('');
+        }, 5000);
+        
+      } else {
+        // 扣款失敗
+        if (result.message === '餘額不足') {
+          setError(
+            `餘額不足！您的剩餘配額為 ${result.data?.currentQuota || 0}，` +
+            `需要 ${result.data?.requiredAmount || productScanResult.price}`
+          );
+        } else {
+          setError(result.message || '扣款失敗，請稍後重試');
+        }
+      }
+      
+    } catch (err) {
+      console.error('處理扣款時發生錯誤:', err);
+      setError('處理扣款時發生錯誤，請稍後重試');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
   // 重置狀態
   const resetScan = () => {
     setScanResult(null);
@@ -264,6 +351,7 @@ export default function ScanAttendancePage() {
     setError('');
     setSuccess('');
     setMemberInfo(null);
+    setIsProcessingPayment(false);
   };
 
   if (!user || !['member', 'regular-member', 'premium-member', 'trainer'].includes(user.role)) {
@@ -451,14 +539,71 @@ export default function ScanAttendancePage() {
               </div>
             </div>
 
-            <div className="flex justify-center">
-              <button
-                onClick={resetScan}
-                className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
-              >
-                重新掃描
-              </button>
-            </div>
+            {/* 只有會員才顯示扣款按鈕 */}
+            {['member', 'regular-member', 'premium-member'].includes(user?.role || '') && (
+              <>
+                {memberInfo && (
+                  <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <h3 className="text-sm font-semibold text-green-800 mb-2">會員資料</h3>
+                    <div className="space-y-1 text-sm text-green-700">
+                      <p><strong>姓名:</strong> {memberInfo.memberName}</p>
+                      <p><strong>當前剩餘配額:</strong> <span className="text-lg font-bold">{memberInfo.quota}</span></p>
+                      <p><strong>本次消費:</strong> <span className="text-lg font-bold text-red-600">{productScanResult.price}</span></p>
+                      {memberInfo.quota >= productScanResult.price ? (
+                        <p><strong>扣款後剩餘:</strong> <span className="text-lg font-bold text-blue-600">{memberInfo.quota - productScanResult.price}</span></p>
+                      ) : (
+                        <p className="text-red-600 font-bold">⚠️ 配額不足，無法完成交易</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={resetScan}
+                    disabled={isProcessingPayment}
+                    className="flex-1 px-4 py-2 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors"
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={async () => {
+                      // 如果還沒有獲取會員信息，先獲取
+                      if (!memberInfo) {
+                        await fetchMemberInfo();
+                      }
+                      handleProductPayment();
+                    }}
+                    disabled={isProcessingPayment}
+                    className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors flex items-center justify-center"
+                  >
+                    {isProcessingPayment ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        處理中...
+                      </>
+                    ) : (
+                      '確認扣款'
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* 教練只能查看，不能扣款 */}
+            {user?.role === 'trainer' && (
+              <div className="flex justify-center">
+                <button
+                  onClick={resetScan}
+                  className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
+                >
+                  關閉
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
