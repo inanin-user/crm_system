@@ -122,8 +122,14 @@ export default function MemberProfilePage() {
     if (!selectedMember) return;
     
     const quotaValue = parseInt(newQuota);
-    if (isNaN(quotaValue) || quotaValue < 0) {
-      setError('請輸入有效的配额数值（不能为负数）');
+    if (isNaN(quotaValue)) {
+      setError('請輸入有效的數字');
+      return;
+    }
+    
+    // 檢查減少配額後是否會變為負數
+    if (quotaValue < 0 && Math.abs(quotaValue) > selectedMember.quota) {
+      setError(`無法減少 ${Math.abs(quotaValue)} 個配額，當前只有 ${selectedMember.quota} 個配額`);
       return;
     }
 
@@ -159,7 +165,9 @@ export default function MemberProfilePage() {
         };
         setSelectedMember(updatedMember);
         setMembers(members.map(m => m._id === selectedMember._id ? updatedMember : m));
-        setSuccessMessage(`配额更新成功！當前剩餘配額: ${result.data.quota}`);
+        const operation = quotaValue >= 0 ? '增加' : '減少';
+        const amount = Math.abs(quotaValue);
+        setSuccessMessage(`配额${operation}成功！${operation}了 ${amount} 個配額，當前剩餘配額: ${result.data.quota}`);
         setError('');
         // 更新輸入框顯示為新的配額值
         setNewQuota('');
@@ -336,15 +344,14 @@ export default function MemberProfilePage() {
                     <div className="flex items-center space-x-3">
                       <input
                         type="number"
-                        min="0"
                         value={newQuota}
                         onChange={(e) => setNewQuota(e.target.value)}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="輸入新的配額數量"
+                        placeholder="輸入數字添加配額，"-"號減少配額"
                       />
                       <button
                         onClick={handleUpdateQuota}
-                        disabled={isUpdatingQuota || newQuota === selectedMember.quota.toString()}
+                        disabled={isUpdatingQuota || !newQuota || newQuota === '0'}
                         className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md font-medium transition-colors"
                       >
                         {isUpdatingQuota ? '更新中...' : '更新配額'}

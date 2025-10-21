@@ -15,10 +15,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<Pa
     const { quota } = await request.json();
 
     // 验证输入
-    if (typeof quota !== 'number' || quota < 0) {
+    if (typeof quota !== 'number') {
       return NextResponse.json({
         success: false,
-        message: '配额必须是非负数'
+        message: '配额必须是数字'
       }, { status: 400 });
     }
 
@@ -49,16 +49,34 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<Pa
       }, { status: 400 });
     }
 
-    // 累加配额而不是替换
+    // 處理配額變更（支持正數增加和負數減少）
     const currentAddedTickets = account.addedTickets || 0;
     const currentInitialTickets = account.initialTickets || 0;
     const currentUsedTickets = account.usedTickets || 0;
+    const currentQuota = account.quota || 0;
 
-    // 新的累計添加套票 = 原有添加套票 + 新增配额
-    const newAddedTickets = currentAddedTickets + quota;
+    // 計算新的總配額
+    const newTotalQuota = currentQuota + quota;
 
-    // 新的總配额 = 初始套票 + 新的累計添加套票 - 已使用套票
-    const newTotalQuota = currentInitialTickets + newAddedTickets - currentUsedTickets;
+    // 檢查配額是否會變為負數
+    if (newTotalQuota < 0) {
+      return NextResponse.json({
+        success: false,
+        message: `無法減少 ${Math.abs(quota)} 個配額，當前只有 ${currentQuota} 個配額`
+      }, { status: 400 });
+    }
+
+    // 更新累計添加套票（如果是增加配額）或已使用套票（如果是減少配額）
+    let newAddedTickets = currentAddedTickets;
+    let newUsedTickets = currentUsedTickets;
+
+    if (quota > 0) {
+      // 增加配額：更新 addedTickets
+      newAddedTickets = currentAddedTickets + quota;
+    } else if (quota < 0) {
+      // 減少配額：更新 usedTickets
+      newUsedTickets = currentUsedTickets + Math.abs(quota);
+    }
 
     const updatedAccount = await Account.findByIdAndUpdate(
       id,
@@ -66,6 +84,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<Pa
         $set: {
           quota: newTotalQuota,
           addedTickets: newAddedTickets,
+          usedTickets: newUsedTickets,
           renewalCount: (account.renewalCount || 0) + 1
         }
       },
@@ -82,10 +101,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<Pa
       }, { status: 500 });
     }
 
+    const operation = quota >= 0 ? '增加' : '減少';
+    const amount = Math.abs(quota);
+    
     return NextResponse.json({
       success: true,
       data: updatedAccount,
-      message: `成功添加 ${quota} 個配额，總配额現為 ${newTotalQuota}`
+      message: `成功${operation} ${amount} 個配额，總配额現為 ${newTotalQuota}`
     });
 
   } catch (error: unknown) {
