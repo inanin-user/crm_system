@@ -456,7 +456,7 @@ export default function Navigation() {
                 )}
               </li>
 
-              {/* 個人資料 - 只有會員可以看到 */}
+              {/* 會員資料 - 只有會員可以看到 */}
               {['member', 'regular-member', 'premium-member'].includes(user?.role || '') && (
                 <li>
                   <Link
@@ -472,7 +472,7 @@ export default function Navigation() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     )}
-                    {!isCollapsed && <span>個人資料</span>}
+                    {!isCollapsed && <span>會員資料</span>}
                   </Link>
                 </li>
               )}

@@ -51,10 +51,10 @@ export default function MyProfilePage() {
       if (result.success && result.data) {
         setProfile(result.data);
       } else {
-        setError(result.message || '無法獲取個人資料');
+        setError(result.message || '無法獲取會員資料');
       }
     } catch (err) {
-      console.error('獲取個人資料錯誤:', err);
+      console.error('獲取會員資料錯誤:', err);
       setError('網絡錯誤，請稍後重試');
     } finally {
       setIsLoading(false);
@@ -75,7 +75,7 @@ export default function MyProfilePage() {
     });
   };
 
-  // 獲取角色顯示名稱
+  // 獲取類型顯示名稱
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case 'regular-member':
@@ -128,7 +128,7 @@ export default function MyProfilePage() {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-          <p className="text-yellow-800">找不到個人資料</p>
+          <p className="text-yellow-800">找不到會員資料</p>
         </div>
       </div>
     );
@@ -138,7 +138,7 @@ export default function MyProfilePage() {
   const descriptionData: DescriptionItem[] = [
     { key: '帳號名', value: profile.username },
     { key: '會員姓名', value: profile.memberName },
-    { key: '角色', value: getRoleDisplayName(profile.role) },
+    { key: '類型', value: getRoleDisplayName(profile.role) },
     { key: '電話號碼', value: profile.phone },
     {
       key: '剩餘配額',
@@ -146,7 +146,7 @@ export default function MyProfilePage() {
         <span className="text-2xl font-bold text-blue-600">{profile.quota}</span>
       )
     },
-    { key: '教練介紹人', value: profile.trainerIntroducer },
+    { key: '介紹人', value: profile.trainerIntroducer },
     { key: '加入日期', value: formatDate(profile.joinDate) },
     { key: '續卡次數', value: `${profile.renewalCount} 次` },
   ];
@@ -154,7 +154,7 @@ export default function MyProfilePage() {
   // 添加可選字段
   if (profile.herbalifePCNumber) {
     descriptionData.splice(4, 0, {
-      key: '康寶萊PC/會員號碼',
+      key: '康寶萊/會員號碼',
       value: profile.herbalifePCNumber
     });
   }
@@ -168,21 +168,21 @@ export default function MyProfilePage() {
 
   if (profile.initialTickets !== undefined) {
     descriptionData.push({
-      key: '初始套票',
+      key: '初始代幣',
       value: profile.initialTickets
     });
   }
 
   if (profile.addedTickets !== undefined) {
     descriptionData.push({
-      key: '累計添加套票',
+      key: '累計添加代幣',
       value: profile.addedTickets
     });
   }
 
   if (profile.usedTickets !== undefined) {
     descriptionData.push({
-      key: '已使用套票',
+      key: '已使用代幣',
       value: profile.usedTickets
     });
   }
@@ -210,7 +210,7 @@ export default function MyProfilePage() {
     <div className="max-w-6xl mx-auto px-4 py-6 md:py-8">
       {/* 頁面標題 */}
       <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">個人資料</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">會員資料</h1>
       </div>
 
       {/* 描述列表 */}

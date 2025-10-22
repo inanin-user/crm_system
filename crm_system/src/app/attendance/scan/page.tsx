@@ -319,10 +319,11 @@ export default function ScanAttendancePage() {
         setProductScanResult(null);
         setMemberInfo(null);
         
-        // 3秒後自動關閉成功信息
+        // 3秒後跳轉到個人資料頁面
         setTimeout(() => {
           setSuccess('');
-        }, 5000);
+          router.push('/member_management/my_profile');
+        }, 3000);
         
       } else {
         // 扣款失敗
