@@ -347,7 +347,7 @@ export default function MemberProfilePage() {
                         value={newQuota}
                         onChange={(e) => setNewQuota(e.target.value)}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="輸入數字添加配額，"-"號減少配額"
+                        placeholder="輸入數字添加配額，'-'號減少配額"
                       />
                       <button
                         onClick={handleUpdateQuota}
