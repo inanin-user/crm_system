@@ -521,13 +521,13 @@ export default function ScanAttendancePage() {
         {productScanResult && (
           <div>
             <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="text-lg font-semibold text-blue-800 mb-2">產品二維碼信息</h3>
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">確認信息</h3>
               <div className="space-y-2 text-sm text-blue-700">
                 <p><strong>編號:</strong> {productScanResult.number}</p>
                 <p><strong>地區:</strong> {
                   typeof productScanResult.formattedDisplay !== 'undefined'
-                    ? productScanResult.formattedDisplay.line1
-                    : `地區：${productScanResult.regionName || productScanResult.regionCode}`
+                    ? (productScanResult.formattedDisplay.line1.replace('地區：', '') || productScanResult.regionName || productScanResult.regionCode)
+                    : (productScanResult.regionName || productScanResult.regionCode)
                 }</p>
                 <p><strong>產品信息:</strong> {
                   typeof productScanResult.formattedDisplay !== 'undefined'
