@@ -81,17 +81,15 @@ export default function TransactionRecordsPage() {
     }
   }, [searchTerm, records]);
 
-  // 格式化日期
+  // 格式化日期（只顯示年月日）
   const formatDate = (dateString: string) => {
     if (!dateString) return '無記錄';
     const date = new Date(dateString);
-    return date.toLocaleString('zh-TW', {
+    return date.toLocaleDateString('zh-TW', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    }).replace(/\//g, '/'); // 格式：YYYY/MM/DD
   };
 
   if (!user || !['member', 'regular-member', 'premium-member'].includes(user.role)) {
@@ -147,7 +145,6 @@ export default function TransactionRecordsPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">記錄</h1>
-            <p className="mt-1 text-sm text-gray-600">查看您的配額使用歷史記錄</p>
           </div>
           
           {/* 搜索欄 */}
@@ -173,24 +170,6 @@ export default function TransactionRecordsPage() {
               />
             </svg>
           </div>
-        </div>
-      </div>
-
-      {/* 記錄統計 */}
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-sm text-gray-600">總記錄數</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">{records.length}</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-sm text-gray-600">總使用配額</div>
-          <div className="text-2xl font-bold text-blue-600 mt-1">
-            {records.reduce((sum, r) => sum + r.quotaUsed, 0)}
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-sm text-gray-600">搜索結果</div>
-          <div className="text-2xl font-bold text-green-600 mt-1">{filteredRecords.length}</div>
         </div>
       </div>
 
@@ -238,41 +217,18 @@ export default function TransactionRecordsPage() {
                 {filteredRecords.map((record) => (
                   <tr key={record._id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <svg
-                            className="h-6 w-6 text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                            />
-                          </svg>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {record.productDescription}
-                          </div>
-                          <div className="text-xs text-gray-500">編號: {record.qrCodeNumber}</div>
-                        </div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {record.productDescription}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      <div className="text-sm text-gray-900">
                         {record.region}
-                      </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 font-bold text-lg text-red-600">
-                        -{record.quotaUsed}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {record.previousQuota} → {record.newQuota}
+                      <div className="text-sm text-gray-900">
+                        {record.quotaUsed}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
