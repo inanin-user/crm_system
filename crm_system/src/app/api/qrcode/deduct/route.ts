@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import QRCode from '@/models/QRCode';
 import Account from '@/models/Account';
+import Transaction from '@/models/Transaction';
 import { getAuthUser } from '@/lib/auth';
 import cache from '@/lib/cache';
 
@@ -109,17 +110,32 @@ export async function POST(request: NextRequest) {
     
     await memberAccount.save();
 
-    // 清除相關緩存
-    cache.delete('accounts_all');
-    cache.delete('accounts_member');
-    cache.delete(`accounts_${authUser.role}`);
-
     // 地區名稱映射
     const regionNames: Record<string, string> = {
       'WC': '灣仔',
       'WTS': '黃大仙',
       'SM': '石門'
     };
+
+    // 保存交易記錄
+    const transaction = new Transaction({
+      memberId: memberAccount._id,
+      memberName: memberAccount.memberName,
+      qrCodeNumber: qrCodeRecord.qrCodeNumber,
+      productDescription: qrCodeRecord.productDescription,
+      region: regionNames[qrCodeRecord.regionCode] || qrCodeRecord.regionCode,
+      quotaUsed: price,
+      previousQuota: currentQuota,
+      newQuota: newQuota,
+      transactionDate: new Date()
+    });
+
+    await transaction.save();
+
+    // 清除相關緩存
+    cache.delete('accounts_all');
+    cache.delete('accounts_member');
+    cache.delete(`accounts_${authUser.role}`);
 
     // 返回成功信息
     return NextResponse.json({
