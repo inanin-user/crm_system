@@ -20,7 +20,7 @@ export async function POST() {
     // 创建默认管理员账号
     const adminAccount = new Account({
       username: 'admin',
-      password: 'password123', // 密码会自动加密
+      password: 'admin123', // 密码会自动加密
       role: 'admin',
       isActive: true,
     });

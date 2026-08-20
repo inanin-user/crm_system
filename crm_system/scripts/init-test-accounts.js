@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 // 连接数据库
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/crm_system');
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ MongoDB 连接成功');
   } catch (error) {
     console.error('❌ MongoDB 连接失败:', error);
@@ -77,8 +77,8 @@ const Account = mongoose.model('Account', AccountSchema);
 const testAccounts = [
   {
     username: 'admin',
-    password: 'password123',
-    displayPassword: 'password123',
+    password: 'admin123',
+    displayPassword: 'admin123',
     role: 'admin'
   },
   {

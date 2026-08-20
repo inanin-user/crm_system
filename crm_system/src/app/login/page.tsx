@@ -135,7 +135,7 @@ function LoginForm() {
             <div className="text-sm text-gray-600">
               <div className="font-medium">測試帳號：</div>
               <div>使用者名稱：admin</div>
-              <div>密碼：password123</div>
+              <div>密碼：admin123</div>
             </div>
           </div>
         </form>

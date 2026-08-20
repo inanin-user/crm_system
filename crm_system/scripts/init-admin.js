@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 // 数据库连接URI
-const MONGODB_URI = 'mongodb+srv://hung51607602:Qang86rejdSczeIB@cluster0.ugimcd0.mongodb.net/crm-system?retryWrites=true&w=majority&appName=Cluster0';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 // 账号Schema（复制自Account.ts）
 const AccountSchema = new mongoose.Schema({
@@ -73,7 +73,7 @@ async function initializeAdmin() {
     console.log('正在创建默认管理员账号...');
     const adminAccount = new Account({
       username: 'admin',
-      password: 'password123',
+      password: 'admin123',
       role: 'admin',
       isActive: true,
     });
@@ -82,7 +82,7 @@ async function initializeAdmin() {
     console.log('✅ 默认管理员账号创建成功！');
     console.log('登录信息:');
     console.log('用户名: admin');
-    console.log('密码: password123');
+    console.log('密码: admin123');
     console.log('角色: 管理员');
   } catch (error) {
     console.error('❌ 初始化失败:', error.message);

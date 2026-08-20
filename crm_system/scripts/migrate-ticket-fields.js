@@ -1,7 +1,7 @@
 const { MongoClient } = require('mongodb');
 
 // MongoDB 连接字符串
-const CONNECTION_STRING = 'mongodb+srv://hung51607602:Qang86rejdSczeIB@cluster0.ugimcd0.mongodb.net/crm-system?retryWrites=true&w=majority&appName=Cluster0';
+const CONNECTION_STRING = process.env.MONGODB_URI;
 
 async function migrateTicketFields() {
   const client = new MongoClient(CONNECTION_STRING);

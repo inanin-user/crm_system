@@ -1,11 +1,5 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = 'mongodb+srv://hung51607602:Qang86rejdSczeIB@cluster0.ugimcd0.mongodb.net/crm-system?retryWrites=true&w=majority&appName=Cluster0';
-
-if (!MONGODB_URI) {
-  throw new Error('请在环境变量中定义 MONGODB_URI');
-}
-
 declare global {
   // eslint-disable-next-line no-var
   var mongoose: {
@@ -35,7 +29,7 @@ async function connectDB() {
       maxIdleTimeMS: 30000, // 30秒最大空閒時間
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(process.env.MONGODB_URI, opts).then((mongoose) => {
       // 設置查詢默認選項
       mongoose.set('debug', false); // 生產環境關閉調試
       return mongoose;

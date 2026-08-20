@@ -17,6 +17,7 @@ export default function Navigation() {
   const [isActivityManagementOpen, setIsActivityManagementOpen] = useState(false);
   const [isFinancialManagementOpen, setIsFinancialManagementOpen] = useState(false);
   const [isQRCodeOpen, setIsQRCodeOpen] = useState(false);
+  const [isDailySettlementOpen, setIsDailySettlementOpen] = useState(false);
   
   // 防止快速鼠标移动造成的闪烁
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -66,6 +67,12 @@ export default function Navigation() {
     } else {
       setIsQRCodeOpen(false);
     }
+
+    if (pathname.startsWith('/daily_settlement')) {
+      setIsDailySettlementOpen(true);
+    } else {
+      setIsDailySettlementOpen(false);
+    }
   }, [pathname]);
 
   const isActive = (href: string) => {
@@ -101,6 +108,10 @@ export default function Navigation() {
 
   const isQRCodeActive = () => {
     return pathname.startsWith('/qrcode');
+  };
+
+  const isDailySettlementActive = () => {
+    return pathname.startsWith('/daily_settlement');
   };
 
   // 檢查用户是否有權限訪問帳號管理
@@ -868,6 +879,77 @@ export default function Navigation() {
                             }`}
                           >
                             二維碼生成
+                          </Link>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+                </li>
+              )}
+
+              {/* 每日結算 - 只有管理員可以看到 */}
+              {user?.role === 'admin' && (
+                <li>
+                  <div>
+                    <button
+                      onClick={() => setIsDailySettlementOpen(!isDailySettlementOpen)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
+                        isDailySettlementActive()
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        {!isCollapsed && (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h-1m-9-1H7a2 2 0 01-2-2V7a2 2 0 012-2h1m0 0V4a1 1 0 011-1h4a1 1 0 011 1v1m0 0h1a2 2 0 012 2v6a2 2 0 01-2 2h-1m-9 0v1m4-4h.01m3-3h.01" />
+                          </svg>
+                        )}
+                        {!isCollapsed && <span>每日結算</span>}
+                      </div>
+                      {!isCollapsed && (
+                        <svg
+                          className={`w-4 h-4 transition-transform duration-200 ${isDailySettlementOpen ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* 每日結算子菜单 */}
+                    {(isDailySettlementOpen && !isCollapsed) && (
+                      <ul className="mt-1 ml-8 space-y-1">
+                        <li>
+                          <Link
+                            href="/daily_settlement/update_data"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/daily_settlement/update_data'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            更新資料
+                          </Link>
+                        </li>
+                      </ul>
+                    )}
+
+                    {/* 每日結算子菜单 */}
+                    {(isDailySettlementOpen && !isCollapsed) && (
+                      <ul className="mt-1 ml-8 space-y-1">
+                        <li>
+                          <Link
+                            href="/daily_settlement/view_data"
+                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                              pathname === '/daily_settlement/view_data'
+                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            查看資料
                           </Link>
                         </li>
                       </ul>
