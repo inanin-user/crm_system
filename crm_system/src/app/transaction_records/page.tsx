@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { withBasePath } from '@/lib/basePath';
 
 interface TransactionRecord {
   _id: string;
@@ -37,7 +38,7 @@ export default function TransactionRecordsPage() {
       setIsLoading(true);
       setError('');
 
-      const response = await fetch('/api/transactions', {
+      const response = await fetch(withBasePath('/api/transactions'), {
         method: 'GET',
         credentials: 'include',
       });

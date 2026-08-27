@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
+import { withBasePath } from "@/lib/basePath";
 
 interface Trainer {
   _id: string;
@@ -54,7 +55,7 @@ export default function TrainerProfilePage() {
   const fetchTrainers = async () => {
     try {
       setIsLoadingTrainers(true);
-      const response = await fetch('/api/accounts?role=trainer');
+      const response = await fetch(withBasePath('/api/accounts?role=trainer'));
       const result = await response.json();
       
       if (result.success) {
@@ -79,7 +80,7 @@ export default function TrainerProfilePage() {
   const fetchTrainerActivities = async (trainerId: string) => {
     try {
       setIsLoadingActivities(true);
-      const response = await fetch(`/api/activities/by-trainer?trainerId=${trainerId}`);
+      const response = await fetch(withBasePath(`/api/activities/by-trainer?trainerId=${trainerId}`));
       const result = await response.json();
       
       if (result.success) {
@@ -98,7 +99,7 @@ export default function TrainerProfilePage() {
   const fetchTrainerProfile = async (trainerId: string) => {
     try {
       setIsLoadingProfile(true);
-      const response = await fetch(`/api/trainer-profile/${trainerId}`);
+      const response = await fetch(withBasePath(`/api/trainer-profile/${trainerId}`));
       const result = await response.json();
       
       if (result.success && result.data) {
@@ -151,7 +152,7 @@ export default function TrainerProfilePage() {
 
     try {
       setIsUpdatingWorkHours(true);
-      const response = await fetch(`/api/trainer-profile/${selectedTrainer._id}`, {
+      const response = await fetch(withBasePath(`/api/trainer-profile/${selectedTrainer._id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-
+const MONGODB_URI = process.env.MONGODB_URI;
 declare global {
   // eslint-disable-next-line no-var
   var mongoose: {
@@ -28,8 +28,10 @@ async function connectDB() {
       connectTimeoutMS: 10000, // 10秒連接超時
       maxIdleTimeMS: 30000, // 30秒最大空閒時間
     };
-
-    cached.promise = mongoose.connect(process.env.MONGODB_URI, opts).then((mongoose) => {
+    if (!MONGODB_URI) {
+      throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+    }
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
       // 設置查詢默認選項
       mongoose.set('debug', false); // 生產環境關閉調試
       return mongoose;

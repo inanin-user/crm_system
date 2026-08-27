@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import CustomSelect from '@/app/components/CustomSelect';
+import { withBasePath } from "@/lib/basePath";
 
 interface AddAccountModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
-        const response = await fetch('/api/accounts?role=trainer');
+        const response = await fetch(withBasePath('/api/accounts?role=trainer'));
         const result = await response.json();
         if (result.success) {
           setTrainers(result.data);
@@ -60,7 +61,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
         role: formData.role
       };
 
-      const response = await fetch('/api/accounts', {
+      const response = await fetch(withBasePath('/api/accounts'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

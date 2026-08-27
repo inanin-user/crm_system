@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import AuthLoadingScreen from '@/app/components/AuthLoadingScreen';
+import { withBasePath } from "@/lib/basePath";
 
 interface User {
   id: string;
@@ -147,7 +148,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // 只有在有有效本地會話或強制檢查時才向服務器請求
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch(withBasePath('/api/auth/me'), {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -202,7 +203,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // 注销（手動或自動）
   const logout = useCallback(async (isAutoLogout = false) => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch(withBasePath('/api/auth/logout'), { method: 'POST' });
     } catch {
       // 忽略登出 API 錯誤
     } finally {

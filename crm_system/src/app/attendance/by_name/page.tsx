@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { withBasePath } from "@/lib/basePath";
 
 interface AttendanceRecord {
   _id: string;
@@ -57,7 +58,7 @@ export default function AttendanceByNamePage() {
   // 獲取會員列表 - 使用 useCallback 優化
   const fetchMembers = useCallback(async () => {
     try {
-      const response = await fetch('/api/accounts?role=member');
+      const response = await fetch(withBasePath('/api/accounts?role=member'));
       const data = await response.json();
       if (response.ok && data.success) {
         setMembers(data.data);
@@ -78,7 +79,7 @@ export default function AttendanceByNamePage() {
   const fetchAttendanceRecords = useCallback(async () => {
     try {
       // 獲取所有記錄（使用更大的limit）
-      const response = await fetch('/api/attendance/accessible?limit=5000');
+      const response = await fetch(withBasePath('/api/attendance/accessible?limit=5000'));
       const data = await response.json();
       if (response.ok && data.success) {
         setAttendanceRecords(data.data);

@@ -5,9 +5,10 @@ import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 import AddAccountModal from '@/app/components/AddAccountModal';
 import DeleteAccountModal from '@/app/components/DeleteAccountModal';
 import EditAccountModal from '@/app/components/EditAccountModal';
+import { withBasePath } from "@/lib/basePath";
 
 interface Account {
-  _id: string;
+  id: number;
   username: string;
   role: string;
   isActive: boolean;
@@ -39,14 +40,14 @@ export default function TrainerManagementPage() {
   const fetchTrainerAccounts = async () => {
     try {
       setIsLoadingAccounts(true);
-      const response = await fetch('/api/accounts?role=trainer');
+      const response = await fetch(withBasePath('/api/accounts?role=trainer'));
       const result = await response.json();
       
       if (result.success) {
         setAccounts(result.data);
         // 如果有帳戶且没有选中的帳戶，默认选中第一个
         if (result.data.length > 0 && !selectedAccount) {
-          handleSelectAccount(result.data[0]._id);
+          handleSelectAccount(result.data[0].id);
         }
       } else {
         setError('獲取教練列表失敗');
@@ -59,10 +60,10 @@ export default function TrainerManagementPage() {
   };
 
   // 獲取帳戶详细信息
-  const handleSelectAccount = async (accountId: string) => {
+  const handleSelectAccount = async (accountId: number) => {
     try {
       setIsLoadingDetail(true);
-      const response = await fetch(`/api/accounts/${accountId}`);
+      const response = await fetch(withBasePath(`/api/accounts/${accountId}`));
       const result = await response.json();
       
       if (result.success) {
@@ -109,7 +110,7 @@ export default function TrainerManagementPage() {
     fetchTrainerAccounts(); // 重新獲取列表
     if (selectedAccount) {
       // 重新獲取选中帳戶的详细信息
-      handleSelectAccount(selectedAccount._id);
+      handleSelectAccount(selectedAccount.id);
     }
   };
 
@@ -185,10 +186,10 @@ export default function TrainerManagementPage() {
                 <div className="space-y-1 p-2">
                   {accounts.map((account) => (
                     <button
-                      key={account._id}
-                      onClick={() => handleSelectAccount(account._id)}
+                      key={account.id}
+                      onClick={() => handleSelectAccount(account.id)}
                       className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        selectedAccount?._id === account._id
+                        selectedAccount?.id === account.id
                           ? 'bg-green-50 border border-green-200 text-green-900'
                           : 'hover:bg-gray-50 border border-transparent'
                       }`}

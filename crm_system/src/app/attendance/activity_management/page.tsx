@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 import CustomSelect from '@/app/components/CustomSelect';
+import { withBasePath } from "@/lib/basePath";
 
 interface Activity {
   _id: string;
@@ -54,7 +55,7 @@ export default function ActivityManagementPage() {
   const fetchActivities = async () => {
     try {
       setIsLoadingActivities(true);
-      const response = await fetch('/api/activities');
+      const response = await fetch(withBasePath('/api/activities'));
       const result = await response.json();
       
       if (result.success) {
@@ -76,7 +77,7 @@ export default function ActivityManagementPage() {
   const fetchTrainers = async () => {
     try {
       setIsLoadingTrainers(true);
-      const response = await fetch('/api/accounts?role=trainer');
+      const response = await fetch(withBasePath('/api/accounts?role=trainer'));
       const result = await response.json();
       
       if (result.success) {
@@ -129,7 +130,7 @@ export default function ActivityManagementPage() {
       setIsSubmitting(true);
       const selectedTrainer = trainers.find(t => t._id === addFormData.trainerId);
       
-      const response = await fetch('/api/activities', {
+      const response = await fetch(withBasePath('/api/activities'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

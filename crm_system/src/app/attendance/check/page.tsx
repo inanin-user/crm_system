@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import CustomSelect from '@/app/components/CustomSelect';
+import { withBasePath } from "@/lib/basePath";
 
 interface AttendanceRecord {
   _id: string;
@@ -44,7 +45,7 @@ export default function CheckPage() {
     setError(null);
     
     try {
-      const response = await fetch(`/api/attendance/by-date?date=${date}`);
+      const response = await fetch(withBasePath(`/api/attendance/by-date?date=${date}`));
       
       if (!response.ok) {
         throw new Error('獲取記錄失敗');
@@ -75,7 +76,7 @@ export default function CheckPage() {
     setUpdatingStatus(recordId);
     
     try {
-      const response = await fetch(`/api/attendance/${recordId}`, {
+      const response = await fetch(withBasePath(`/api/attendance/${recordId}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

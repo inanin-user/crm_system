@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import EditFinancialRecordModal from '@/app/components/EditFinancialRecordModal';
 import MobileTable from '@/app/components/MobileTable';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { withBasePath } from '@/lib/basePath';
 
 interface FinancialRecord {
   _id: string;
@@ -47,7 +48,7 @@ export default function FinancialByName() {
   // 獲取所有成員列表
   const fetchMembers = async () => {
     try {
-      const response = await fetch('/api/financial-records');
+      const response = await fetch(withBasePath('/api/financial-records'));
       if (response.ok) {
         const data = await response.json();
         if (data.success) {

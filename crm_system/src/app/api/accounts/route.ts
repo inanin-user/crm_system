@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Account from '@/models/Account';
+import { db } from '@/lib/db';
 import cache from '@/lib/cache';
 
 // 获取账户列表（根据角色筛选）
@@ -14,30 +13,78 @@ export async function GET(request: NextRequest) {
 
     // 嘗試從緩存獲取
     const cachedData = cache.get<unknown[]>(cacheKey);
+
     if (cachedData) {
       return NextResponse.json({
         success: true,
         data: cachedData,
-        cached: true // 調試用，可以移除
+        cached: true
       });
     }
 
-    await connectDB();
+    let sql = `
+      SELECT
+        id,
+        username,
+        role,
+        isActive,
+        locations,
+        lastLogin,
+        createdAt,
+        updatedAt,
+        memberName,
+        phone,
+        herbalifePCNumber,
+        joinDate,
+        trainerIntroducer,
+        referrer,
+        quota,
+        renewalCount,
+        initialTickets,
+        addedTickets,
+        usedTickets
+      FROM account_management
+      WHERE isActive = ?
+    `;
 
-    const query: Record<string, unknown> = { isActive: true };
-    if (role) {
-      // 如果查詢 member，則查詢所有會員類型
-      if (role === 'member') {
-        query.role = { $in: ['member', 'regular-member', 'premium-member'] };
-      } else {
-        query.role = role;
-      }
+    const params: unknown[] = [true];
+
+    // 如果查詢 member，則查詢所有會員類型
+    if (role === 'member') {
+      sql += `
+        AND role IN (?, ?, ?)
+      `;
+
+      params.push(
+        'member',
+        'regular-member',
+        'premium-member'
+      );
+    } else if (role) {
+      sql += `
+        AND role = ?
+      `;
+
+      params.push(role);
     }
 
-    const accounts = await Account.find(query)
-      .select('-password -displayPassword') // 不返回密码字段，節省傳輸
-      .sort({ createdAt: -1 })
-      .lean(); // 使用 lean() 提升性能
+    sql += `
+      ORDER BY createdAt DESC
+    `;
+
+    const [rows] = await db.query(sql, params);
+
+    const accounts = rows as Record<string, unknown>[];
+    // MySQL JSON column -> JavaScript array
+    for (const account of accounts) {
+      if (typeof account.locations === 'string') {
+        try {
+          account.locations = JSON.parse(account.locations);
+        } catch {
+          account.locations = [];
+        }
+      }
+    }
 
     // 緩存結果（2分鐘）
     cache.set(cacheKey, accounts, 2 * 60 * 1000);
@@ -46,145 +93,287 @@ export async function GET(request: NextRequest) {
       success: true,
       data: accounts
     });
+
   } catch (error) {
     console.error('获取账户列表失败:', error);
+
     return NextResponse.json(
-      { success: false, message: '获取账户列表失败' },
+      {
+        success: false,
+        message: '获取账户列表失败'
+      },
       { status: 500 }
     );
   }
 }
 
+
 // 添加新账户
 export async function POST(request: NextRequest) {
   try {
-    const { username, password, role, locations, memberName, phone, herbalifePCNumber, joinDate, trainerIntroducer, referrer, quota } = await request.json();
-    
+    const {
+      username,
+      password,
+      role,
+      locations,
+      memberName,
+      phone,
+      herbalifePCNumber,
+      joinDate,
+      trainerIntroducer,
+      referrer,
+      quota
+    } = await request.json();
+
     // 验证必填字段
     if (!username || !password || !role) {
       return NextResponse.json(
-        { success: false, message: '账号名、密码和角色都是必填项' },
+        {
+          success: false,
+          message: '账号名、密码和角色都是必填项'
+        },
         { status: 400 }
       );
     }
 
     // 如果是会员角色，验证会员专用字段
-    if (['member', 'regular-member', 'premium-member'].includes(role)) {
-      if (!memberName || !phone || !herbalifePCNumber || !joinDate || !trainerIntroducer) {
+    const isMemberRole = [
+      'member',
+      'regular-member',
+      'premium-member'
+    ].includes(role);
+
+    if (isMemberRole) {
+      if (
+        !memberName ||
+        !phone ||
+        !herbalifePCNumber ||
+        !joinDate ||
+        !trainerIntroducer
+      ) {
         return NextResponse.json(
-          { success: false, message: '会员账户需要提供姓名、电话、康寶萊PC/會員號碼、入會日期和教練介紹人' },
+          {
+            success: false,
+            message:
+              '会员账户需要提供姓名、电话、康寶萊PC/會員號碼、入會日期和教練介紹人'
+          },
           { status: 400 }
         );
       }
     }
-    
-    // 验证地区权限（如果提供的话）
-    const validLocations = ['灣仔', '黃大仙', '石門'];
-    if (locations && Array.isArray(locations)) {
-      const invalidLocations = locations.filter((loc: string) => !validLocations.includes(loc));
+
+    // 验证地区权限
+    const validLocations = [
+      '灣仔',
+      '黃大仙',
+      '石門'
+    ];
+
+    if (locations !== undefined && locations !== null) {
+
+      if (!Array.isArray(locations)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: '地区权限必须是数组'
+          },
+          { status: 400 }
+        );
+      }
+
+      const invalidLocations = locations.filter(
+        (loc: unknown) =>
+          typeof loc !== 'string' ||
+          !validLocations.includes(loc)
+      );
+
       if (invalidLocations.length > 0) {
         return NextResponse.json(
-          { success: false, message: '包含无效的地区权限' },
+          {
+            success: false,
+            message: '包含无效的地区权限'
+          },
           { status: 400 }
         );
       }
     }
-    
-    await connectDB();
-    
-    // 统一处理用户名（转小写并去除空格）
-    const normalizedUsername = username.toLowerCase().trim();
 
-    // 检查用户名是否已存在（使用索引查詢）
-    const existingAccount = await Account.findOne({ username: normalizedUsername }).lean();
-    if (existingAccount) {
+    // 统一处理用户名
+    const normalizedUsername = username
+      .toLowerCase()
+      .trim();
+
+    // 检查用户名是否已存在
+    const [existingRows] = await db.query(
+      `
+        SELECT id
+        FROM account_management
+        WHERE username = ?
+        LIMIT 1
+      `,
+      [normalizedUsername]
+    );
+
+    const existingAccounts =
+      existingRows as Record<string, unknown>[];
+
+    if (existingAccounts.length > 0) {
       return NextResponse.json(
-        { success: false, message: '该账号名已存在' },
+        {
+          success: false,
+          message: '该账号名已存在'
+        },
         { status: 400 }
       );
     }
 
-    // 创建新账户
-    const newAccountData: Record<string, unknown> = {
-      username: normalizedUsername,
+    const accountLocations =
+      locations !== undefined && locations !== null
+        ? locations
+        : [];
+
+    const initialQuota = quota || 0;
+
+    let sql = `
+      INSERT INTO account_management (
+        username,
+        password,
+        role,
+        isActive,
+        locations
+    `;
+
+    const params: unknown[] = [
+      normalizedUsername,
       password,
-      displayPassword: password, // 保存明文密码用于显示
       role,
-      isActive: true,
-      locations: locations || [] // 地区权限，默认为空数组
-    };
+      true,
+      JSON.stringify(accountLocations)
+    ];
 
-    // 如果是会员角色，添加会员专用字段
-    if (['member', 'regular-member', 'premium-member'].includes(role)) {
-      newAccountData.memberName = memberName;
-      newAccountData.phone = phone;
-      newAccountData.herbalifePCNumber = herbalifePCNumber;
-      newAccountData.joinDate = new Date(joinDate);
-      newAccountData.trainerIntroducer = trainerIntroducer;
-      if (referrer) {
-        newAccountData.referrer = referrer;
-      }
-      const initialQuota = quota || 0;
-      newAccountData.quota = initialQuota; // 剩余配额
-      newAccountData.renewalCount = 0; // 初始續卡次數為0
+    sql += `
+        VALUES (?, ?, ?, ?, ?)
+    `;
 
-      // 設置套票相關字段
-      newAccountData.initialTickets = initialQuota; // 初始套票次數
-      newAccountData.addedTickets = 0; // 累計添加套票初始為0
-      newAccountData.usedTickets = 0; // 已使用套票初始為0
+    // 会员额外字段
+    if (isMemberRole) {
+      sql = `
+        INSERT INTO account_management (
+          username,
+          password,
+          role,
+          isActive,
+          locations,
+          memberName,
+          phone,
+          herbalifePCNumber,
+          joinDate,
+          trainerIntroducer,
+          referrer,
+          quota,
+          renewalCount,
+          initialTickets,
+          addedTickets,
+          usedTickets
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      params.length = 0;
+
+      params.push(
+        normalizedUsername,
+        password,
+        role,
+        true,
+        JSON.stringify(accountLocations),
+        memberName,
+        phone,
+        herbalifePCNumber,
+        new Date(joinDate),
+        trainerIntroducer,
+        referrer || null,
+        initialQuota,
+        0,
+        initialQuota,
+        0,
+        0
+      );
     }
 
-    const newAccount = new Account(newAccountData);
+    const [result] = await db.query(sql, params);
 
-    await newAccount.save();
+    const insertResult = result as {
+      insertId: number;
+    };
+
+    const newAccountId = insertResult.insertId;
+
+    // retrieve the newly created account to return in the response
+    const [newRows] = await db.query(
+      `
+        SELECT
+          id,
+          username,
+          role,
+          isActive,
+          locations,
+          createdAt,
+          updatedAt,
+          memberName,
+          phone,
+          herbalifePCNumber,
+          joinDate,
+          trainerIntroducer,
+          referrer,
+          quota,
+          renewalCount,
+          initialTickets,
+          addedTickets,
+          usedTickets
+        FROM account_management
+        WHERE id = ?
+        LIMIT 1
+      `,
+      [newAccountId]
+    );
+
+    const newAccount =
+      (newRows as Record<string, unknown>[])[0];
+
+    if (newAccount && typeof newAccount.locations === 'string') {
+      try {
+        newAccount.locations =
+          JSON.parse(newAccount.locations);
+      } catch {
+        newAccount.locations = [];
+      }
+    }
 
     // 清除相關緩存
     cache.delete('accounts_all');
     cache.delete(`accounts_${role}`);
+
     // 如果是任何會員類型，都清除 accounts_member 緩存
-    if (['member', 'regular-member', 'premium-member'].includes(role)) {
+    if (isMemberRole) {
       cache.delete('accounts_member');
     }
-    
-    // 返回创建的账户信息（不包含加密密码）
-    const accountData: Record<string, unknown> = {
-      _id: newAccount._id,
-      username: newAccount.username,
-      role: newAccount.role,
-      isActive: newAccount.isActive,
-      locations: newAccount.locations,
-      createdAt: newAccount.createdAt,
-      updatedAt: newAccount.updatedAt
-    };
 
-    // 如果是会员，添加会员字段到返回数据
-    if (['member', 'regular-member', 'premium-member'].includes(newAccount.role)) {
-      accountData.memberName = newAccount.memberName;
-      accountData.phone = newAccount.phone;
-      accountData.herbalifePCNumber = newAccount.herbalifePCNumber;
-      accountData.joinDate = newAccount.joinDate;
-      accountData.trainerIntroducer = newAccount.trainerIntroducer;
-      if (newAccount.referrer) {
-        accountData.referrer = newAccount.referrer;
-      }
-      accountData.quota = newAccount.quota;
-      accountData.renewalCount = newAccount.renewalCount;
-      // 新增套票相關字段
-      accountData.initialTickets = newAccount.initialTickets;
-      accountData.addedTickets = newAccount.addedTickets;
-      accountData.usedTickets = newAccount.usedTickets;
-    }
-    
     return NextResponse.json({
       success: true,
       message: '账户创建成功',
-      data: accountData
+      data: newAccount
     });
+
   } catch (error) {
     console.error('创建账户失败:', error);
+
     return NextResponse.json(
-      { success: false, message: '创建账户失败' },
+      {
+        success: false,
+        message: '创建账户失败'
+      },
       { status: 500 }
     );
   }
-} 
+}

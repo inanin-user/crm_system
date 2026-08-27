@@ -1,10 +1,11 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-
+const MONGODB_URI = process.env.MONGODB_URI;
 // 连接数据库
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(MONGODB_URI);
     console.log('✅ MongoDB 连接成功');
   } catch (error) {
     console.error('❌ MongoDB 连接失败:', error);
@@ -104,7 +105,13 @@ const testAccounts = [
     password: 'member456',
     displayPassword: 'member456',
     role: 'member'
-  }
+  },
+  {
+    username: 'test',
+    password: 'test123',
+    displayPassword: 'test123',
+    role: 'admin'
+  } 
 ];
 
 // 初始化测试账户
@@ -138,6 +145,7 @@ const initTestAccounts = async () => {
     console.log('│ trainer2    │ trainer456  │ 教練        │');
     console.log('│ member1     │ member123   │ 會員        │');
     console.log('│ member2     │ member456   │ 會員        │');
+    console.log('│ test        │ test123     │ admin       │');
     console.log('└─────────────┴─────────────┴─────────────┘');
     console.log('\n🔐 权限说明：');
     console.log('• 管理員：可以访问所有功能');

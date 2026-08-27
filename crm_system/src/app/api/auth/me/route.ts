@@ -1,28 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Account from '@/models/Account';
 import { getAuthUser } from '@/lib/auth';
+import { db } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
-    // 获取认证用户
+    // Check if the user is authenticated
     const authUser = getAuthUser(request);
     
     if (!authUser) {
       return NextResponse.json(
-        { success: false, message: '未登录' },
+        { success: false, message: 'Not logged in' },
         { status: 401 }
       );
     }
 
-    await connectDB();
+    const [rows]: any = await db.query(
+      `SELECT
+        id,
+        username,
+        role,
+        isActive,
+        locations,
+        lastLogin,
+        createdAt
+      FROM account_management
+      WHERE id = ?
+      LIMIT 1`,
+      [authUser.userId]
+    );
 
-    // 从数据库获取最新的用户信息
-    const user = await Account.findById(authUser.userId).select('-password');
-    
+    const user = rows[0];
+
     if (!user || !user.isActive) {
       return NextResponse.json(
-        { success: false, message: '用户不存在或已禁用' },
+        { success: false, message: 'Account is disabled' },
         { status: 401 }
       );
     }
@@ -39,9 +50,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('获取用户信息错误:', error);
+    console.error('Error fetching user info:', error);
     return NextResponse.json(
-      { success: false, message: '服务器内部错误' },
+      { success: false, message: 'Server internal error' },
       { status: 500 }
     );
   }

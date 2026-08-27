@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
+import { withBasePath } from "@/lib/basePath";
 
 interface Activity {
   _id: string;
@@ -37,7 +38,7 @@ export default function MyActivityPage() {
 
     try {
       setIsLoadingActivities(true);
-      const response = await fetch(`/api/activities/by-trainer?trainerId=${user.id}`);
+      const response = await fetch(withBasePath(`/api/activities/by-trainer?trainerId=${user.id}`));
       const result = await response.json();
       
       if (result.success) {

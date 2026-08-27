@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { withBasePath } from '@/lib/basePath';
 
 interface AttendanceRecord {
   _id: string;
@@ -29,7 +30,7 @@ export default function PersonDetailPage() {
 
   const fetchPersonRecords = async () => {
     try {
-      const response = await fetch('/api/attendance');
+      const response = await fetch(withBasePath('/api/attendance'));
       const data = await response.json();
       if (response.ok) {
         const decodedName = decodeURIComponent(personId);

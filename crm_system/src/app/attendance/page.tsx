@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import MobileTable from '@/app/components/MobileTable';
+import { withBasePath } from "@/lib/basePath";
 
 interface AttendanceRecord {
   _id: string;
@@ -44,13 +45,13 @@ export default function AttendancePage() {
 
   const fetchAttendanceRecords = async () => {
     try {
-      const response = await fetch('/api/attendance/accessible');
+      const response = await fetch(withBasePath('/api/attendance/accessible'));
       const data = await response.json();
       if (response.ok && data.success) {
         const records = data.data;
         
         // 獲取所有會員信息來匹配quota
-        const membersResponse = await fetch('/api/accounts?role=member');
+        const membersResponse = await fetch(withBasePath('/api/accounts?role=member'));
         const membersData = await membersResponse.json();
         
         if (membersResponse.ok && membersData.success) {
@@ -183,7 +184,7 @@ export default function AttendancePage() {
     setIsDeleting(true);
     try {
       const deletePromises = selectedRecords.map(async (recordId) => {
-        const response = await fetch(`/api/attendance/${recordId}`, {
+        const response = await fetch(withBasePath(`/api/attendance/${recordId}`), {
           method: 'DELETE',
         });
         
@@ -228,7 +229,7 @@ export default function AttendancePage() {
           record.location !== original.location ||
           record.activity !== original.activity
         )) {
-          const response = await fetch(`/api/attendance/${record._id}`, {
+          const response = await fetch(withBasePath(`/api/attendance/${record._id}`), {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',

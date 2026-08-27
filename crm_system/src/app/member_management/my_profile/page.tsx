@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
+import { withBasePath } from '@/lib/basePath';
 
 interface MemberProfile {
   username: string;
@@ -41,7 +42,7 @@ export default function MyProfilePage() {
       setIsLoading(true);
       setError('');
 
-      const response = await fetch('/api/accounts/current-member', {
+      const response = await fetch(withBasePath('/api/accounts/current-member'), {
         method: 'GET',
         credentials: 'include',
       });

@@ -7,9 +7,10 @@ import { useMobileDetection } from '@/hooks/useMobileDetection';
 import AddAccountModal from '@/app/components/AddAccountModal';
 import DeleteAccountModal from '@/app/components/DeleteAccountModal';
 import EditAccountModal from '@/app/components/EditAccountModal';
+import { withBasePath } from '@/lib/basePath';
 
 interface Account {
-  _id: string;
+  id: number;
   username: string;
   role: string;
   isActive: boolean;
@@ -42,14 +43,14 @@ export default function AdminManagementPage() {
   const fetchAdminAccounts = async () => {
     try {
       setIsLoadingAccounts(true);
-      const response = await fetch('/api/accounts?role=admin');
+      const response = await fetch(withBasePath('/api/accounts?role=admin'));
       const result = await response.json();
       
       if (result.success) {
         setAccounts(result.data);
         // 如果有帳戶且没有选中的帳戶，默认选中第一个
         if (result.data.length > 0 && !selectedAccount) {
-          handleSelectAccount(result.data[0]._id);
+          handleSelectAccount(result.data[0].id);
         }
       } else {
         setError('獲取管理员列表失敗');
@@ -62,10 +63,10 @@ export default function AdminManagementPage() {
   };
 
   // 獲取帳戶详细信息
-  const handleSelectAccount = async (accountId: string) => {
+  const handleSelectAccount = async (accountId: number) => {
     try {
       setIsLoadingDetail(true);
-      const response = await fetch(`/api/accounts/${accountId}`);
+      const response = await fetch(withBasePath(`/api/accounts/${accountId}`));
       const result = await response.json();
       
       if (result.success) {
@@ -112,7 +113,7 @@ export default function AdminManagementPage() {
     fetchAdminAccounts(); // 重新獲取列表
     if (selectedAccount) {
       // 重新獲取选中帳戶的详细信息
-      handleSelectAccount(selectedAccount._id);
+      handleSelectAccount(selectedAccount.id);
     }
   };
 
@@ -188,10 +189,10 @@ export default function AdminManagementPage() {
                 <div className="space-y-1 p-2">
                   {accounts.map((account) => (
                     <button
-                      key={account._id}
-                      onClick={() => handleSelectAccount(account._id)}
+                      key={account.id}
+                      onClick={() => handleSelectAccount(account.id)}
                       className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        selectedAccount?._id === account._id
+                        selectedAccount?.id === account.id
                           ? 'bg-blue-50 border border-blue-200 text-blue-900'
                           : 'hover:bg-gray-50 border border-transparent'
                       }`}
@@ -213,7 +214,7 @@ export default function AdminManagementPage() {
               <h2 className="text-lg font-semibold text-gray-900">帳戶詳情</h2>
             </div>
             
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto h-80">
               {!selectedAccount ? (
                 <div className="flex items-center justify-center h-64 text-gray-500">
                   請從左側選擇一個管理員帳戶

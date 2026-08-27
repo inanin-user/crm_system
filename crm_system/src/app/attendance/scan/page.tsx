@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import QrScanner from 'qr-scanner';
+import { withBasePath } from '@/lib/basePath';
 
 interface QrData {
   type: string;
@@ -81,7 +82,7 @@ export default function ScanAttendancePage() {
     if (!user) return;
     
     try {
-      const response = await fetch('/api/accounts/current-member');
+      const response = await fetch(withBasePath('/api/accounts/current-member'));
       const result = await response.json();
       
       if (result.success && result.data) {
@@ -139,7 +140,7 @@ export default function ScanAttendancePage() {
             if (parsedData.number && parsedData.regionCode && parsedData.productDescription) {
               // 調用API獲取產品信息
               try {
-                const response = await fetch('/api/qrcode/scan', {
+                const response = await fetch(withBasePath('/api/qrcode/scan'), {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -219,7 +220,7 @@ export default function ScanAttendancePage() {
       }
 
       // 提交簽到記錄
-      const response = await fetch('/api/attendance', {
+      const response = await fetch(withBasePath('/api/attendance'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -297,7 +298,7 @@ export default function ScanAttendancePage() {
       });
 
       // 調用扣款 API
-      const response = await fetch('/api/qrcode/deduct', {
+      const response = await fetch(withBasePath('/api/qrcode/deduct'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

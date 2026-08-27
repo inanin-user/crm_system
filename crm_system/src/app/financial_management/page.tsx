@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import EditFinancialRecordModal from '@/app/components/EditFinancialRecordModal';
+import { withBasePath } from '@/lib/basePath';
 
 interface FinancialRecord {
   _id: string;
@@ -45,7 +46,7 @@ export default function FinancialOverview() {
   const fetchFinancialRecords = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/financial-records');
+      const response = await fetch(withBasePath('/api/financial-records'));
       if (response.ok) {
         const data = await response.json();
         if (data.success) {

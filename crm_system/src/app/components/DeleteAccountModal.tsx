@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 interface Account {
-  _id: string;
+  id: number;
   username: string;
   role: string;
   isActive: boolean;
@@ -37,7 +37,7 @@ export default function DeleteAccountModal({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/accounts/${account._id}`, {
+      const response = await fetch(`/api/accounts/${account.id}`, {
         method: 'DELETE',
       });
 

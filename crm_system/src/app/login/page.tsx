@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { withBasePath } from "@/lib/basePath";
 
 function LoginForm() {
   const [formData, setFormData] = useState({
@@ -47,7 +48,7 @@ function LoginForm() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(withBasePath('/api/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -134,8 +135,8 @@ function LoginForm() {
           <div className="text-center">
             <div className="text-sm text-gray-600">
               <div className="font-medium">測試帳號：</div>
-              <div>使用者名稱：admin</div>
-              <div>密碼：admin123</div>
+              <div>使用者名稱：test</div>
+              <div>密碼：test123</div>
             </div>
           </div>
         </form>

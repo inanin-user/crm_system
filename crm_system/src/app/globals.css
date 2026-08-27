@@ -167,3 +167,54 @@ a:hover {
     user-select: text;
   }
 }
+
+
+/* ------------------------------daily settlement--------------------------------- */
+@tailwind utilities;
+
+/* Hide screens */
+.screen-hidden {
+  display: none !important;
+}
+
+/* Login input */
+.login-input {
+  border: 2px solid #cbd5e1;
+  border-radius: 10px;
+  padding: .75rem 1rem;
+  width: 100%;
+  outline: none;
+  transition: .2s;
+}
+
+.login-input:focus {
+  border-color: #2563eb;
+}
+
+/* Input field */
+.input-field {
+  @apply border-2 border-slate-300 rounded px-3 py-2 focus:border-blue-500 focus:ring-0 transition-all outline-none text-slate-900;
+}
+
+/* Row container */
+.row-container {
+  @apply flex items-center gap-3 p-2 bg-slate-50 rounded-lg mb-2 border border-transparent hover:border-slate-200 transition-all;
+}
+
+/* Buttons */
+.btn-icon {
+  @apply w-8 h-8 flex items-center justify-center rounded-full font-bold transition-all cursor-pointer select-none;
+}
+
+.btn-add {
+  @apply bg-blue-600 text-blue-700 hover:bg-blue-900 hover:text-2xl;
+}
+
+.btn-del {
+  @apply bg-red-100 text-red-500 hover:bg-red-500 hover:text-white;
+}
+
+/* Section label */
+.label-title {
+  @apply text-slate-700 font-bold text-sm mb-2 flex justify-between items-center;
+}

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import LocationPermissionEditor from './LocationPermissionEditor';
 
 interface Account {
-  _id: string;
+  id: number;
   username: string;
   password: string;
   role: string;
@@ -57,7 +57,7 @@ export default function EditAccountModal({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/accounts/${account._id}`, {
+      const response = await fetch(`/api/accounts/${account.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

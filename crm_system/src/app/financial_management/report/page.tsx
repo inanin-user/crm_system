@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { withBasePath } from '@/lib/basePath';
 
 interface FinancialRecord {
   _id: string;
@@ -46,7 +47,7 @@ export default function FinancialReport() {
   const fetchFinancialReport = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/financial-records');
+      const response = await fetch(withBasePath('/api/financial-records'));
       if (response.ok) {
         const data = await response.json();
         if (data.success) {

@@ -924,9 +924,9 @@ export default function Navigation() {
                       <ul className="mt-1 ml-8 space-y-1">
                         <li>
                           <Link
-                            href="/daily_settlement/update_data"
+                            href="/daily_settlement/home"
                             className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                              pathname === '/daily_settlement/update_data'
+                              pathname === '/daily_settlement/home'
                                 ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
                                 : 'text-gray-600 hover:bg-gray-100'
                             }`}
@@ -942,9 +942,9 @@ export default function Navigation() {
                       <ul className="mt-1 ml-8 space-y-1">
                         <li>
                           <Link
-                            href="/daily_settlement/view_data"
+                            href="/daily_settlement/view-data"
                             className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                              pathname === '/daily_settlement/view_data'
+                              pathname === '/daily_settlement/view-data'
                                 ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
                                 : 'text-gray-600 hover:bg-gray-100'
                             }`}

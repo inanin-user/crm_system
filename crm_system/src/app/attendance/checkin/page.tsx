@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import QRCode from 'qrcode';
 import CustomSelect from '@/app/components/CustomSelect';
+import { withBasePath } from "@/lib/basePath";
 
 interface Member {
   _id: string;
@@ -67,7 +68,7 @@ export default function AddAttendancePage() {
   const fetchActivities = async () => {
     try {
       setIsLoadingActivities(true);
-      const response = await fetch('/api/activities');
+      const response = await fetch(withBasePath('/api/activities'));
       const result = await response.json();
       
       if (result.success) {
@@ -108,7 +109,7 @@ export default function AddAttendancePage() {
     setMemberValidation(prev => ({ ...prev, isValidating: true, error: '' }));
 
     try {
-      const response = await fetch(`/api/accounts/validate-member?name=${encodeURIComponent(name)}&contact=${encodeURIComponent(contactInfo)}`);
+      const response = await fetch(withBasePath(`/api/accounts/validate-member?name=${encodeURIComponent(name)}&contact=${encodeURIComponent(contactInfo)}`));
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -251,7 +252,7 @@ export default function AddAttendancePage() {
     try {
       const selectedActivity = activities.find(a => a._id === formData.activityId);
       
-      const response = await fetch('/api/attendance', {
+      const response = await fetch(withBasePath('/api/attendance'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

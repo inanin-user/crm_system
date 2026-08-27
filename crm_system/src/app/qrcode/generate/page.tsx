@@ -8,6 +8,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { getPDFConfig } from '@/config/pdfTemplateConfig';
 import CustomSelect from '@/app/components/CustomSelect';
+import { withBasePath } from '@/lib/basePath';
 
 interface QRCodeRecord {
   _id: string;
@@ -38,7 +39,7 @@ export default function QRCodeGeneratePage() {
   // 獲取當前編號
   const fetchCurrentNumber = async () => {
     try {
-      const response = await fetch('/api/qrcode/current-number');
+      const response = await fetch(withBasePath('/api/qrcode/current-number'));
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -54,7 +55,7 @@ export default function QRCodeGeneratePage() {
   const fetchHistory = async () => {
     try {
       setIsLoadingHistory(true);
-      const response = await fetch('/api/qrcode');
+      const response = await fetch(withBasePath('/api/qrcode'));
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -168,7 +169,7 @@ export default function QRCodeGeneratePage() {
       setIsGenerating(true);
 
       // 調用API創建二維碼記錄
-      const response = await fetch('/api/qrcode', {
+      const response = await fetch(withBasePath('/api/qrcode'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

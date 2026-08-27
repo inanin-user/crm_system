@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
+import { withBasePath } from '@/lib/basePath';
 
 interface Member {
   _id: string;
@@ -45,7 +46,7 @@ export default function MemberProfilePage() {
   const fetchMembers = async () => {
     try {
       setIsLoadingMembers(true);
-      const response = await fetch('/api/accounts?role=member');
+      const response = await fetch(withBasePath('/api/accounts?role=member'));
       const result = await response.json();
       
       if (result.success) {

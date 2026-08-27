@@ -1,0 +1,8 @@
+ RewriteEngine On
+
+# Only redirect the bare root, and only if no auth cookie is present at all
+RewriteCond %{REQUEST_URI} ^/202608/?$
+RewriteCond %{HTTP_COOKIE} !auth_token=
+RewriteRule ^ /202608/login [R=302,L]
+
+ RewriteRule ^(.*)$ http://localhost:3030/202608/$1 [P,L]

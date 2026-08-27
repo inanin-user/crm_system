@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import CustomSelect from '@/app/components/CustomSelect';
+import { withBasePath } from '@/lib/basePath';
 
 export default function AddFinancialRecord() {
   const router = useRouter();
@@ -57,7 +58,7 @@ export default function AddFinancialRecord() {
       
       console.log('提交的數據:', submitData);
       
-      const response = await fetch('/api/financial-records', {
+      const response = await fetch(withBasePath('/api/financial-records'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
