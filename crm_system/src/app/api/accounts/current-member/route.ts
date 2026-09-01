@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Account from '@/models/Account';
 import { getAuthUser } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { AccountDetailRow } from '@/types/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
 
     // 驗證用戶身份
     const authUser = getAuthUser(request);
@@ -17,7 +16,11 @@ export async function GET(request: NextRequest) {
     }
 
     // 根據用戶ID查找會員資料
-    const member = await Account.findById(authUser.userId);
+    const [userRows] = await db.query<AccountDetailRow[]>(
+      "SELECT * FROM account_management WHERE id = ?",
+      [authUser.userId] // now a UUID string, not a number
+    );
+    const member = userRows[0] ?? null;
 
     // 檢查是否為會員角色（包括 member, regular-member, premium-member）
     const memberRoles = ['member', 'regular-member', 'premium-member'];
@@ -31,7 +34,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        _id: member._id,
+        id: member.id,
         username: member.username,
         memberName: member.memberName,
         phone: member.phone,

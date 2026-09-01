@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 interface Account {
-  id: number;
+  id: string;
   username: string;
   role: string;
   isActive: boolean;
@@ -50,7 +50,7 @@ export default function DeleteAccountModal({
         setError(result.message || '刪除帳戶失敗');
       }
     } catch (error) {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsLoading(false);
     }

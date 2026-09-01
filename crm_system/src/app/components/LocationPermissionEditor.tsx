@@ -1,27 +1,26 @@
 'use client';
 
+import { LocationCode, useLocation } from '@/types/location';
 import { useState, useEffect } from 'react';
 
 interface LocationPermissionEditorProps {
-  initialLocations: string[];
-  onLocationsChange: (locations: string[]) => void;
+  initialLocations: LocationCode[];
+  onLocationsChange: (locations: LocationCode[]) => void;
   disabled?: boolean;
 }
-
-const AVAILABLE_LOCATIONS = ['灣仔', '黃大仙', '石門'];
 
 export default function LocationPermissionEditor({ 
   initialLocations, 
   onLocationsChange, 
   disabled = false 
 }: LocationPermissionEditorProps) {
-  const [selectedLocations, setSelectedLocations] = useState<string[]>(initialLocations || []);
-
+  const [selectedLocations, setSelectedLocations] = useState<LocationCode[]>(initialLocations || []);
+  const { label } = useLocation();
   useEffect(() => {
     setSelectedLocations(initialLocations || []);
   }, [initialLocations]);
 
-  const handleLocationToggle = (location: string) => {
+  const handleLocationToggle = (location: LocationCode) => {
     if (disabled) return;
     
     const newSelectedLocations = selectedLocations.includes(location)
@@ -38,7 +37,7 @@ export default function LocationPermissionEditor({
         地區權限
       </label>
       <div className="space-y-2">
-        {AVAILABLE_LOCATIONS.map((location) => (
+        {Object.values(LocationCode).map((location) => (
           <label
             key={location}
             className={`flex items-center cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -50,7 +49,7 @@ export default function LocationPermissionEditor({
               disabled={disabled}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
             />
-            <span className="ml-2 text-sm text-gray-700">{location}</span>
+            <span className="ml-2 text-sm text-gray-700">{label(location)}</span>
           </label>
         ))}
       </div>

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -H 0.0.0.0 -p 3001",
+    "dev": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -26,10 +26,12 @@
     "mongoose": "^8.17.0",
     "mysql2": "^3.24.2",
     "next": "^15.5.2",
+    "next-intl": "4.4.0",
     "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.4",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "uuid": "^14.0.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

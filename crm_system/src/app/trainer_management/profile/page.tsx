@@ -4,30 +4,31 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 import { withBasePath } from "@/lib/basePath";
+import { LocationCode, useLocation } from '@/types/location';
 
 interface Trainer {
-  _id: string;
+  id: string;
   username: string;
   role: string;
   isActive: boolean;
-  locations: string[];
+  locations: LocationCode[];
   createdAt: string;
   lastLogin?: string;
 }
 
 interface Activity {
-  _id: string;
+  id: string;
   activityName: string;
   startTime: string;
   endTime: string;
   duration: number;
-  location: string;
+  location: LocationCode;
   participants: string[];
   createdAt: string;
 }
 
 interface TrainerProfile {
-  _id?: string;
+  id?: string;
   trainerId: string;
   trainerUsername: string;
   otherWorkHours: number;
@@ -37,6 +38,7 @@ interface TrainerProfile {
 export default function TrainerProfilePage() {
   const { user } = useAuth();
   useScrollOptimization();
+  const { label } = useLocation();
 
   const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null);
@@ -63,14 +65,14 @@ export default function TrainerProfilePage() {
         if (result.data.length > 0 && !selectedTrainer) {
           const firstTrainer = result.data[0];
           setSelectedTrainer(firstTrainer);
-          fetchTrainerActivities(firstTrainer._id);
-          fetchTrainerProfile(firstTrainer._id);
+          fetchTrainerActivities(firstTrainer.id);
+          fetchTrainerProfile(firstTrainer.id);
         }
       } else {
         setError('獲取教练列表失敗');
       }
     } catch (error) {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsLoadingTrainers(false);
     }
@@ -134,8 +136,8 @@ export default function TrainerProfilePage() {
   // 選擇教练
   const handleSelectTrainer = (trainer: Trainer) => {
     setSelectedTrainer(trainer);
-    fetchTrainerActivities(trainer._id);
-    fetchTrainerProfile(trainer._id);
+    fetchTrainerActivities(trainer.id);
+    fetchTrainerProfile(trainer.id);
     setError('');
     setSuccessMessage('');
   };
@@ -152,7 +154,7 @@ export default function TrainerProfilePage() {
 
     try {
       setIsUpdatingWorkHours(true);
-      const response = await fetch(withBasePath(`/api/trainer-profile/${selectedTrainer._id}`), {
+      const response = await fetch(withBasePath(`/api/trainer-profile/${selectedTrainer.id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -174,7 +176,7 @@ export default function TrainerProfilePage() {
         setError(result.message || '更新工作时间失敗');
       }
     } catch (error) {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsUpdatingWorkHours(false);
     }
@@ -267,10 +269,10 @@ export default function TrainerProfilePage() {
                 <div className="space-y-1 p-2">
                   {trainers.map((trainer) => (
                     <button
-                      key={trainer._id}
+                      key={trainer.id}
                       onClick={() => handleSelectTrainer(trainer)}
                       className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        selectedTrainer?._id === trainer._id
+                        selectedTrainer?.id === trainer.id
                           ? 'bg-blue-50 border border-blue-200 text-blue-900'
                           : 'hover:bg-gray-50 border border-transparent'
                       }`}
@@ -346,15 +348,15 @@ export default function TrainerProfilePage() {
                     
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">{getTotalTeachingHours().toFixed(1)}h</div>
+                        <div className="text-2xl font-bold text-blue-600">{getTotalTeachingHours()}h</div>
                         <div className="text-sm text-gray-600">帶隊時間</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">{(trainerProfile?.otherWorkHours || 0).toFixed(1)}h</div>
+                        <div className="text-2xl font-bold text-green-600">{(trainerProfile?.otherWorkHours || 0)}h</div>
                         <div className="text-sm text-gray-600">其他工作時間</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">{getTotalWorkHours().toFixed(1)}h</div>
+                        <div className="text-2xl font-bold text-purple-600">{getTotalWorkHours()}h</div>
                         <div className="text-sm text-gray-600">總工作時間</div>
                       </div>
                     </div>
@@ -419,7 +421,7 @@ export default function TrainerProfilePage() {
                     ) : (
                       <div className="space-y-3">
                         {trainerActivities.map((activity) => (
-                          <div key={activity._id} className="border border-gray-200 rounded-lg p-4">
+                          <div key={activity.id} className="border border-gray-200 rounded-lg p-4">
                             <div className="flex justify-between items-start mb-2">
                               <div className="font-medium text-gray-900">{activity.activityName}</div>
                               <div className="text-right">
@@ -428,7 +430,7 @@ export default function TrainerProfilePage() {
                               </div>
                             </div>
                             <div className="text-sm text-gray-600 space-y-1">
-                              <div>地點: {activity.location}</div>
+                              <div>地點: {label(activity.location)}</div>
                               <div>時間: {formatDateTime(activity.startTime)} - {formatDateTime(activity.endTime)}</div>
                               <div>參與者: {activity.participants.length} 人</div>
                             </div>

@@ -6,12 +6,13 @@ import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import MobileTable from '@/app/components/MobileTable';
 import { withBasePath } from "@/lib/basePath";
+import { LocationCode, useLocation } from '@/types/location';
 
 interface AttendanceRecord {
-  _id: string;
+  id: string;
   name: string;
   contactInfo: string;
-  location: string;
+  location: LocationCode;
   activity: string;
   createdAt: string;
   updatedAt: string;
@@ -25,7 +26,8 @@ export default function AttendancePage() {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-
+  const { label } = useLocation();
+  
   // 启用滚动性能优化
   useScrollOptimization();
   // 新增状态：更新模式相关
@@ -141,7 +143,7 @@ export default function AttendancePage() {
     
     // 计算修改的記錄数量
     const changedCount = newEditedRecords.filter((record) => {
-      const original = attendanceRecords.find(orig => orig._id === record._id);
+      const original = attendanceRecords.find(orig => orig.id === record.id);
       return original && (
         record.name !== original.name ||
         record.contactInfo !== original.contactInfo ||
@@ -168,7 +170,7 @@ export default function AttendancePage() {
     if (selectedRecords.length === filteredRecords.length) {
       setSelectedRecords([]);
     } else {
-      setSelectedRecords(filteredRecords.map(record => record._id));
+      setSelectedRecords(filteredRecords.map(record => record.id));
     }
   };
 
@@ -222,14 +224,14 @@ export default function AttendancePage() {
     setIsUpdating(true);
     try {
       const updatePromises = editedRecords.map(async (record) => {
-        const original = attendanceRecords.find(orig => orig._id === record._id);
+        const original = attendanceRecords.find(orig => orig.id === record.id);
         if (original && (
           record.name !== original.name ||
           record.contactInfo !== original.contactInfo ||
           record.location !== original.location ||
           record.activity !== original.activity
         )) {
-          const response = await fetch(withBasePath(`/api/attendance/${record._id}`), {
+          const response = await fetch(withBasePath(`/api/attendance/${record.id}`), {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -293,8 +295,8 @@ export default function AttendancePage() {
         return (
           <input
             type="checkbox"
-            checked={selectedRecords.includes(record._id)}
-            onChange={() => handleRecordSelect(record._id)}
+            checked={selectedRecords.includes(record.id)}
+            onChange={() => handleRecordSelect(record.id)}
             className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
           />
         );
@@ -309,7 +311,7 @@ export default function AttendancePage() {
         if (!isUpdateMode) {
           return <div className="text-sm font-medium text-gray-900">{record.name}</div>;
         }
-        const editIndex = editedRecords.findIndex(r => r._id === record._id);
+        const editIndex = editedRecords.findIndex(r => r.id === record.id);
         const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
         return (
           <input
@@ -331,7 +333,7 @@ export default function AttendancePage() {
         if (!isUpdateMode) {
           return <div className="text-sm text-gray-900">{record.contactInfo}</div>;
         }
-        const editIndex = editedRecords.findIndex(r => r._id === record._id);
+        const editIndex = editedRecords.findIndex(r => r.id === record.id);
         const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
         return (
           <input
@@ -350,9 +352,9 @@ export default function AttendancePage() {
       render: (item: unknown) => {
         const record = item as AttendanceRecord;
         if (!isUpdateMode) {
-          return <div className="text-sm text-gray-900">{record.location}</div>;
+          return <div className="text-sm text-gray-900">{label(record.location)}</div>;
         }
-        const editIndex = editedRecords.findIndex(r => r._id === record._id);
+        const editIndex = editedRecords.findIndex(r => r.id === record.id);
         const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
         return (
           <input
@@ -377,7 +379,7 @@ export default function AttendancePage() {
             </div>
           );
         }
-        const editIndex = editedRecords.findIndex(r => r._id === record._id);
+        const editIndex = editedRecords.findIndex(r => r.id === record.id);
         const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
         return (
           <textarea

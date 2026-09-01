@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Account from '@/models/Account';
-import mongoose from 'mongoose';
+import { db } from '@/lib/db';
+import { AccountDetailRow } from '@/types/auth';
 
 interface Params {
   id: string;
@@ -9,7 +8,6 @@ interface Params {
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<Params> }) {
   try {
-    await connectDB();
 
     const { id } = await params;
     const { quota } = await request.json();
@@ -23,15 +21,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<Pa
     }
 
     // 验证ID格式
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({
-        success: false,
-        message: '无效的账户ID'
-      }, { status: 400 });
-    }
+    // if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    //   return NextResponse.json({
+    //     success: false,
+    //     message: '无效的账户ID'
+    //   }, { status: 400 });
+    // }
 
-    // 查找账户
-    const account = await Account.findById(id);
+    const [userRows] = await db.query<AccountDetailRow[]>(
+      "SELECT * FROM account_management WHERE id = ?",
+      [id]
+    );
+    const account = userRows[0] ?? null;
 
     if (!account) {
       return NextResponse.json({
@@ -78,21 +79,24 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<Pa
       newUsedTickets = currentUsedTickets + Math.abs(quota);
     }
 
-    const updatedAccount = await Account.findByIdAndUpdate(
-      id,
-      {
-        $set: {
-          quota: newTotalQuota,
-          addedTickets: newAddedTickets,
-          usedTickets: newUsedTickets,
-          renewalCount: (account.renewalCount || 0) + 1
-        }
-      },
-      {
-        new: true,
-        runValidators: true
-      }
+    await db.execute(
+      `UPDATE account_management
+   SET quota = ?, addedTickets = ?, usedTickets = ?, renewalCount = ?
+   WHERE id = ?`,
+      [
+        newTotalQuota,
+        newAddedTickets,
+        newUsedTickets,
+        (account.renewalCount || 0) + 1,
+        id,
+      ]
     );
+
+    const [updatedRows] = await db.query<AccountDetailRow[]>(
+      "SELECT * FROM account_management WHERE id = ?",
+      [id]
+    );
+    const updatedAccount = updatedRows[0] ?? null;
 
     if (!updatedAccount) {
       return NextResponse.json({
@@ -103,7 +107,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<Pa
 
     const operation = quota >= 0 ? '增加' : '減少';
     const amount = Math.abs(quota);
-    
+
     return NextResponse.json({
       success: true,
       data: updatedAccount,

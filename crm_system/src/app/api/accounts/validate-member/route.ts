@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Account from '@/models/Account';
+import { AccountRow } from '@/types/auth';
+import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
 
     const searchParams = request.nextUrl.searchParams;
     const name = searchParams.get('name');
@@ -17,16 +16,19 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 根据姓名和联系方式查找会员
-    // 包括所有會員類型：member, regular-member, premium-member
-    // 同时检查phone和email字段
-    const member = await Account.findOne({
-      role: { $in: ['member', 'regular-member', 'premium-member'] },
-      $and: [
-        { memberName: name.trim() },
-        { phone: contact.trim() }
-      ]
-    });
+    const [rows] = await db.query<AccountRow[]>(
+      `
+  SELECT *
+  FROM account_management
+  WHERE role IN ('member', 'regular-member', 'premium-member')
+    AND memberName = ?
+    AND phone = ?
+  LIMIT 1
+  `,
+      [name.trim(), contact.trim()]
+    );
+
+    const member = rows[0] ?? null;
 
     if (!member) {
       return NextResponse.json({
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        _id: member._id,
+        id: member.id,
         username: member.username,
         memberName: member.memberName,
         phone: member.phone,
@@ -49,14 +51,14 @@ export async function GET(request: NextRequest) {
         addedTickets: member.addedTickets || 0,
         usedTickets: member.usedTickets || 0
       },
-      message: '会员验证成功'
+      message: '會員驗證通過'
     });
 
   } catch (error: unknown) {
-    console.error('验证会员失败:', error);
+    console.error('會員驗證失敗:', error);
     return NextResponse.json({
       success: false,
-      message: '验证会员时出错',
+      message: '會員驗證出錯',
       error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     }, { status: 500 });
   }

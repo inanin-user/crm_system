@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import FinancialRecord from '@/models/FinancialRecord';
+import { FinancialRecordRow } from '@/types/financialRecord';
+import { db } from '@/lib/db';
 
 // 修改財務記錄
 export async function PUT(
@@ -9,14 +9,9 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    console.log('開始修改財務記錄...', id);
-    
-    await connectDB();
-    console.log('數據庫連接成功');
-    
+
     const body = await request.json();
-    console.log('接收到的修改數據:', body);
-    
+
     const {
       recordType,
       memberName,
@@ -27,7 +22,7 @@ export async function PUT(
       quantity,
       recordDate
     } = body;
-    
+
     // 驗證必填字段
     if (!recordType || !memberName || !item || !location || unitPrice === undefined || !quantity) {
       console.log('必填字段驗證失敗');
@@ -36,7 +31,7 @@ export async function PUT(
         { status: 400 }
       );
     }
-    
+
     // 驗證數值
     if (unitPrice < 0 || quantity < 1) {
       console.log('數值驗證失敗:', { unitPrice, quantity });
@@ -45,42 +40,92 @@ export async function PUT(
         { status: 400 }
       );
     }
-    
-    // 查找並更新記錄
-    const updatedRecord = await FinancialRecord.findByIdAndUpdate(
-      id,
-      {
-        recordType,
-        memberName,
-        item,
-        details,
-        location,
-        unitPrice,
-        quantity,
-        recordDate: recordDate ? new Date(recordDate) : new Date()
-      },
-      { new: true, runValidators: true }
+
+    // Step 1 — Build dynamic update fields
+    const updateFields: string[] = [];
+    const updateValues: (string | number | null)[] = [];
+
+    if (recordType !== undefined) {
+      updateFields.push("recordType = ?");
+      updateValues.push(recordType);
+    }
+    if (memberName !== undefined) {
+      updateFields.push("memberName = ?");
+      updateValues.push(memberName.trim());
+    }
+    if (item !== undefined) {
+      updateFields.push("item = ?");
+      updateValues.push(item.trim());
+    }
+    if (details !== undefined) {
+      updateFields.push("details = ?");
+      updateValues.push(details?.trim() ?? null);
+    }
+    if (location !== undefined) {
+      updateFields.push("location = ?");
+      updateValues.push(location.trim());
+    }
+    if (unitPrice !== undefined) {
+      updateFields.push("unitPrice = ?");
+      updateValues.push(unitPrice);
+    }
+    if (quantity !== undefined) {
+      updateFields.push("quantity = ?");
+      updateValues.push(quantity);
+    }
+    if (recordDate !== undefined) {
+      updateFields.push("recordDate = ?");
+      const formattedDate = (recordDate ? new Date(recordDate) : new Date())
+        .toISOString()
+        .slice(0, 19) // "YYYY-MM-DDTHH:mm:ss"
+        .replace("T", " "); // "YYYY-MM-DD HH:mm:ss"
+      updateValues.push(formattedDate);
+    }
+
+    // Always recalc totalAmount
+    updateFields.push("totalAmount = unitPrice * quantity");
+
+    // Always update timestamp
+    updateFields.push("updatedAt = NOW()");
+
+    // Step 2 — Execute UPDATE
+    const sqlUpdate = `
+  UPDATE financial_records
+  SET ${updateFields.join(", ")}
+  WHERE id = ?
+`;
+
+    updateValues.push(id.trim());
+
+    await db.query(sqlUpdate, updateValues);
+
+    // Step 3 — Fetch updated row
+    const [rows] = await db.query<FinancialRecordRow[]>(
+      "SELECT * FROM financial_records WHERE id = ?",
+      [id.trim()]
     );
-    
+
+    const updatedRecord = rows[0];
+
     if (!updatedRecord) {
       return NextResponse.json(
         { success: false, message: '財務記錄不存在' },
         { status: 404 }
       );
     }
-    
-    console.log('記錄更新成功:', updatedRecord._id);
-    
+
+    console.log('記錄更新成功:', updatedRecord.id);
+
     return NextResponse.json({
       success: true,
       message: '財務記錄修改成功',
       data: updatedRecord
     });
   } catch (error) {
-    console.error('修改財務記錄失敗:', error);
+    console.error('財務記錄修改失敗:', error);
     const errorMessage = error instanceof Error ? error.message : '未知錯誤';
     return NextResponse.json(
-      { success: false, message: `修改財務記錄失敗: ${errorMessage}` },
+      { success: false, message: `財務記錄修改失敗: ${errorMessage}` },
       { status: 500 }
     );
   }
@@ -93,23 +138,24 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    console.log('開始刪除財務記錄...', id);
-    
-    await connectDB();
-    console.log('數據庫連接成功');
-    
-    // 查找並刪除記錄
-    const deletedRecord = await FinancialRecord.findByIdAndDelete(id);
-    
-    if (!deletedRecord) {
+
+
+    // Step 1 — Fetch record before deletion
+    const [rows] = await db.query<FinancialRecordRow[]>(
+      "SELECT * FROM financial_records WHERE id = ?",
+      [id.trim()]
+    );
+
+    if (rows.length === 0) {
       return NextResponse.json(
-        { success: false, message: '財務記錄不存在' },
+        { success: false, message: "記錄不存在" },
         { status: 404 }
       );
     }
-    
-    console.log('記錄刪除成功:', deletedRecord._id);
-    
+
+    // Step 2 — Delete record
+    await db.query("DELETE FROM financial_records WHERE id = ?", [id.trim()]);
+
     return NextResponse.json({
       success: true,
       message: '財務記錄刪除成功'

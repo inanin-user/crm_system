@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import CustomSelect from '@/app/components/CustomSelect';
-
+import { useLocation, LocationCode } from "@/types/location";
 interface FinancialRecord {
-  _id: string;
+  id: string;
   recordType: 'income' | 'expense';
   memberName: string;
   item: string;
   details?: string;
-  location: string;
+  location: LocationCode;
   unitPrice: number;
   quantity: number;
   totalAmount: number;
@@ -29,12 +29,29 @@ export default function EditFinancialRecordModal({
   record,
   onUpdate
 }: EditFinancialRecordModalProps) {
-  const [formData, setFormData] = useState({
+  const { label } = useLocation();
+
+  const locationOptions = Object.values(LocationCode).map((code) => ({
+    value: code,
+    label: label(code),
+  }));
+
+    type FormData = {
+    recordType: string;
+    memberName: string;
+    item: string;
+    details: string;
+    location: LocationCode; // the union type, not inferred from LocationCode.WC alone
+    unitPrice: number;
+    quantity: number;
+    recordDate: string;
+  };
+  const [formData, setFormData] = useState<FormData>({
     recordType: 'income',
     memberName: '',
     item: '',
     details: '',
-    location: '灣仔',
+    location: LocationCode.WC,
     unitPrice: 0,
     quantity: 1,
     recordDate: new Date().toISOString().split('T')[0]
@@ -85,7 +102,7 @@ export default function EditFinancialRecordModal({
     try {
       setIsSubmitting(true);
       
-      const response = await fetch(`/api/financial-records/${record._id}`, {
+      const response = await fetch(`/api/financial-records/${record.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -210,12 +227,8 @@ export default function EditFinancialRecordModal({
             </label>
             <CustomSelect
               value={formData.location}
-              onChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
-              options={[
-                { value: '灣仔', label: '灣仔' },
-                { value: '黃大仙', label: '黃大仙' },
-                { value: '石門', label: '石門' },
-              ]}
+              onChange={(value) => setFormData(prev => ({ ...prev, location: value as LocationCode }))}
+              options={locationOptions}
               placeholder="請選擇地點"
             />
           </div>

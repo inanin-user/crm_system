@@ -2,17 +2,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { centerLabel } from "@/types/center";
 import ExportMenu from "@/app/components/ExportMenu";
 import { exportToTXT, exportToPDF } from "@/lib/export";
 import { withDailySettlementPath } from "@/lib/basePath";
+import { LocationCode, useLocation } from "@/types/location";
+import ExportFab from "@/app/components/ExportFab";
+import { useSidebar } from "@/contexts/SidebarContext";
+
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 type Record = {
   username: string;
   submittedAt: string;
-  center: string;
+  center: LocationCode;
   docDate: string;
   docTime: string;
   grandTotal: number;
@@ -31,6 +34,8 @@ const twoMonthsAgoStr = () => {
 };
 
 export default function ViewDataPage() {
+  const { setDisableGPULayer } = useSidebar();
+
   const [username, setUsername] = useState("");
   const [role, setRole] = useState("");
 
@@ -41,9 +46,14 @@ export default function ViewDataPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [staffList, setStaffList] = useState<{ username: string; center: string; role: string }[]>([]);
+  const [staffList, setStaffList] = useState<{ username: string; center: LocationCode; role: string }[]>([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const { label } = useLocation();
+  useEffect(() => {
+    setDisableGPULayer(true);
+    return () => setDisableGPULayer(false);
+  }, [setDisableGPULayer]);
 
   useEffect(() => {
     fetch(withDailySettlementPath("/api/staff"))
@@ -80,7 +90,7 @@ export default function ViewDataPage() {
   // };
 
   const handleExportTXT = () => {
-    exportToTXT(records, staffList, username);
+    exportToTXT(records, staffList, username, label);
   };
 
   const fetchRecords = async () => {
@@ -115,7 +125,7 @@ export default function ViewDataPage() {
 
 
   return (
-    <div id="view-screen">
+    <div id="view-screen" className="">
       <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200">
         <div className="relative bg-slate-800 p-6 text-white">
           <div className="flex items-center justify-between">
@@ -204,7 +214,7 @@ export default function ViewDataPage() {
                 <div>
                   <p className="font-bold text-slate-800">{rec.docDate} {rec.docTime}</p>
                   <p className="text-xs text-slate-400">
-                    分店 {centerLabel(rec.center)} · 提交人 {rec.username}
+                    分店 {label(rec.center)} · 提交人 {rec.username}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -230,12 +240,10 @@ export default function ViewDataPage() {
               {rec.classItems.length > 0 && (
                 <RecordSection title="教班" rows={rec.classItems} />
               )}
-              {rec.introductionFee.length > 0 && (
-                <RecordSection title="介紹費" rows={rec.introductionFee} />
-              )}
+              
 
               {rec.income.length > 0 && (
-                <div className="mt-2">
+                <div className="mb-2">
                   <p className="text-xs font-bold text-slate-500 mb-1">收入明細</p>
                   <div className="flex flex-wrap gap-2">
                     {rec.income.map((inc, i) => (
@@ -248,6 +256,10 @@ export default function ViewDataPage() {
                     ))}
                   </div>
                 </div>
+              )}
+
+              {rec.introductionFee.length > 0 && (
+                <RecordSection title="介紹費" rows={rec.introductionFee} />
               )}
 
               {rec.income.length > 0 && (
@@ -278,15 +290,7 @@ export default function ViewDataPage() {
             exporting={exporting}
           />
 
-          <button
-            onClick={() => setShowExportMenu(true)}
-            className="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-lg p-4 transition-all active:scale-95 flex items-center justify-center"
-            aria-label="匯出報表"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-          </button>
+          <ExportFab onClick={() => setShowExportMenu(true)} />
     </div>
   );
 }

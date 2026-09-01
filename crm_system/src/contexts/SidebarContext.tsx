@@ -7,6 +7,8 @@ interface SidebarContextType {
   setIsCollapsed: (collapsed: boolean) => void;
   toggleCollapse: () => void;
   isMobile: boolean;
+  disableGPULayer: boolean;
+  setDisableGPULayer: (disabled: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -14,7 +16,7 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-
+  const [disableGPULayer, setDisableGPULayer] = useState(false);
   // 检测屏幕尺寸
   useEffect(() => {
     let previousMobileState: boolean | null = null;
@@ -74,7 +76,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       isCollapsed,
       setIsCollapsed,
       toggleCollapse,
-      isMobile
+      isMobile,
+      disableGPULayer,
+      setDisableGPULayer
     }}>
       {children}
     </SidebarContext.Provider>

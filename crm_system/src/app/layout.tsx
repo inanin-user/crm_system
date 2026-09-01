@@ -7,6 +7,10 @@ import MobileClickInitializer from "./components/MobileClickInitializer";
 import DebugClickHelper from "./components/DebugClickHelper";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { getUserLocale } from "@/services/locale";
+import GPULayerWrapper from "./components/GPULayerWrapper";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -19,35 +23,33 @@ export const metadata: Metadata = {
   viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  const locale = await getUserLocale();
+  const messages = await getMessages();
   return (
-    <html lang="zh-TW">
+    <html lang={locale}>
       <body
-        className={`${inter.variable} antialiased bg-gray-50`}
+        className={`${inter.variable} antialiased bg-gray-50 gpu-layer`}
       >
-        <AuthProvider>
-          <SidebarProvider>
-            <MobileClickInitializer />
-            <DebugClickHelper />
-            <div 
-              className="min-h-screen bg-gray-50"
-              style={{
-                transform: 'translateZ(0)',
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden'
-              }}
-            >
-              <ConditionalNavigation />
-              <ConditionalMain>
-                {children}
-              </ConditionalMain>
-            </div>
-          </SidebarProvider>
-        </AuthProvider>
+        <NextIntlClientProvider messages={messages}>
+          <AuthProvider>
+            <SidebarProvider>
+              <MobileClickInitializer />
+              <DebugClickHelper />
+              <GPULayerWrapper>
+                <ConditionalNavigation />
+                <ConditionalMain>
+                  {children}
+                </ConditionalMain>
+              </GPULayerWrapper>
+            </SidebarProvider>
+          </AuthProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

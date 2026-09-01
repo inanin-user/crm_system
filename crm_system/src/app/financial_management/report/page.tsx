@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { withBasePath } from '@/lib/basePath';
 
 interface FinancialRecord {
-  _id: string;
+  id: string;
   recordType: 'income' | 'expense';
   memberName: string;
   item: string;

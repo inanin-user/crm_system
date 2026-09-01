@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import QRCode from '@/models/QRCode';
-import Account from '@/models/Account';
-import Transaction from '@/models/Transaction';
+import { db } from '@/lib/db';
+import { qrCodeRow } from '@/types/qrCode';
+import { getLocation } from '@/types/location';
+import { v4 as uuid } from "uuid";
 import { getAuthUser } from '@/lib/auth';
 import cache from '@/lib/cache';
+import { AccountDetailRow } from '@/types/auth';
 
 // 處理 QR Code 掃描並扣除 quota
 export async function POST(request: NextRequest) {
@@ -56,13 +57,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await connectDB();
-
-    // 查找對應的二維碼記錄
-    const qrCodeRecord = await QRCode.findOne({
-      qrCodeNumber: number,
-      isActive: true
-    }).lean();
+    const [rows] = await db.query<qrCodeRow[]>(
+          `
+          SELECT *
+          FROM qrcodes
+          WHERE qrCodeNumber = ?
+            AND isActive = TRUE
+          LIMIT 1
+          `,
+          [number.trim()]
+        );
+    
+        const qrCodeRecord = rows[0] ?? null;
 
     if (!qrCodeRecord) {
       return NextResponse.json(
@@ -71,8 +77,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 獲取當前用戶的完整信息
-    const memberAccount = await Account.findById(authUser.userId);
+    const [memberRows] = await db.query<AccountDetailRow[]>(
+      `
+      SELECT *
+      FROM account_management
+      WHERE id = ?
+      LIMIT 1
+      `,
+      [authUser.userId]
+    );
+
+    const memberAccount = memberRows[0] ?? null;
+
 
     if (!memberAccount || !memberAccount.isActive) {
       return NextResponse.json(
@@ -103,34 +119,50 @@ export async function POST(request: NextRequest) {
     // 扣除 quota
     const newQuota = currentQuota - price;
     
-    // 更新會員的 quota 和 usedTickets
-    const currentUsedTickets = memberAccount.usedTickets || 0;
-    memberAccount.quota = newQuota;
-    memberAccount.usedTickets = currentUsedTickets + price;
-    
-    await memberAccount.save();
+    await db.query(
+      `
+      UPDATE account_management
+      SET 
+        quota = ?, 
+        usedTickets = usedTickets + ?
+      WHERE id = ?
+      `,
+      [newQuota, price, memberAccount.id]
+    );
 
-    // 地區名稱映射
-    const regionNames: Record<string, string> = {
-      'WC': '灣仔',
-      'WTS': '黃大仙',
-      'SM': '石門'
-    };
+    const { label } = await getLocation();
 
-    // 保存交易記錄
-    const transaction = new Transaction({
-      memberId: memberAccount._id,
-      memberName: memberAccount.memberName,
-      qrCodeNumber: qrCodeRecord.qrCodeNumber,
-      productDescription: qrCodeRecord.productDescription,
-      region: regionNames[qrCodeRecord.regionCode] || qrCodeRecord.regionCode,
-      quotaUsed: price,
-      previousQuota: currentQuota,
-      newQuota: newQuota,
-      transactionDate: new Date()
-    });
-
-    await transaction.save();
+    await db.query(
+      `
+      INSERT INTO transactions (
+        id,
+        memberId,
+        memberName,
+        qrCodeNumber,
+        productDescription,
+        region,
+        quotaUsed,
+        previousQuota,
+        newQuota,
+        transactionDate,
+        createdAt,
+        updatedAt
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
+      `,
+      [
+        uuid(),
+        memberAccount.id,
+        memberAccount.memberName,
+        qrCodeRecord.qrCodeNumber,
+        qrCodeRecord.productDescription,
+        label(qrCodeRecord.regionCode) || qrCodeRecord.regionCode,
+        price,
+        currentQuota,
+        newQuota,
+        new Date()
+      ]
+    );
 
     // 清除相關緩存
     cache.delete('accounts_all');
@@ -144,7 +176,7 @@ export async function POST(request: NextRequest) {
       data: {
         qrCode: {
           number: qrCodeRecord.qrCodeNumber,
-          regionName: regionNames[qrCodeRecord.regionCode] || qrCodeRecord.regionCode,
+          regionName: label(qrCodeRecord.regionCode) || qrCodeRecord.regionCode,
           productDescription: qrCodeRecord.productDescription,
           price: qrCodeRecord.price,
         },

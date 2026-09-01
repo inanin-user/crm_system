@@ -1,0 +1,30 @@
+{
+    "location": {
+        "WC": "湾仔",
+        "SM": "石门",
+        "DM": "大马",
+        "WTS": "黄大仙"
+    },
+    "role": {
+        "admin": "管理员",
+        "user": "职员",
+        "member": "会员",
+        "trainer": "教练",
+        "regular-member": "普通会员",
+        "premium-member": "高级会员"
+    },
+    "incomeType": {
+        "试": "试",
+        "单": "单",
+        "卡": "卡"
+    },
+    "dailySettlement": {
+        "title": "每日结算系统",
+        "login": "登入",
+        "logout": "登出",
+        "home": "首页",
+        "viewData": "查看资料",
+        "submit": "确认并提交报表",
+        "remarks": "备注 Remarks"
+    }
+}

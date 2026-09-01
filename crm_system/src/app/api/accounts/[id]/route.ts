@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Account from '@/models/Account';
 import { db } from '@/lib/db';
+import { AccountDetailRow, AccountRow } from '@/types/auth';
+import { LocationCode } from '@/types/location';
 
 // 获取单个账户的详细信息
 export async function GET(
@@ -10,13 +10,13 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    console.log('Fetched account from database:', params);
-    const [rows] = await db.query(
+    const [rows] = await db.query<AccountDetailRow[]>(
       "SELECT * FROM account_management WHERE id = ?",
       [id]
     );
+    
+    const account = rows[0];
 
-    const account = (rows as any)[0];
     if (!account) {
       return NextResponse.json(
         { success: false, message: '账户不存在' },
@@ -26,7 +26,7 @@ export async function GET(
     
     // 準備返回的基本數據
     const accountData: Record<string, unknown> = {
-      _id: account.id,
+      id: account.id,
       username: account.username,
       // password: account.displayPassword || account.password, // 显示明文密码用于管理
       role: account.role,
@@ -73,12 +73,12 @@ export async function DELETE(
   try {
     const { id } = await params;
     
-    const rows = await db.query(
+    const [rows] = await db.query<AccountRow[]>(
       "SELECT * FROM account_management WHERE id = ?",
       [id]
     );
 
-    const account = (rows as any)[0];
+    const account = rows[0];
     
     if (!account) {
       return NextResponse.json(
@@ -97,7 +97,7 @@ export async function DELETE(
       success: true,
       message: '账户删除成功',
       data: {
-        _id: account._id,
+        id: account.id,
         username: account.username,
         role: account.role
       }
@@ -109,6 +109,10 @@ export async function DELETE(
       { status: 500 }
     );
   }
+}
+
+interface UpdateAccRow extends AccountDetailRow {
+  password: string;
 }
 
 // 更新账户
@@ -136,9 +140,9 @@ export async function PUT(
     }
     
     // 验证地区权限（如果提供的话）
-    const validLocations = ['灣仔', '黃大仙', '石門'];
+    const validLocations = Object.values(LocationCode);
     if (locations && Array.isArray(locations)) {
-      const invalidLocations = locations.filter((loc: string) => !validLocations.includes(loc));
+      const invalidLocations = locations.filter((loc: LocationCode) => !validLocations.includes(loc));
       if (invalidLocations.length > 0) {
         return NextResponse.json(
           { success: false, message: '包含无效的地区权限' },
@@ -147,12 +151,12 @@ export async function PUT(
       }
     }
     
-    const rows = await db.query(
+    const [rows] = await db.query<UpdateAccRow[]>(
       "SELECT * FROM account_management WHERE id = ?",
       [id]
     );
 
-    const account = (rows as any)[0];
+    const account = rows[0];
     
     if (!account) {
       return NextResponse.json(
@@ -165,12 +169,12 @@ export async function PUT(
     const normalizedUsername = username.toLowerCase().trim();
 
     // 检查用户名是否已存在（排除当前账户）
-    const [existingrows] = await db.execute(
+    const [existingrows] = await db.query<AccountRow[]>(
       "SELECT * FROM account_management WHERE username = ? AND id <> ?",
       [normalizedUsername, id]
     );
 
-    const existingAccount = (existingrows as any)[0]; // same as findOne
+    const existingAccount = existingrows[0]; // same as findOne
 
     if (existingAccount) {
       return NextResponse.json(
@@ -200,7 +204,7 @@ export async function PUT(
     
     // 準備返回的基本數據
     const updatedAccountData: Record<string, unknown> = {
-      _id: account._id,
+      id: account.id,
       username: account.username,
       password: account.password, //account.displayPassword ||
       role: account.role,

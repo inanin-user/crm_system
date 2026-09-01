@@ -25,7 +25,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
     referrer: '',
     quota: 0
   });
-  const [trainers, setTrainers] = useState<{_id: string, username: string}[]>([]);
+  const [trainers, setTrainers] = useState<{id: string, username: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -90,7 +90,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
         setError(result.message || '添加帳戶失敗');
       }
     } catch (error) {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsLoading(false);
     }

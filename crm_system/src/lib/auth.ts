@@ -1,13 +1,13 @@
 import jwt from 'jsonwebtoken';
 import { NextRequest } from 'next/server';
-
+import { DailySettlementRole } from '@/types/auth';
 // JWT密钥，在生产环境中应该使用环境变量
 const JWT_SECRET = process.env.JWT_SECRET || 'crm_system_secret_key_2024';
 
 export interface TokenPayload {
-  userId: string;
+  userId: number;
   username: string;
-  role: 'admin' | 'user' | 'trainer' | 'member' | 'regular-member' | 'premium-member';
+  role: DailySettlementRole;
 }
 
 // 生成JWT token

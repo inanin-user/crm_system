@@ -57,7 +57,7 @@ function LoginForm() {
       });
 
       const data = await response.json();
-
+      console.log(data);
       if (data.success) {
         // 更新认证状态
         login(data.user);

@@ -1,0 +1,30 @@
+{
+  "location": {
+    "WC": "Wan Chai",
+    "SM": "Shek Mun",
+    "WTS": "Wong Tai Sin",
+    "DM": "Tai Ma"
+  },
+  "role": {
+    "admin": "Admin",
+    "user": "Staff",
+    "member": "Member",
+    "trainer": "Trainer",
+    "regular-member": "Regular Member",
+    "premium-member": "Premium Member"
+  },
+  "incomeType": {
+    "試": "Trial",
+    "單": "Single",
+    "卡": "Card"
+  },
+  "dailySettlement": {
+    "title": "Daily Settlement System",
+    "login": "Login",
+    "logout": "Logout",
+    "home": "Home",
+    "viewData": "View Data",
+    "submit": "Submit Report",
+    "remarks": "Remarks"
+  }
+}

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Transaction from '@/models/Transaction';
 import { getAuthUser } from '@/lib/auth';
+import { TransactionRow } from '@/types/transaction';
+import { db } from '@/lib/db';
 
 // 獲取當前會員的交易記錄
 export async function GET(request: NextRequest) {
@@ -25,14 +25,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    await connectDB();
-
-    // 查詢該會員的所有交易記錄，按日期降序排列
-    const transactions = await Transaction.find({
-      memberId: authUser.userId
-    })
-      .sort({ transactionDate: -1 })
-      .lean();
+    const [transactions] = await db.query<TransactionRow[]>(
+      `SELECT *
+      FROM transactions
+      WHERE memberId = ?
+      ORDER BY transactionDate DESC`,
+      [authUser.userId]
+    );
 
     return NextResponse.json({
       success: true,

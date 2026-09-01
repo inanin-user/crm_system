@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Attendance from '@/models/Attendance';
-import Activity from '@/models/Activity';
-import Account from '@/models/Account';
 import { getAuthUser } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { RowDataPacket } from 'mysql2';
+import { AttendanceRow } from '@/types/attendance';
+import { LocationCode } from '@/types/location';
+
+
+interface User extends RowDataPacket {
+  id: number;
+  role: string;
+  locations: LocationCode[];
+}
+
+interface AttendanceWithTrainerRow extends AttendanceRow {
+  trainerName: string;
+}
+
 
 // 获取用户有权限访问的出席记录
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
-    
+
     // 验证用户身份
     const authUser = getAuthUser(request);
     if (!authUser) {
@@ -19,149 +30,139 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 获取用户详细信息
-    const user = await Account.findById(authUser.userId);
+    // get acc detail
+    const [rows] = await db.query<User[]>(
+      "SELECT * FROM account_management WHERE id = ?",
+      [authUser.userId]
+    );
+
+    const user = rows[0];
     if (!user) {
       return NextResponse.json(
-        { success: false, message: '用户不存在' },
+        { success: false, message: 'User does not exist.' },
         { status: 404 }
       );
     }
 
-    const attendanceQuery: Record<string, unknown> = {};
+    const whereClauses: string[] = [];
+    const params: (string | number)[] = [];
 
-    // 根据用户角色设置查询条件
-    if (user.role === 'admin') {
-      // 管理员可以看到所有出席记录
-      // 不设置任何过滤条件
-    } else if (user.role === 'trainer') {
-      // 教练只能看到他们有权限的地区的出席记录
-      if (!user.locations || user.locations.length === 0) {
-        // 如果教练没有任何地区权限，返回空数组
+    if (user.role === "admin") {
+      whereClauses.push("1=1");
+    } else if (user.role === "trainer") {
+      if (user.locations.length === 0) {
         return NextResponse.json({
           success: true,
           data: [],
-          message: '您目前没有任何地区权限，无法查看出席记录'
+          message: "您目前沒有任何地區權限，無法查看出席記錄"
         });
       }
-      
-      // 过滤出席记录，只显示教练有权限的地区
-      attendanceQuery.location = { $in: user.locations };
+
+      const placeholders = user.locations.map(() => "?").join(",");
+      whereClauses.push(`a.location IN (${placeholders})`);
+      params.push(...user.locations);
     } else {
-      // 其他角色暂时不允许访问出席记录
       return NextResponse.json(
-        { success: false, message: '您没有权限查看出席记录' },
+        { success: false, message: "您沒有權限查看出席記錄" },
         { status: 403 }
       );
     }
 
-    // 获取URL参数
+    // -------------------------------
+    // 2. URL filters
+    // -------------------------------
     const { searchParams } = new URL(request.url);
-    const name = searchParams.get('name');
-    const date = searchParams.get('date');
-    const location = searchParams.get('location');
-    const limit = parseInt(searchParams.get('limit') || '1000'); // 默认返回1000条记录
-    const page = parseInt(searchParams.get('page') || '1'); // 页码，默认1
-    const skip = (page - 1) * limit;
 
-    // 添加额外的过滤条件
+    const name = searchParams.get("name");
+    const date = searchParams.get("date");
+    const location = searchParams.get("location") as LocationCode;
+
+    const limit = Number(searchParams.get("limit") ?? "1000");
+    const page = Number(searchParams.get("page") ?? "1");
+    const offset = (page - 1) * limit;
+
     if (name) {
-      attendanceQuery.name = { $regex: name, $options: 'i' };
+      whereClauses.push("a.name LIKE CONCAT('%', ?, '%')");
+      params.push(name);
     }
 
     if (date) {
-      const targetDate = new Date(date);
-      const nextDay = new Date(targetDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-      
-      attendanceQuery.createdAt = {
-        $gte: targetDate,
-        $lt: nextDay
-      };
+      const startDate = new Date(date);
+      const endDate = new Date(date);
+      endDate.setDate(endDate.getDate() + 1);
+
+      whereClauses.push("a.createdAt >= ? AND a.createdAt < ?");
+      params.push(startDate.toISOString().slice(0, 19).replace("T", " "));
+      params.push(endDate.toISOString().slice(0, 19).replace("T", " "));
     }
 
     if (location) {
-      // 如果指定了地区，还需要确保用户有权限查看该地区
-      if (user.role === 'trainer' && !user.locations.includes(location)) {
+      if (user.role === "trainer" && !user.locations.includes(location)) {
         return NextResponse.json(
-          { success: false, message: '您没有权限查看该地区的出席记录' },
+          { success: false, message: "您沒有權限查看該地區的出席記錄" },
           { status: 403 }
         );
       }
-      attendanceQuery.location = location;
+      whereClauses.push("a.location = ?");
+      params.push(location);
     }
 
-    // 並行執行 count 和 find 查詢
-    const [totalCount, attendances] = await Promise.all([
-      Attendance.countDocuments(attendanceQuery),
-      Attendance.find(attendanceQuery)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean() // 使用 lean() 獲取原始 JSON 對象，提升性能
-    ]);
+    const whereSQL = whereClauses.length > 0 ? whereClauses.join(" AND ") : "1=1";
 
-    // 優化：批量獲取所有相關的活動信息
-    const activityIds = attendances
-      .map(a => a.activityId)
-      .filter(Boolean);
+    // -------------------------------
+    // 3. Count query
+    // -------------------------------
+    const countSQL = `
+    SELECT COUNT(*) AS totalCount
+    FROM attendance a
+    WHERE ${whereSQL}
+  `;
 
-    const activityQueries = attendances
-      .filter(a => !a.activityId && a.activity && a.location)
-      .map(a => ({
-        activityName: a.activity,
-        location: a.location,
-        isActive: true
-      }));
+    const [countRows] = await db.query(countSQL, params);
+    const totalCount = (countRows as { totalCount: number }[])[0].totalCount;
 
-    // 批量查詢活動信息
-    const [activitiesByIds, activitiesByNameLocation] = await Promise.all([
-      activityIds.length > 0
-        ? Activity.find({ _id: { $in: activityIds } }).lean()
-        : Promise.resolve([]),
-      activityQueries.length > 0
-        ? Activity.find({ $or: activityQueries }).sort({ createdAt: -1 }).lean()
-        : Promise.resolve([])
-    ]);
+    // -------------------------------
+    // 4. Main query with trainerName join
+    // -------------------------------
+    const dataSQL = `
+    SELECT 
+      a.id,
+      a.name,
+      a.contactInfo,
+      a.location,
+      a.activity,
+      a.activityId,
+      a.status,
+      a.createdAt,
+      a.updatedAt,
+      COALESCE(act1.trainerName, act2.trainerName) AS trainerName
+    FROM attendance a
+    LEFT JOIN activities act1
+      ON a.activityId = act1.id
+    LEFT JOIN activities act2
+      ON a.activity = act2.activityName
+      AND a.location = act2.location
+      AND act2.isActive = TRUE
+    WHERE ${whereSQL}
+    ORDER BY a.createdAt DESC
+    LIMIT ? OFFSET ?
+  `;
 
-    // 建立查找表以提升性能
-    const activityByIdMap = new Map(
-      activitiesByIds.map(activity => [activity._id.toString(), activity])
-    );
+    const dataParams = [...params, limit, offset];
+    const [attendances] = await db.query<AttendanceWithTrainerRow[]>(dataSQL, dataParams);
 
-    const activityByNameLocationMap = new Map(
-      activitiesByNameLocation.map(activity => [
-        `${activity.activityName}-${activity.location}`,
-        activity
-      ])
-    );
-
-    // 為每個出席記錄添加教練信息
-    const attendancesWithTrainer = attendances.map(attendance => {
-      let trainerName = null;
-
-      // 優先通過 activityId 查找
-      if (attendance.activityId) {
-        const activity = activityByIdMap.get(attendance.activityId.toString());
-        if (activity) {
-          trainerName = activity.trainerName;
-        }
-      }
-
-      // 如果沒找到，通過活動名稱和地點查找
-      if (!trainerName && attendance.activity && attendance.location) {
-        const key = `${attendance.activity}-${attendance.location}`;
-        const activity = activityByNameLocationMap.get(key);
-        if (activity) {
-          trainerName = activity.trainerName;
-        }
-      }
-
-      return {
-        ...attendance,
-        trainerName: trainerName || null
-      };
-    });
+    const attendancesWithTrainer = attendances.map((row) => ({
+      id: row.id,
+      name: row.name,
+      contactInfo: row.contactInfo,
+      location: row.location,
+      activity: row.activity,
+      activityId: row.activityId,
+      status: row.status,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      trainerName: row.trainerName
+    }));
 
     return NextResponse.json({
       success: true,

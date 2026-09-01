@@ -5,14 +5,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import EditFinancialRecordModal from '@/app/components/EditFinancialRecordModal';
 import { withBasePath } from '@/lib/basePath';
+import { useLocation, LocationCode } from "@/types/location";
 
 interface FinancialRecord {
-  _id: string;
+  id: string;
   recordType: 'income' | 'expense';
   memberName: string;
   item: string;
   details?: string;
-  location: string;
+  location: LocationCode;
   unitPrice: number;
   quantity: number;
   totalAmount: number;
@@ -41,6 +42,7 @@ export default function FinancialOverview() {
   const [totalRecords, setTotalRecords] = useState(0);
   const [editingRecord, setEditingRecord] = useState<FinancialRecord | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const { label } = useLocation();
 
   // 獲取財務記錄
   const fetchFinancialRecords = async () => {
@@ -316,7 +318,7 @@ export default function FinancialOverview() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {records.map((record) => (
-                  <tr key={record._id} className="hover:bg-gray-50">
+                  <tr key={record.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatDate(record.recordDate)}
                     </td>
@@ -330,7 +332,7 @@ export default function FinancialOverview() {
                       {record.details || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {record.location}
+                      {record.location || "—"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(record.unitPrice)}
@@ -358,7 +360,7 @@ export default function FinancialOverview() {
                         修改
                       </button>
                       <button 
-                        onClick={() => handleDelete(record._id)}
+                        onClick={() => handleDelete(record.id)}
                         className="text-red-600 hover:text-red-900"
                       >
                         刪除

@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import CustomSelect from '@/app/components/CustomSelect';
 import { withBasePath } from "@/lib/basePath";
+import { LocationCode, useLocation } from '@/types/location';
 
 interface AttendanceRecord {
-  _id: string;
+  id: string;
   name: string;
   contactInfo: string;
-  location: string;
+  location: LocationCode;
   activity: string;
   status: string;
   createdAt: string;
@@ -24,6 +25,9 @@ export default function CheckPage() {
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   });
+
+  const { label } = useLocation();
+  
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +70,7 @@ export default function CheckPage() {
     // 立即更新本地状态以获得即时反馈
     const optimisticUpdate = (prevRecords: AttendanceRecord[]) => 
       prevRecords.map(record => 
-        record._id === recordId 
+        record.id === recordId 
           ? { ...record, status: newStatus }
           : record
       );
@@ -93,7 +97,7 @@ export default function CheckPage() {
       // 確認更新成功，再次更新状态确保資料一致性
       setRecords(prevRecords => 
         prevRecords.map(record => 
-          record._id === recordId 
+          record.id === recordId 
             ? { ...record, status: updatedRecord.status, updatedAt: updatedRecord.updatedAt }
             : record
         )
@@ -103,7 +107,7 @@ export default function CheckPage() {
       // 回滚乐观更新
       setRecords(prevRecords => 
         prevRecords.map(record => 
-          record._id === recordId 
+          record.id === recordId 
             ? { ...record, status: record.status === newStatus ? '出席' : record.status }
             : record
         )
@@ -231,7 +235,7 @@ export default function CheckPage() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {records.map((record, index) => (
-                      <tr key={record._id} className={`transition-colors duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
+                      <tr key={record.id} className={`transition-colors duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {record.name}
                         </td>
@@ -244,30 +248,30 @@ export default function CheckPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {record.location}
+                          {label(record.location)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <div className="relative inline-block w-20">
                             <CustomSelect
                               value={record.status || '出席'}
-                              onChange={(value) => updateStatus(record._id, value)}
+                              onChange={(value) => updateStatus(record.id, value)}
                               options={[
                                 { value: '出席', label: '出席' },
                                 { value: '早退', label: '早退' },
                               ]}
-                              disabled={updatingStatus === record._id}
+                              disabled={updatingStatus === record.id}
                               className={`
                                 ${record.status === '早退'
                                   ? '[&_button]:border-orange-200 [&_button]:bg-orange-50 [&_button]:text-orange-700 [&_button]:hover:bg-orange-100'
                                   : '[&_button]:border-green-200 [&_button]:bg-green-50 [&_button]:text-green-700 [&_button]:hover:bg-green-100'
                                 }
-                                ${updatingStatus === record._id
+                                ${updatingStatus === record.id
                                   ? '[&_button]:opacity-60 [&_button]:cursor-wait'
                                   : '[&_button]:hover:shadow-sm'
                                 }
                               `}
                             />
-                            {updatingStatus === record._id && (
+                            {updatingStatus === record.id && (
                               <div className="absolute inset-y-0 right-8 flex items-center pointer-events-none">
                                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
                               </div>

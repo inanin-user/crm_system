@@ -2,17 +2,21 @@ import { NextResponse } from 'next/server';
 import { generateToken } from '@/lib/auth';
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
-import { TokenPayload } from "@/lib/auth";
+import { AccountRow } from '@/types/auth';
+
+interface LoginAccRow extends AccountRow {
+  password: string;
+}
+
 export async function POST(req: Request) {
   try {
     const { username, password } = await req.json();
-
     if (!username || !password) {
       return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
     }
-
-    const [rows]: any = await db.query(
-      "SELECT * FROM account_management WHERE username = ? AND isActive = TRUE",
+    
+    const [rows] = await db.execute<LoginAccRow[]>(
+      `SELECT * FROM account_management WHERE username = ? AND isActive = TRUE`,
       [username]
     );
 
@@ -45,7 +49,7 @@ export async function POST(req: Request) {
       success: true,
       message: 'Login successful',
       user: {
-        id: String(user._id),
+        id: user.id,
         username: user.username,
         role: user.role,
         locations: user.locations || [],

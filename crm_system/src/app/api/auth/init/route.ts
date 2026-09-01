@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Account from '@/models/Account';
+import { db } from '@/lib/db';
+import { AccountRow } from '@/types/auth';
 
 export async function POST() {
   try {
-    await connectDB();
-
     // 检查是否已存在管理员账号
-    const existingAdmin = await Account.findOne({ role: 'admin' });
+    const [rows] = await db.query<AccountRow[]>(
+          "SELECT * FROM account_management WHERE role = ?",
+          ["admin"]
+        );
+    
+    const existingAdmin = rows[0];
     
     if (existingAdmin) {
       return NextResponse.json({

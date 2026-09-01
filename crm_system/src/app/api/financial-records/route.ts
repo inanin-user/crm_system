@@ -1,78 +1,108 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import FinancialRecord from '@/models/FinancialRecord';
+import { db } from '@/lib/db';
+import { FinancialRecordRow } from '@/types/financialRecord';
+import { RowDataPacket } from "mysql2";
+import { AccountRow } from '@/types/auth';
+import { v4 as uuid } from "uuid";
+import { LocationCode } from '@/types/location';
+
+
+interface CountRow extends RowDataPacket {
+  total: number;
+}
+
+interface StatsRow extends RowDataPacket {
+  totalIncome: number;
+  totalExpense: number;
+}
 
 // 獲取所有財務記錄
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
-    
+
     const { searchParams } = new URL(request.url);
     const memberName = searchParams.get('memberName');
     const recordType = searchParams.get('recordType');
     const location = searchParams.get('location');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
-    
-    // 構建查詢條件
-    const query: Record<string, unknown> = {};
-    if (memberName) {
-      query.memberName = { $regex: memberName, $options: 'i' };
-    }
-    if (recordType) {
-      query.recordType = recordType;
-    }
-    if (location) {
-      query.location = location;
-    }
-    
-    // 計算跳過數量
+
     const skip = (page - 1) * limit;
-    
-    // 執行查詢 - 移除 populate 避免錯誤
-    const records = await FinancialRecord.find(query)
-      .sort({ recordDate: -1, createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-    
+
+    const sql = `
+      SELECT *
+      FROM financial_records
+      WHERE 1=1
+        AND (? IS NULL OR memberName LIKE CONCAT('%', ?, '%'))
+        AND (? IS NULL OR recordType = ?)
+        AND (? IS NULL OR location = ?)
+      ORDER BY recordDate DESC, createdAt DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const params: (string | number | LocationCode | null)[] = [
+      memberName ?? null, memberName ?? null,
+      recordType ?? null, recordType ?? null,
+      location ?? null, location ?? null,
+      limit, skip
+    ];
+
+    const [records] = await db.query<FinancialRecordRow[]>(sql, params);
+
     // 手動處理 createdBy 字段
     const recordsWithUser = records.map(record => {
-      const recordObj = record.toObject();
+      // const recordObj = record.toObject();
       return {
-        ...recordObj,
+        ...record,
         createdBy: {
           username: '系統用戶' // 使用默認值
         }
       };
     });
-    
-    // 獲取總數
-    const total = await FinancialRecord.countDocuments(query);
-    
-    // 計算統計數據
-    const stats = await FinancialRecord.aggregate([
-      { $match: query },
-      {
-        $group: {
-          _id: null,
-          totalIncome: {
-            $sum: {
-              $cond: [{ $eq: ['$recordType', 'income'] }, '$totalAmount', 0]
-            }
-          },
-          totalExpense: {
-            $sum: {
-              $cond: [{ $eq: ['$recordType', 'expense'] }, '$totalAmount', 0]
-            }
-          }
-        }
-      }
-    ]);
-    
-    const totalIncome = stats[0]?.totalIncome || 0;
-    const totalExpense = stats[0]?.totalExpense || 0;
+
+
+
+
+
+    const countSql = `
+  SELECT COUNT(*) AS total
+  FROM financial_records
+  WHERE 1=1
+    AND (? IS NULL OR memberName LIKE CONCAT('%', ?, '%'))
+    AND (? IS NULL OR recordType = ?)
+    AND (? IS NULL OR location = ?)
+`;
+
+    const statsSql = `
+  SELECT
+    SUM(CASE WHEN recordType = 'income' THEN totalAmount ELSE 0 END) AS totalIncome,
+    SUM(CASE WHEN recordType = 'expense' THEN totalAmount ELSE 0 END) AS totalExpense
+  FROM financial_records
+  WHERE 1=1
+    AND (? IS NULL OR memberName LIKE CONCAT('%', ?, '%'))
+    AND (? IS NULL OR recordType = ?)
+    AND (? IS NULL OR location = ?)
+`;
+
+    const countParams: (string | number | null)[] = [
+      memberName ?? null, memberName ?? null,
+      recordType ?? null, recordType ?? null,
+      location ?? null, location ?? null
+    ];
+
+    const [[countRow]] = await db.query<CountRow[]>(countSql, countParams);
+    const [[statsRow]] = await db.query<StatsRow[]>(statsSql, countParams);
+
+    const total = countRow.total;
+    const stats = {
+      totalIncome: statsRow.totalIncome ?? 0,
+      totalExpense: statsRow.totalExpense ?? 0
+    };
+
+    const totalIncome = stats.totalIncome || 0;
+    const totalExpense = stats.totalExpense || 0;
     const netAmount = totalIncome - totalExpense;
-    
+
     return NextResponse.json({
       success: true,
       data: {
@@ -102,14 +132,8 @@ export async function GET(request: NextRequest) {
 // 創建新的財務記錄
 export async function POST(request: NextRequest) {
   try {
-    console.log('開始創建財務記錄...');
-    
-    await connectDB();
-    console.log('數據庫連接成功');
-    
     const body = await request.json();
-    console.log('接收到的請求體:', body);
-    
+
     const {
       recordType,
       memberName,
@@ -121,66 +145,72 @@ export async function POST(request: NextRequest) {
       recordDate,
       createdBy
     } = body;
-    
-    console.log('解析後的字段:', {
-      recordType,
-      memberName,
-      item,
-      details,
-      location,
-      unitPrice,
-      quantity,
-      recordDate,
-      createdBy
-    });
-    
-    // 驗證必填字段
+
+
+    // 必填字段
     if (!recordType || !memberName || !item || !location || unitPrice === undefined || !quantity) {
-      console.log('必填字段驗證失敗');
+      console.log('必填字段檢驗失敗');
       return NextResponse.json(
         { success: false, message: '請填寫所有必填字段' },
         { status: 400 }
       );
     }
-    
-    // 驗證數值
+
+    // 檢驗數值
     if (unitPrice < 0 || quantity < 1) {
-      console.log('數值驗證失敗:', { unitPrice, quantity });
+      console.log('數值檢驗失敗:', { unitPrice, quantity });
       return NextResponse.json(
         { success: false, message: '單價和數量必須為正數' },
         { status: 400 }
       );
     }
-    
-    // 驗證 createdBy 是否為有效的 ObjectId
-    if (!createdBy || !/^[0-9a-fA-F]{24}$/.test(createdBy)) {
-      console.log('createdBy 驗證失敗:', createdBy);
+
+    const [accountRows] = await db.query<AccountRow[]>(
+      "SELECT id FROM account_management WHERE id = ? LIMIT 1",
+      [createdBy.trim()]
+    );
+
+    if (accountRows.length === 0) {
       return NextResponse.json(
-        { success: false, message: '創建者ID無效' },
+        { success: false, message: "創建者不存在" },
         { status: 400 }
       );
     }
-    
-    console.log('所有驗證通過，開始創建記錄...');
-    
-    // 創建新記錄
-    const newRecord = new FinancialRecord({
-      recordType,
-      memberName,
-      item,
-      details,
-      location,
-      unitPrice,
-      quantity,
-      recordDate: recordDate ? new Date(recordDate) : new Date(),
-      createdBy
-    });
-    
-    console.log('記錄對象創建成功:', newRecord);
-    
-    await newRecord.save();
-    console.log('記錄保存成功，ID:', newRecord._id);
-    
+
+    console.log('所有檢驗通過，開始創建記錄...');
+
+    const recordId = uuid();
+
+    await db.query(
+      `
+  INSERT INTO financial_records
+    (id, recordType, memberName, item, details, location,
+     unitPrice, quantity, totalAmount, recordDate, createdBy,
+     createdAt, updatedAt)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+  `,
+      [
+        recordId,
+        recordType,
+        memberName.trim(),
+        item.trim(),
+        details?.trim() ?? null,
+        location.trim(),
+        unitPrice,
+        quantity,
+        unitPrice * quantity, // auto-calc totalAmount
+        recordDate ? new Date(recordDate) : new Date(),
+        createdBy.trim()
+      ]
+    );
+
+    const [rows] = await db.query<FinancialRecordRow[]>(
+      "SELECT * FROM financial_records WHERE id = ?",
+      [recordId]
+    );
+
+    const newRecord = rows[0];
+
     return NextResponse.json({
       success: true,
       message: '財務記錄創建成功',
@@ -194,4 +224,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

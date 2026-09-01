@@ -8,13 +8,14 @@ import AddAccountModal from '@/app/components/AddAccountModal';
 import DeleteAccountModal from '@/app/components/DeleteAccountModal';
 import EditAccountModal from '@/app/components/EditAccountModal';
 import { withBasePath } from '@/lib/basePath';
+import { LocationCode } from '@/types/location';
 
 interface Account {
-  id: number;
+  id: string;
   username: string;
   role: string;
   isActive: boolean;
-  locations: string[];
+  locations: LocationCode[];
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
@@ -52,23 +53,24 @@ export default function MemberManagementPage() {
         setAccounts(result.data);
         // 如果有帳戶且没有选中的帳戶，默认选中第一个
         if (result.data.length > 0 && !selectedAccount) {
+          console.log("select first one");
           handleSelectAccount(result.data[0].id);
         }
       } else {
         setError('獲取會員列表失敗');
       }
     } catch {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsLoadingAccounts(false);
     }
   };
 
   // 獲取帳戶详细信息
-  const handleSelectAccount = async (accountId: number) => {
+  const handleSelectAccount = async (accountId: string) => {
     try {
       setIsLoadingDetail(true);
-      const response = await fetch(`/api/accounts/${accountId}`);
+      const response = await fetch(withBasePath(`/api/accounts/${accountId}`));
       const result = await response.json();
       
       if (result.success) {
@@ -81,7 +83,7 @@ export default function MemberManagementPage() {
         setError('獲取帳戶詳情失敗');
       }
     } catch {
-      setError('網絡錯誤，請重试');
+      setError('Internal Server error');
     } finally {
       setIsLoadingDetail(false);
     }

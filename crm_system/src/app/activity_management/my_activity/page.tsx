@@ -6,7 +6,7 @@ import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 import { withBasePath } from "@/lib/basePath";
 
 interface Activity {
-  _id: string;
+  id: string;
   activityName: string;
   trainerId: string;
   trainerName: string;
@@ -50,7 +50,7 @@ export default function MyActivityPage() {
         setError('獲取活动列表失敗');
       }
     } catch {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsLoadingActivities(false);
     }
@@ -128,10 +128,10 @@ export default function MyActivityPage() {
                 <div className="space-y-1 p-2">
                   {activities.map((activity) => (
                     <button
-                      key={activity._id}
+                      key={activity.id}
                       onClick={() => handleSelectActivity(activity)}
                       className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        selectedActivity?._id === activity._id
+                        selectedActivity?.id === activity.id
                           ? 'bg-blue-50 border border-blue-200 text-blue-900'
                           : 'hover:bg-gray-50 border border-transparent'
                       }`}

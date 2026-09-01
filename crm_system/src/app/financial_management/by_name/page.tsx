@@ -6,14 +6,15 @@ import EditFinancialRecordModal from '@/app/components/EditFinancialRecordModal'
 import MobileTable from '@/app/components/MobileTable';
 import { useMobileDetection } from '@/hooks/useMobileDetection';
 import { withBasePath } from '@/lib/basePath';
+import { LocationCode, useLocation } from '@/types/location';
 
 interface FinancialRecord {
-  _id: string;
+  id: string;
   recordType: 'income' | 'expense';
   memberName: string;
   item: string;
   details?: string;
-  location: string;
+  location: LocationCode;
   unitPrice: number;
   quantity: number;
   totalAmount: number;
@@ -44,7 +45,8 @@ export default function FinancialByName() {
   const [totalRecords, setTotalRecords] = useState(0);
   const [editingRecord, setEditingRecord] = useState<FinancialRecord | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
+  const { label } = useLocation();
+  
   // 獲取所有成員列表
   const fetchMembers = async () => {
     try {
@@ -300,7 +302,7 @@ export default function FinancialByName() {
                 hideOnMobile: isMobile,
                 render: (item: unknown) => {
                   const record = item as FinancialRecord;
-                  return <span className="text-sm text-gray-900">{record.location}</span>;
+                  return <span className="text-sm text-gray-900">{label(record.location)}</span>;
                 }
               },
               {
@@ -368,7 +370,7 @@ export default function FinancialByName() {
                         修改
                       </button>
                       <button
-                        onClick={() => handleDelete(record._id)}
+                        onClick={() => handleDelete(record.id)}
                         className="text-red-600 hover:text-red-900 text-sm font-medium"
                       >
                         刪除

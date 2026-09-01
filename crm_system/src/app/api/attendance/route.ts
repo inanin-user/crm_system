@@ -1,215 +1,327 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Attendance from '@/models/Attendance';
-import Account from '@/models/Account';
 import { getAuthUser } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { v4 as uuid } from "uuid";
+import { RowDataPacket } from 'mysql2';
+import { DailySettlementRole, MemberFields, TicketFields } from '@/types/auth';
+import { AttendanceRow } from '@/types/attendance';
+import { LocationCode } from '@/types/location';
+import { ActivityRow } from '@/types/activity';
 
-// GET - 获取所有出席记录
+interface DuplicateRow extends RowDataPacket {
+  id: string;
+}
+
+interface AttendanceAccRow extends RowDataPacket {
+  username: string;
+  role: DailySettlementRole;
+  locations: LocationCode[];
+}
+
+export interface MemberRow extends MemberFields, TicketFields {
+  id: number;
+  role: DailySettlementRole;
+  isActive: number;
+}
+// GET - 獲取出席記錄
 export async function GET() {
   try {
-    await connectDB();
-    const attendances = await Attendance.find({}).sort({ createdAt: -1 });
-    
+    const [rows] = await db.query<AttendanceRow[]>(
+      "SELECT * FROM attendance ORDER BY createdAt DESC"
+    );
+
+    const attendances: AttendanceRow[] = rows;
+
     return NextResponse.json(attendances, { status: 200 });
   } catch (error) {
-    console.error('获取出席记录失败:', error);
+    console.error('獲取出席記錄失敗:', error);
     return NextResponse.json(
-      { error: '获取出席记录失败', details: error instanceof Error ? error.message : '未知错误' },
+      { error: '獲取出席記錄失敗', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
 }
 
-// POST - 创建新的出席记录
+// POST - 出席記錄建立
 export async function POST(request: NextRequest) {
   try {
-    await connectDB();
-    
-    // 验证用户身份
+
+    // 查驗用戶身份
     const authUser = getAuthUser(request);
     if (!authUser) {
       return NextResponse.json(
-        { error: '未授权访问' },
+        { error: '未授權訪問' },
         { status: 401 }
       );
     }
 
-    // 获取用户详细信息
-    const user = await Account.findById(authUser.userId);
+    // 獲取用戶信息
+    const [rows] = await db.query<AttendanceAccRow[]>(
+      `SELECT 
+        username,
+        role,
+        locations
+       FROM account_management WHERE id = ?`,
+      [authUser.userId]
+    );
+    const user = rows[0];
     if (!user) {
       return NextResponse.json(
-        { error: '用户不存在' },
+        { error: '用戶不存在' },
         { status: 404 }
       );
     }
-    
+
     const body = await request.json();
     const { name, contactInfo, location, activity, activityId, memberId } = body;
-    
+
     // 验证必需字段
     if (!name || !contactInfo || !location || !activity) {
       return NextResponse.json(
-        { error: '所有字段都是必需的：姓名、联系方式、地点、活动内容' },
+        { error: '所需字段：姓名、聯絡方式、地區、活動' },
         { status: 400 }
       );
     }
-    
-    // 检查用户是否有权限在该地区创建记录
-    if (user.role === 'trainer') {
-      // 教练只能在他们有权限的地区创建记录
-      if (!user.locations || user.locations.length === 0) {
+
+    // 1. Trainer permission check
+    if (user.role === "trainer") {
+      if (user.locations.length === 0) {
         return NextResponse.json(
-          { error: '您没有任何地区权限，无法创建出席记录' },
+          { error: "你未有任何地區權限，無法創建出席記錄" },
           { status: 403 }
         );
       }
-      
+
       if (!user.locations.includes(location)) {
         return NextResponse.json(
-          { error: `您没有在 ${location} 创建出席记录的权限` },
+          { error: `你未有創建該地區出席記錄的權限: ${location}` },
           { status: 403 }
         );
       }
-    } else if (['member', 'regular-member', 'premium-member'].includes(user.role)) {
-      // 會員只能為自己創建出席記錄（通過QR code掃描）
+    }
+
+    // 2. Member permission check
+    if (["member", "regular-member", "premium-member"].includes(user.role)) {
       if (!memberId || memberId !== authUser.userId) {
         return NextResponse.json(
-          { error: '會員只能為自己創建出席記錄' },
+          { error: "會員只能為自己創建出席記錄" },
           { status: 403 }
         );
       }
-    } else if (user.role !== 'admin') {
-      // 其他角色不允許創建記錄
+    }
+
+    // 3. Other roles not allowed
+    if (user.role !== "admin" &&
+      user.role !== "trainer" &&
+      !["member", "regular-member", "premium-member"].includes(user.role)) {
       return NextResponse.json(
-        { error: '您没有权限创建出席记录' },
+        { error: "你未有創建該地區出席記錄的權限" },
         { status: 403 }
       );
     }
 
-    // 如果提供了memberId，验证会员并扣除quota
-    if (memberId) {
-      const member = await Account.findById(memberId);
-      
-      if (!member || !['member', 'regular-member', 'premium-member'].includes(member.role)) {
-        return NextResponse.json(
-          { error: '无效的会员ID' },
-          { status: 400 }
-        );
-      }
+    // 4. Validate member in MySQL
+    const [memberRows] = await db.query<MemberRow[]>(
+      `
+      SELECT
+        id,
+        memberName,
+        phone,
+        role,
+        quota,
+        isActive,
+        initialTickets,
+        addedTickets,
+        usedTickets
+      FROM account_management
+      WHERE id = ?
+      `,
+      [memberId]
+    );
 
-      // 檢查重複簽到 - 使用activityId精確判斷
-      if (activityId) {
-        const existingAttendance = await Attendance.findOne({
-          $and: [
-            // 匹配活動ID（確保是同一活動時段）
-            { 
-              $or: [
-                { activityId: activityId },
-                // 兼容舊記錄：如果沒有activityId，用活動名稱和地點匹配
-                { 
-                  $and: [
-                    { activity: activity.trim() },
-                    { location: location.trim() },
-                    { activityId: { $exists: false } }
-                  ]
-                }
-              ]
-            },
-            // 匹配會員身份
-            {
-              $or: [
-                { name: member.memberName },
-                { contactInfo: member.phone }
-              ]
-            }
-          ]
-        });
-
-        if (existingAttendance) {
-          return NextResponse.json(
-            { error: '你已簽到' },
-            { status: 400 }
-          );
-        }
-      }
-
-      if (!member.isActive) {
-        return NextResponse.json(
-          { error: '该会员账户已被禁用' },
-          { status: 400 }
-        );
-      }
-
-      if (!member.quota || member.quota <= 0) {
-        return NextResponse.json(
-          { error: '该会员配额不足，无法参加活动' },
-          { status: 400 }
-        );
-      }
-
-      // 验证会员信息是否匹配
-      const isNameMatch = member.memberName === name.trim();
-      const isContactMatch = member.phone === contactInfo.trim();
-
-      if (!isNameMatch || !isContactMatch) {
-        return NextResponse.json(
-          { error: '提供的姓名和联系方式与会员记录不匹配' },
-          { status: 400 }
-        );
-      }
-
-      // 扣除配额（更新套票相關字段）
-      const currentUsedTickets = member.usedTickets || 0;
-      const currentInitialTickets = member.initialTickets || 0;
-      const currentAddedTickets = member.addedTickets || 0;
-
-      // 增加已使用套票次數
-      const newUsedTickets = currentUsedTickets + 1;
-
-      // 重新計算剩余配额
-      const newQuota = currentInitialTickets + currentAddedTickets - newUsedTickets;
-
-      // 更新數據
-      member.quota = Math.max(0, newQuota); // 確保不為負數
-      member.usedTickets = newUsedTickets;
-
-      await member.save();
+    if (memberRows.length === 0 ||
+      !["member", "regular-member", "premium-member"].includes(memberRows[0].role)) {
+      return NextResponse.json(
+        { error: "會員ID無效" },
+        { status: 400 }
+      );
     }
-    
-    const newAttendance = new Attendance({
-      name: name.trim(),
-      contactInfo: contactInfo.trim(),
-      location: location.trim(),
-      activity: activity.trim(),
-      activityId: activityId || undefined // 保存活動ID，如果沒有則為undefined
-    });
-    
-    const savedAttendance = await newAttendance.save();
-    
-    // 如果指定了活动ID，将参与者添加到活动中
+
+    const member = memberRows[0];
+
+    // 5. Duplicate attendance check (MySQL rewrite)
+    const [duplicateRows] = await db.query<DuplicateRow[]>(
+      `
+      SELECT a.id
+      FROM attendance a
+
+      LEFT JOIN activities act
+        ON a.activityId = act.id
+
+      WHERE
+        (
+          -- Case 1: exact match by activityId
+          a.activityId = ?
+
+          OR
+
+          -- Case 2: fallback match by activityName + location
+          (
+            a.activity = ?
+            AND a.location = ?
+            AND a.activityId IS NULL
+          )
+        )
+        AND
+        (
+          a.name = ?
+          OR a.contactInfo = ?
+        )
+      LIMIT 1
+      `,
+      [
+        activityId,
+        activity.trim(),
+        location.trim(),
+        member.memberName,
+        member.phone
+      ]
+    );
+
+    if (duplicateRows.length > 0) {
+      return NextResponse.json(
+        { error: "你已簽到" },
+        { status: 400 }
+      );
+    }
+
+
+    if (!member.isActive) {
+      return NextResponse.json(
+        { error: '會員户口已被禁用' },
+        { status: 400 }
+      );
+    }
+
+    if (!member.quota || member.quota <= 0) {
+      return NextResponse.json(
+        { error: '该會員配额不足，不能参加活動' },
+        { status: 400 }
+      );
+    }
+
+    // 验证會員信息是否匹配
+    const isNameMatch = member.memberName === name.trim();
+    const isContactMatch = member.phone === contactInfo.trim();
+
+    if (!isNameMatch || !isContactMatch) {
+      return NextResponse.json(
+        { error: '姓名與聯絡方式不符合會員記錄' },
+        { status: 400 }
+      );
+    }
+
+    // 扣除配额（更新套票相關字段）
+    const currentUsedTickets = member.usedTickets || 0;
+    const currentInitialTickets = member.initialTickets || 0;
+    const currentAddedTickets = member.addedTickets || 0;
+
+    // 增加已使用套票次數
+    const newUsedTickets = currentUsedTickets + 1;
+
+    // 重新計算剩余配额
+    const newQuota = currentInitialTickets + currentAddedTickets - newUsedTickets;
+
+    // 更新數據
+    member.quota = Math.max(0, newQuota); // 確保不為負數
+    member.usedTickets = newUsedTickets;
+
+    await db.query(
+      `
+      UPDATE account_management
+      SET
+        quota = ?, 
+        renewalCount = ?, 
+        initialTickets = ?, 
+        addedTickets = ?, 
+        usedTickets = ?
+      WHERE id = ?
+      `,
+      [
+        member.quota,
+        member.renewalCount,
+        member.initialTickets,
+        member.addedTickets,
+        member.usedTickets,
+        member.id
+      ]
+    );
+
+    // 1. Generate UUID
+    const attendanceId = uuid();
+
+    // 2. Insert with explicit UUID
+    await db.query(
+      `
+      INSERT INTO attendance
+        (id, name, contactInfo, location, activity, activityId, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
+      `,
+      [
+        attendanceId,
+        name.trim(),
+        contactInfo.trim(),
+        location.trim(),
+        activity.trim(),
+        activityId ?? null
+      ]
+    );
+
+    const [attendanceRows] = await db.query<AttendanceRow[]>(
+      `
+      SELECT *
+      FROM attendance
+      WHERE id = ?
+      `,
+      [attendanceId]
+    );
+
+    const savedAttendance = attendanceRows[0];
+    // 3. Add participant to activity (simulate $addToSet)
     if (activityId) {
-      try {
-        const { default: Activity } = await import('@/models/Activity');
-        await Activity.findByIdAndUpdate(
-          activityId,
-          { $addToSet: { participants: name.trim() } }, // 使用$addToSet避免重复
-          { new: true }
-        );
-      } catch (error) {
-        console.error('添加参与者到活动失败:', error);
-        // 不影响出席记录的创建，只记录错误
-      }
+      const [activityRows] = await db.query<ActivityRow[]>(
+        `
+        SELECT participants
+        FROM activities
+        WHERE id = ?
+        `,
+        [activityId]
+      );
+      console.log(activityRows[0].participants);
+      const currentParticipants: string[] = activityRows[0].participants;
+      const updatedParticipants = Array.from(
+        new Set([...currentParticipants, name.trim()])
+      );
+
+      await db.query(
+        `
+        UPDATE activities
+        SET participants = ?
+        WHERE id = ?
+        `,
+        [JSON.stringify(updatedParticipants), activityId]
+      );
     }
-    
+
     return NextResponse.json({
       ...savedAttendance.toObject(),
       quotaDeducted: !!memberId,
       activityUpdated: !!activityId
     }, { status: 201 });
   } catch (error) {
-    console.error('创建出席记录失败:', error);
+    console.error('創建出席記錄失敗:', error);
     return NextResponse.json(
-      { error: '创建出席记录失败', details: error instanceof Error ? error.message : '未知错误' },
+      { error: '創建出席記錄失敗', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

@@ -1,9 +1,10 @@
 // app/daily_settlement/home/page.tsx
 "use client";
-import { CENTER_CODES, CENTER_LABELS } from "@/types/center";
 import StaffSection, { StaffRow, StaffMember } from "@/app/components/StaffSection";
 import { useEffect, useMemo, useState } from "react";
 import { withDailySettlementPath } from "@/lib/basePath";
+import { LocationCode, useLocation } from "@/types/location";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
@@ -13,6 +14,9 @@ let rowIdCounter = 0;
 const nextId = () => ++rowIdCounter;
 
 export default function HomeScreen() {
+
+  const { setDisableGPULayer } = useSidebar();
+  
   const [username, setUsername] = useState("");
   const [center, setCenter] = useState('');
   const [role, setRole] = useState("");
@@ -31,6 +35,11 @@ export default function HomeScreen() {
 
   const [remarks, setRemarks] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { label } = useLocation();
+  useEffect(() => {
+    setDisableGPULayer(true);
+    return () => setDisableGPULayer(false);
+  }, [setDisableGPULayer]);
 
   useEffect(() => {
     fetch(withDailySettlementPath("/api/staff"))
@@ -119,10 +128,10 @@ export default function HomeScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!center) {
-      setCenter('WC');
-      // return;
-    }
+    // if (!center) {
+    //   setCenter('WC');
+    //   // return;
+    // }
     setSubmitting(true);
     try {
       const res = await fetch(`${BASE_PATH}/api/update-data`, {
@@ -175,9 +184,8 @@ export default function HomeScreen() {
       window.location.href = `${BASE_PATH}/login`;
     }
   };
-
   return (
-    <div id="home-screen">
+    <div id="home-screen" className="">
       <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200">
         {/* Header */}
         <div className="relative bg-slate-800 p-6 text-white">
@@ -218,15 +226,15 @@ export default function HomeScreen() {
               className="bg-slate-600 hover:bg-slate-500 text-white text-sm font-bold px-3 py-1.5 rounded-lg border border-slate-500 transition-all"
             >
               <option value="">請選擇分店</option>
-              {CENTER_CODES.map((code) => (
+              {Object.values(LocationCode).map((code) => (
                 <option key={code} value={code}>
-                  {CENTER_LABELS[code]}
+                  {label(code)}
                 </option>
               ))}
             </select>
           ) : (
             <div className="text-center text-white font-bold text-lg tracking-wide">
-              {CENTER_LABELS[center as keyof typeof CENTER_LABELS] || center}
+              {center ? label(center) : ""}
             </div>
           )}
         </div>
@@ -273,22 +281,14 @@ export default function HomeScreen() {
             onChange={(id, field, value) => updateRow(setClassItems, id, field, value)}
           />
 
-          <StaffSection
-            title="3. 介紹費"
-            rows={introductionFee}
-            staffList={staffList}
-            onAdd={() => addRow(setIntroductionFee)}
-            onRemove={(id) => removeRow(setIntroductionFee, id)}
-            onChange={(id, field, value) => updateRow(setIntroductionFee, id, field, value)}
-          />
+          
 
           <hr className="border-slate-200" />
 
           {/* Income */}
           <div className="section-group">
             <div className="label-title">
-              <span>4. 每日收入明細</span>
-              <span className="text-xs font-normal text-slate-400">{income.length} 筆</span>
+              <span>3. 每日收入明細</span>
             </div>
             <div className="rows-area space-y-2">
               {income.map((row) => (
@@ -316,7 +316,7 @@ export default function HomeScreen() {
                     placeholder="$ 金額"
                     value={row.amount}
                     onChange={(e) => updateIncomeRow(row.id, "amount", Number(e.target.value))}
-                    className="input-field flex-1 money-input"
+                    className="input-field flex-1 min-w-0"
                   />
                   <span className="btn-icon btn-add" onClick={addIncomeRow}>⊕</span>
                   <span className="btn-icon btn-del" onClick={() => removeIncomeRow(row.id)}>−</span>
@@ -325,12 +325,21 @@ export default function HomeScreen() {
             </div>
           </div>
 
+          <StaffSection
+            title="4. 介紹費"
+            rows={introductionFee}
+            staffList={staffList}
+            onAdd={() => addRow(setIntroductionFee)}
+            onRemove={(id) => removeRow(setIntroductionFee, id)}
+            onChange={(id, field, value) => updateRow(setIntroductionFee, id, field, value)}
+          />
+
           {/* Total */}
           <div className="bg-slate-900 rounded-xl p-6 text-white flex justify-between items-center shadow-inner">
             <span className="text-lg font-bold text-slate-400">每日總金額 TOTAL</span>
             <span className="text-4xl font-black text-yellow-400">$ {grandTotal}</span>
           </div>
-
+          
           {/* Remarks */}
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-2">備註 Remarks</label>

@@ -5,16 +5,32 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import CustomSelect from '@/app/components/CustomSelect';
 import { withBasePath } from '@/lib/basePath';
+import { LocationCode, useLocation } from '@/types/location';
 
 export default function AddFinancialRecord() {
   const router = useRouter();
   const { user } = useAuth();
-  const [formData, setFormData] = useState({
+  const { label } = useLocation();
+  const locationOptions = Object.values(LocationCode).map((code) => ({
+    value: code,
+    label: label(code),
+  }));
+  type FormData = {
+    recordType: string;
+    memberName: string;
+    item: string;
+    details: string;
+    location: LocationCode; // the union type, not inferred from LocationCode.WC alone
+    unitPrice: number;
+    quantity: number;
+    recordDate: string;
+  };
+  const [formData, setFormData] = useState<FormData>({
     recordType: 'income',
     memberName: '',
     item: '',
     details: '',
-    location: '灣仔',
+    location: LocationCode.WC,
     unitPrice: 0,
     quantity: 1,
     recordDate: new Date().toISOString().split('T')[0]
@@ -194,12 +210,8 @@ export default function AddFinancialRecord() {
             </label>
             <CustomSelect
               value={formData.location}
-              onChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
-              options={[
-                { value: '灣仔', label: '灣仔' },
-                { value: '黃大仙', label: '黃大仙' },
-                { value: '石門', label: '石門' },
-              ]}
+              onChange={(value) => setFormData(prev => ({ ...prev, location: value as LocationCode }))}
+              options={locationOptions}
               placeholder="請選擇地點"
             />
           </div>

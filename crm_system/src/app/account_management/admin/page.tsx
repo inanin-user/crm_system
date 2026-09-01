@@ -8,13 +8,14 @@ import AddAccountModal from '@/app/components/AddAccountModal';
 import DeleteAccountModal from '@/app/components/DeleteAccountModal';
 import EditAccountModal from '@/app/components/EditAccountModal';
 import { withBasePath } from '@/lib/basePath';
+import { LocationCode } from '@/types/location';
 
 interface Account {
-  id: number;
+  id: string;
   username: string;
   role: string;
   isActive: boolean;
-  locations: string[];
+  locations: LocationCode[];
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
@@ -56,14 +57,14 @@ export default function AdminManagementPage() {
         setError('獲取管理员列表失敗');
       }
     } catch {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsLoadingAccounts(false);
     }
   };
 
   // 獲取帳戶详细信息
-  const handleSelectAccount = async (accountId: number) => {
+  const handleSelectAccount = async (accountId: string) => {
     try {
       setIsLoadingDetail(true);
       const response = await fetch(withBasePath(`/api/accounts/${accountId}`));
@@ -75,7 +76,7 @@ export default function AdminManagementPage() {
         setError('獲取帳戶詳情失敗');
       }
     } catch {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsLoadingDetail(false);
     }

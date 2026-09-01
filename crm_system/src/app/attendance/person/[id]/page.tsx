@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { withBasePath } from '@/lib/basePath';
 
 interface AttendanceRecord {
-  _id: string;
+  id: string;
   name: string;
   contactInfo: string;
   location: string;
@@ -186,7 +186,7 @@ export default function PersonDetailPage() {
                 </tr>
               ) : (
                 personRecords.map((record) => (
-                  <tr key={record._id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={record.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
                         {record.location}

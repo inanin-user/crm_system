@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Activity from '@/models/Activity';
+import { db } from '@/lib/db';
+import { ActivityRow } from '@/types/activity';
 
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
-
     const searchParams = request.nextUrl.searchParams;
     const trainerId = searchParams.get('trainerId');
 
@@ -16,11 +14,29 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 根据教练ID查找活动记录
-    const activities = await Activity.find({
-      trainerId: trainerId,
-      isActive: true
-    }).sort({ startTime: -1 }); // 按开始时间倒序
+    const [activityRows] = await db.query<ActivityRow[]>(
+      `SELECT id, activityName, trainerId, trainerName, startTime, endTime,
+          duration, participants, location, description, isActive,
+          createdAt, updatedAt
+   FROM activities
+   WHERE trainerId = ? AND isActive = 1
+   ORDER BY startTime DESC`,
+      [trainerId]
+    );
+
+    // participants is stored as `longtext`, not a native JSON column, so it
+    // always needs manual parsing — unlike a true `JSON` column type, mysql2
+    // will never auto-parse this for you.
+    const activities = activityRows.map((row) => ({
+      ...row,
+      participants: (() => {
+        try {
+          return JSON.parse(row[0].participants);
+        } catch {
+          return [];
+        }
+      })(),
+    }));
 
     return NextResponse.json({
       success: true,

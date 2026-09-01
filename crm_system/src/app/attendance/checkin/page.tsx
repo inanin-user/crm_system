@@ -6,9 +6,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import QRCode from 'qrcode';
 import CustomSelect from '@/app/components/CustomSelect';
 import { withBasePath } from "@/lib/basePath";
+import { LocationCode, useLocation } from '@/types/location';
 
 interface Member {
-  _id: string;
+  id: string;
   username: string;
   memberName: string;
   phone: string;
@@ -18,14 +19,14 @@ interface Member {
 }
 
 interface Activity {
-  _id: string;
+  id: string;
   activityName: string;
   trainerId: string;
   trainerName: string;
   startTime: string;
   endTime: string;
   duration: number;
-  location: string;
+  location: LocationCode;
   isActive: boolean;
 }
 
@@ -33,8 +34,10 @@ export default function AddAttendancePage() {
   const router = useRouter();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+
+  const { label } = useLocation();
+
+  const [availableLocations, setAvailableLocations] = useState<LocationCode[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [, setIsLoadingActivities] = useState(true);
   const [formData, setFormData] = useState({
@@ -62,7 +65,7 @@ export default function AddAttendancePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // 所有可用的地区
-  const ALL_LOCATIONS = useMemo(() => ['灣仔', '黃大仙', '石門'], []);
+  const ALL_LOCATIONS = Object.values(LocationCode);
 
   // 獲取活动列表
   const fetchActivities = async () => {
@@ -70,7 +73,7 @@ export default function AddAttendancePage() {
       setIsLoadingActivities(true);
       const response = await fetch(withBasePath('/api/activities'));
       const result = await response.json();
-      
+
       if (result.success) {
         setActivities(result.data);
       }
@@ -82,6 +85,7 @@ export default function AddAttendancePage() {
   };
 
   useEffect(() => {
+
     if (user) {
       if (user.role === 'admin') {
         // 管理员可以選擇所有地区
@@ -93,7 +97,7 @@ export default function AddAttendancePage() {
     }
     // 獲取活动列表
     fetchActivities();
-  }, [user, ALL_LOCATIONS]);
+  }, [user]);
 
   // 验证會員信息
   const validateMember = async (name: string, contactInfo: string) => {
@@ -151,10 +155,10 @@ export default function AddAttendancePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     // 特殊处理活动選擇
     if (name === 'activityId') {
-      const selectedActivity = activities.find(activity => activity._id === value);
+      const selectedActivity = activities.find(activity => activity.id === value);
       setFormData(prev => ({
         ...prev,
         activityId: value,
@@ -184,7 +188,7 @@ export default function AddAttendancePage() {
 
       if (formData.activityId && formData.activityName && formData.location) {
         // 如果已選擇活動，生成特定活動的 QR code
-        const selectedActivity = activities.find(a => a._id === formData.activityId);
+        const selectedActivity = activities.find(a => a.id === formData.activityId);
         if (!selectedActivity) {
           throw new Error('找不到選擇的活動');
         }
@@ -235,7 +239,7 @@ export default function AddAttendancePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // 檢查會員验证状态
     if (!memberValidation.member) {
       alert('❌ 請先確認會員信息有效');
@@ -250,8 +254,8 @@ export default function AddAttendancePage() {
     setIsSubmitting(true);
 
     try {
-      const selectedActivity = activities.find(a => a._id === formData.activityId);
-      
+      const selectedActivity = activities.find(a => a.id === formData.activityId);
+
       const response = await fetch(withBasePath('/api/attendance'), {
         method: 'POST',
         headers: {
@@ -263,7 +267,7 @@ export default function AddAttendancePage() {
           location: formData.location,
           activity: formData.activityName,
           activityId: formData.activityId,
-          memberId: memberValidation.member._id // 添加會員ID用于quota扣除
+          memberId: memberValidation.member.id // 添加會員ID用于quota扣除
         }),
       });
 
@@ -282,11 +286,11 @@ export default function AddAttendancePage() {
     }
   };
 
-  const isFormValid = formData.name.trim() && formData.contactInfo.trim() && 
-                     formData.location.trim() && formData.activityId.trim() &&
-                     availableLocations.length > 0 && 
-                     memberValidation.member && 
-                     !memberValidation.error;
+  const isFormValid = formData.name.trim() && formData.contactInfo.trim() &&
+    formData.location.trim() && formData.activityId.trim() &&
+    availableLocations.length > 0 &&
+    memberValidation.member &&
+    !memberValidation.error;
 
   return (
     <div>
@@ -346,7 +350,7 @@ export default function AddAttendancePage() {
           {(formData.name.trim() && formData.contactInfo.trim()) && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <h3 className="text-sm font-medium text-gray-700 mb-2">會員驗證狀態</h3>
-              
+
               {memberValidation.isValidating ? (
                 <div className="flex items-center text-blue-600">
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -387,15 +391,15 @@ export default function AddAttendancePage() {
             <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
               地點 <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              readOnly
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-              placeholder={formData.activityId ? "地點將根據選擇的活動自動設置" : "請先選擇活動"}
-            />
+            <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 min-h-[42px] flex items-center">
+              {formData.location ? (
+                label(formData.location)
+              ) : (
+                <span className="text-gray-400">
+                  {formData.activityId ? "地點將根據選擇的活動自動設置" : "請先選擇活動"}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-gray-500 mt-1">
               地點會根據選擇的活動自動設置
             </p>
@@ -411,7 +415,7 @@ export default function AddAttendancePage() {
               options={[
                 { value: '', label: '請選擇運動班' },
                 ...activities.map((activity) => ({
-                  value: activity._id,
+                  value: activity.id,
                   label: `${activity.activityName} - ${activity.trainerName} (${new Date(activity.startTime).toLocaleDateString('zh-CN')})`,
                 })),
               ]}
@@ -518,9 +522,9 @@ export default function AddAttendancePage() {
             </div>
             <div className="px-6 py-4 text-center">
               <div className="mb-4">
-                <img 
-                  src={qrCode} 
-                  alt="簽到二維碼" 
+                <img
+                  src={qrCode}
+                  alt="簽到二維碼"
                   className="mx-auto border border-gray-200 rounded-lg"
                 />
               </div>
@@ -528,7 +532,7 @@ export default function AddAttendancePage() {
                 {formData.activityName && formData.location ? (
                   <>
                     <p><strong>活動:</strong> {formData.activityName}</p>
-                    <p><strong>地點:</strong> {formData.location}</p>
+                    <p><strong>地點:</strong> {label(formData.location)}</p>
                     <p className="text-xs text-gray-500 mt-3">
                       請讓會員使用手機掃描此二維碼進行自動簽到
                     </p>

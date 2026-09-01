@@ -5,9 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 import CustomSelect from '@/app/components/CustomSelect';
 import { withBasePath } from "@/lib/basePath";
+import { LocationCode, useLocation } from '@/types/location';
 
 interface Activity {
-  _id: string;
+  id: string;
   activityName: string;
   trainerId: string;
   trainerName: string;
@@ -15,14 +16,14 @@ interface Activity {
   endTime: string;
   duration: number;
   participants: string[];
-  location: string;
+  location: LocationCode;
   description?: string;
   isActive: boolean;
   createdAt: string;
 }
 
 interface Trainer {
-  _id: string;
+  id: string;
   username: string;
   role: string;
   isActive: boolean;
@@ -30,7 +31,8 @@ interface Trainer {
 
 export default function ActivityManagementPage() {
   useScrollOptimization();
-
+  const { label } = useLocation();
+  
   const [activities, setActivities] = useState<Activity[]>([]);
   const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
@@ -39,7 +41,10 @@ export default function ActivityManagementPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-
+  const locationOptions = Object.values(LocationCode).map((code) => ({
+      value: code,
+      label: label(code),
+    }));
   // 添加活动表单資料
   const [addFormData, setAddFormData] = useState({
     activityName: '',
@@ -67,7 +72,7 @@ export default function ActivityManagementPage() {
         setError('獲取活动列表失敗');
       }
     } catch {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsLoadingActivities(false);
     }
@@ -86,7 +91,7 @@ export default function ActivityManagementPage() {
         setError('獲取教练列表失敗');
       }
     } catch {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsLoadingTrainers(false);
     }
@@ -128,7 +133,7 @@ export default function ActivityManagementPage() {
 
     try {
       setIsSubmitting(true);
-      const selectedTrainer = trainers.find(t => t._id === addFormData.trainerId);
+      const selectedTrainer = trainers.find(t => t.id === addFormData.trainerId);
       
       const response = await fetch(withBasePath('/api/activities'), {
         method: 'POST',
@@ -159,7 +164,7 @@ export default function ActivityManagementPage() {
         setError(result.message || '添加活动失敗');
       }
     } catch {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsSubmitting(false);
     }
@@ -245,10 +250,10 @@ export default function ActivityManagementPage() {
                 <div className="space-y-1 p-2">
                   {activities.map((activity) => (
                     <button
-                      key={activity._id}
+                      key={activity.id}
                       onClick={() => handleSelectActivity(activity)}
                       className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        selectedActivity?._id === activity._id
+                        selectedActivity?.id === activity.id
                           ? 'bg-blue-50 border border-blue-200 text-blue-900'
                           : 'hover:bg-gray-50 border border-transparent'
                       }`}
@@ -300,7 +305,7 @@ export default function ActivityManagementPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         活動地點
                       </label>
-                      <div className="text-gray-900">{selectedActivity.location}</div>
+                      <div className="text-gray-900">{label(selectedActivity.location)}</div>
                     </div>
                     
                     <div>
@@ -418,7 +423,7 @@ export default function ActivityManagementPage() {
                     options={[
                       { value: '', label: '選擇教練' },
                       ...trainers.map((trainer) => ({
-                        value: trainer._id,
+                        value: trainer.id,
                         label: trainer.username,
                       })),
                     ]}
@@ -467,12 +472,7 @@ export default function ActivityManagementPage() {
                 <CustomSelect
                   value={addFormData.location}
                   onChange={(value) => handleAddFormChange({ target: { name: 'location', value } } as React.ChangeEvent<HTMLSelectElement>)}
-                  options={[
-                    { value: '', label: '選擇地點' },
-                    { value: '灣仔', label: '灣仔' },
-                    { value: '黃大仙', label: '黃大仙' },
-                    { value: '石門', label: '石門' },
-                  ]}
+                  options={locationOptions}
                   placeholder="選擇地點"
                   required
                 />
@@ -516,4 +516,4 @@ export default function ActivityManagementPage() {
       )}
     </div>
   );
-} 
+}

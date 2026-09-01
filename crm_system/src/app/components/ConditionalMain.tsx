@@ -10,7 +10,7 @@ interface ConditionalMainProps {
 
 export default function ConditionalMain({ children }: ConditionalMainProps) {
   const pathname = usePathname();
-  const { isCollapsed, isMobile } = useSidebar();
+  const { isCollapsed, isMobile, disableGPULayer } = useSidebar();
   
   // 需要全屏布局的页面（不需要容器约束）
   const fullScreenPages = [
@@ -22,19 +22,13 @@ export default function ConditionalMain({ children }: ConditionalMainProps) {
   const isFullScreenPage = fullScreenPages.some(page => 
     pathname === page || pathname.startsWith(page + '/')
   );
+
+  const gpuStyle = disableGPULayer
+    ? undefined
+    : { transform: 'translateZ(0)', willChange: 'scroll-position' as const };
   
   if (isFullScreenPage) {
-    // 全屏页面：不添加容器约束和侧边栏边距
-    return (
-      <main 
-        style={{
-          transform: 'translateZ(0)',
-          willChange: 'scroll-position'
-        }}
-      >
-        {children}
-      </main>
-    );
+    return <main style={gpuStyle}>{children}</main>;
   }
   
   // 计算左边距
@@ -47,13 +41,7 @@ export default function ConditionalMain({ children }: ConditionalMainProps) {
   
   // 普通页面：使用容器约束并添加侧边栏边距
   return (
-    <main 
-      className={`transition-all duration-300 ${getLeftMargin()}`}
-      style={{
-        transform: 'translateZ(0)',
-        willChange: 'scroll-position'
-      }}
-    >
+    <main className={`transition-all duration-300 ${getLeftMargin()}`} style={gpuStyle}>
       <div className={`container mx-auto px-4 py-6 ${isMobile ? 'pt-24' : ''}`}>
         {children}
       </div>

@@ -1,13 +1,13 @@
 // lib/export.ts
-import { CENTER_LABELS, centerLabel } from "@/types/center";
+import { LocationCode, useLocation } from "@/types/location";
 
 type StaffItem = { staff_name: string; quantity: number };
 type IncomeItem = { income_type: string; quantity: number; amount: number };
-
+type LabelFn = (code: string) => string;
 export type ExportRecord = {
   username: string;
   submittedAt: string;
-  center: string;
+  center: LocationCode;
   docDate: string;
   docTime: string;
   grandTotal: number;
@@ -18,9 +18,9 @@ export type ExportRecord = {
   income: IncomeItem[];
 };
 
-type StaffMember = { username: string; center: string; role: string };
+type StaffMember = { username: string; center: LocationCode; role: string };
 
-function escapeField(value: any): string {
+function escapeField(value: unknown): string {
   const str = String(value ?? "");
   return /["\,\n\r]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
 }
@@ -84,7 +84,7 @@ function formatSlashDate(dateStr: string): string {
   ).padStart(2, "0")}`;
 }
 
-export function exportToTXT(records: ExportRecord[], staffList: StaffMember[], currentUsername: string) {
+export function exportToTXT(records: ExportRecord[], staffList: StaffMember[], currentUsername: string, label: LabelFn) {
   if (records.length === 0) {
     alert("沒有可匯出的資料");
     return;
@@ -124,7 +124,7 @@ export function exportToTXT(records: ExportRecord[], staffList: StaffMember[], c
       const introFeeMap = qtyMap(record.introductionFee || []);
       const { qty: incomeQtyMap, amount: incomeAmountMap } = incomeMaps(record.income || []);
 
-      const centerName = centerLabel(record.center);
+      const centerName = label(record.center);
       const dateDisplay = formatSlashDate(record.docDate);
 
       rows.push([

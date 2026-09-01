@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { db } from "@/lib/db";
+import { AccountRow } from '@/types/auth';
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,7 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const [rows]: any = await db.query(
+    const [rows] = await db.query<AccountRow[]>(
       `SELECT
         id,
         username,
@@ -41,7 +43,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       user: {
-        id: String(user._id),
+        id: user.id,
         username: user.username,
         role: user.role,
         locations: user.locations || [],

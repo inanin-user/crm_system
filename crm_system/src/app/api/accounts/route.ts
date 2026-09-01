@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import cache from '@/lib/cache';
+import { v4 as uuid } from "uuid";
+import { AccountDetailRow, AccountRow } from '@/types/auth';
+import { RowDataPacket } from "mysql2";
+import { LocationCode } from '@/types/location';
+import bcrypt from 'bcryptjs';
 
 // 获取账户列表（根据角色筛选）
 export async function GET(request: NextRequest) {
@@ -72,9 +77,9 @@ export async function GET(request: NextRequest) {
       ORDER BY createdAt DESC
     `;
 
-    const [rows] = await db.query(sql, params);
+    const [accounts] = await db.query<AccountDetailRow[]>(sql, params);
 
-    const accounts = rows as Record<string, unknown>[];
+    
     // MySQL JSON column -> JavaScript array
     for (const account of accounts) {
       if (typeof account.locations === 'string') {
@@ -163,11 +168,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证地区权限
-    const validLocations = [
-      '灣仔',
-      '黃大仙',
-      '石門'
-    ];
+    const validLocations : LocationCode[] = Object.values(LocationCode)
 
     if (locations !== undefined && locations !== null) {
 
@@ -182,9 +183,9 @@ export async function POST(request: NextRequest) {
       }
 
       const invalidLocations = locations.filter(
-        (loc: unknown) =>
+        (loc): loc is string  =>
           typeof loc !== 'string' ||
-          !validLocations.includes(loc)
+          !validLocations.includes(loc as LocationCode)
       );
 
       if (invalidLocations.length > 0) {
@@ -202,9 +203,10 @@ export async function POST(request: NextRequest) {
     const normalizedUsername = username
       .toLowerCase()
       .trim();
-
+    
+    type AccountIdOnly = Pick<AccountRow, "id"> & RowDataPacket;
     // 检查用户名是否已存在
-    const [existingRows] = await db.query(
+    const [existingRows] = await db.query<AccountIdOnly[]>(
       `
         SELECT id
         FROM account_management
@@ -214,8 +216,7 @@ export async function POST(request: NextRequest) {
       [normalizedUsername]
     );
 
-    const existingAccounts =
-      existingRows as Record<string, unknown>[];
+    const existingAccounts = existingRows;
 
     if (existingAccounts.length > 0) {
       return NextResponse.json(
@@ -236,29 +237,35 @@ export async function POST(request: NextRequest) {
 
     let sql = `
       INSERT INTO account_management (
+        id,
         username,
         password,
         role,
         isActive,
         locations
+      )
     `;
-
+    const accountId = uuid();
+    const salt = await bcrypt.genSalt(12);
+    const encryptedPw = await bcrypt.hash(password, salt);
     const params: unknown[] = [
+      accountId,
       normalizedUsername,
-      password,
+      encryptedPw,
       role,
       true,
       JSON.stringify(accountLocations)
     ];
 
     sql += `
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?)
     `;
 
     // 会员额外字段
     if (isMemberRole) {
       sql = `
         INSERT INTO account_management (
+          id,
           username,
           password,
           role,
@@ -276,14 +283,15 @@ export async function POST(request: NextRequest) {
           addedTickets,
           usedTickets
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       params.length = 0;
 
       params.push(
+        accountId,
         normalizedUsername,
-        password,
+        encryptedPw,
         role,
         true,
         JSON.stringify(accountLocations),
@@ -301,45 +309,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [result] = await db.query(sql, params);
-
-    const insertResult = result as {
-      insertId: number;
-    };
-
-    const newAccountId = insertResult.insertId;
+    await db.query(sql, params);
 
     // retrieve the newly created account to return in the response
-    const [newRows] = await db.query(
+    const [newRows] = await db.query<AccountDetailRow[]>(
       `
-        SELECT
-          id,
-          username,
-          role,
-          isActive,
-          locations,
-          createdAt,
-          updatedAt,
-          memberName,
-          phone,
-          herbalifePCNumber,
-          joinDate,
-          trainerIntroducer,
-          referrer,
-          quota,
-          renewalCount,
-          initialTickets,
-          addedTickets,
-          usedTickets
+        SELECT *
         FROM account_management
         WHERE id = ?
         LIMIT 1
       `,
-      [newAccountId]
+      [accountId]
     );
 
-    const newAccount =
-      (newRows as Record<string, unknown>[])[0];
+    const newAccount = newRows[0];
 
     if (newAccount && typeof newAccount.locations === 'string') {
       try {

@@ -121,13 +121,14 @@ export async function PUT(req: NextRequest) {
   if (!username || !submittedAt) {
     return NextResponse.json({ error: "缺少記錄識別碼" }, { status: 400 });
   }
-
-  const normStaffRows = (rows: any[]) =>
+  type RawStaffRow = { staffName: string; quantity: number | string };
+  type RawIncomeRow = { incomeType: string; quantity: number | string; amount: number | string };
+  const normStaffRows = (rows: RawStaffRow[]) =>
     rows
       .filter((r) => r.staffName)
       .map((r) => ({ staffName: r.staffName, quantity: Number(r.quantity) || 0 }));
 
-  const normIncomeRows = (rows: any[]) =>
+  const normIncomeRows = (rows: RawIncomeRow[]) =>
     rows
       .filter((r) => r.incomeType)
       .map((r) => ({
@@ -146,11 +147,11 @@ export async function PUT(req: NextRequest) {
     await conn.beginTransaction();
 
     const [existingRows] = await conn.query<SettlementRow[]>(
-  `SELECT center, doc_date, doc_time, grand_total, remarks
-   FROM settlements WHERE username = ? AND submitted_at = ? FOR UPDATE`,
-  [username, submittedAt]
-);
-const existing = existingRows[0]; // was: (existingRows as any[])[0]
+      `SELECT center, doc_date, doc_time, grand_total, remarks
+      FROM settlements WHERE username = ? AND submitted_at = ? FOR UPDATE`,
+      [username, submittedAt]
+    );
+    const existing = existingRows[0]; // was: (existingRows as any[])[0]
 
     if (!existing) {
       await conn.rollback();
@@ -158,18 +159,18 @@ const existing = existingRows[0]; // was: (existingRows as any[])[0]
     }
 
     
-const [existingItemRows] = await conn.query<SettlementItemRow[]>(
-  `SELECT section_type, staff_name, quantity FROM settlement_items
-   WHERE username = ? AND submitted_at = ?`,
-  [username, submittedAt]
-);
-const [existingIncomeRows] = await conn.query<SettlementIncomeRow[]>(
-  `SELECT income_type, quantity, amount FROM settlement_income
-   WHERE username = ? AND submitted_at = ?`,
-  [username, submittedAt]
-);
+    const [existingItemRows] = await conn.query<SettlementItemRow[]>(
+      `SELECT section_type, staff_name, quantity FROM settlement_items
+      WHERE username = ? AND submitted_at = ?`,
+      [username, submittedAt]
+    );
+    const [existingIncomeRows] = await conn.query<SettlementIncomeRow[]>(
+      `SELECT income_type, quantity, amount FROM settlement_income
+      WHERE username = ? AND submitted_at = ?`,
+      [username, submittedAt]
+    );
 
-const existingItems = existingItemRows;
+    const existingItems = existingItemRows;
     const oldWaterbar = normStaffRows(
       existingItems.filter((i) => i.section_type === "waterbar")
         .map((i) => ({ staffName: i.staff_name, quantity: i.quantity }))
@@ -183,7 +184,7 @@ const existingItems = existingItemRows;
         .map((i) => ({ staffName: i.staff_name, quantity: i.quantity }))
     );
     const oldIncome = normIncomeRows(
-      (existingIncomeRows as any[]).map((i) => ({
+      (existingIncomeRows).map((i) => ({
         incomeType: i.income_type,
         quantity: i.quantity,
         amount: i.amount,
@@ -191,20 +192,26 @@ const existingItems = existingItemRows;
     );
 
     // Build diff list: [fieldName, previousValue, updatedValue]
-    const diffs: { field: string; prev: string; updated: string }[] = [];
+    type DiffEntry = { field: string; prev: string; updated: string };
 
-    const compareScalar = (field: string, prev: string | number, updated: string | number) => {
-  if (String(prev) !== String(updated)) {
-    diffs.push({ field, prev: String(prev), updated: String(updated) });
-  }
-};
+    const diffs: DiffEntry[] = [];
+    const compareScalar = (
+      field: string,
+      prev: string | number,
+      updated: string | number,
+      diffs: DiffEntry[]
+    ) => {
+      if (String(prev) !== String(updated)) {
+        diffs.push({ field, prev: String(prev), updated: String(updated) });
+      }
+    };
 
     // Matches items between two arrays by deep equality, returns what's uniquely
     // added in `newArr` and what's uniquely removed from `oldArr` — robust even if
     // rows were reordered, not just appended/removed at the end.
-    const diffMultiset = (oldArr: any[], newArr: any[]) => {
+    const diffMultiset = <T>(oldArr: T[], newArr: T[]) => {
       const oldPool = [...oldArr];
-      const added: any[] = [];
+      const added: T[] = [];
       for (const item of newArr) {
         const idx = oldPool.findIndex((o) => JSON.stringify(o) === JSON.stringify(item));
         if (idx === -1) added.push(item);
@@ -214,17 +221,14 @@ const existingItems = existingItemRows;
       return { added, removed };
     }
 
-    const compareArrayField = (
-      field: string,
-      oldArr: any[],
-      newArr: any[],
-      diffs: { field: string; prev: StaffDiffRow[]| IncomeDiffRow[]; updated: StaffDiffRow[]| IncomeDiffRow[] }[]
-    ) => {
+    const compareArrayField = <T extends StaffDiffRow | IncomeDiffRow>(
+        field: string,
+        oldArr: T[],
+        newArr: T[],
+        diffs: DiffEntry[]
+      ) => {
       const oldStr = JSON.stringify(oldArr);
       const newStr = JSON.stringify(newArr);
-
-      const prevStr = JSON.stringify(prev);
-      const updatedStr = JSON.stringify(updated);
       if (oldStr === newStr) return;
 
       if (oldArr.length !== newArr.length) {
@@ -233,13 +237,13 @@ const existingItems = existingItemRows;
           diffs.push({
             field: `${field}_added`,
             prev: "",
-            updated: updatedStr,
+            updated: JSON.stringify({ count: added.length, rows: added }),
           });
         }
         if (removed.length > 0) {
           diffs.push({
             field: `${field}_removed`,
-            prev: prevStr,
+            prev: JSON.stringify({ count: removed.length, rows: removed }),
             updated: "",
           });
         }
@@ -249,13 +253,13 @@ const existingItems = existingItemRows;
       }
     }
 
-    compareScalar("center", existing.center, center);
-    compareScalar("grandTotal", Number(existing.grand_total), Number(grandTotal) || 0);
-    compareScalar("remarks", existing.remarks || "", remarks || "");
-    compareArrayField("waterbar", oldWaterbar, newWaterbar, diffs);
-    compareArrayField("classItems", oldClassItems, newClassItems, diffs);
-    compareArrayField("introductionFee", oldIntroductionFee, newIntroductionFee, diffs);
-    compareArrayField("income", oldIncome, newIncome, diffs);
+    compareScalar("center", existing.center, center, diffs);
+    compareScalar("grandTotal", Number(existing.grand_total), Number(grandTotal) || 0, diffs);
+    compareScalar("remarks", existing.remarks || "", remarks || "", diffs);
+    compareArrayField<StaffDiffRow>("waterbar", oldWaterbar, newWaterbar, diffs);
+    compareArrayField<StaffDiffRow>("classItems", oldClassItems, newClassItems, diffs);
+    compareArrayField<StaffDiffRow>("introductionFee", oldIntroductionFee, newIntroductionFee, diffs);
+    compareArrayField<IncomeDiffRow>("income", oldIncome, newIncome, diffs);
 
     if (diffs.length === 0) {
       await conn.rollback();

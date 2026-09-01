@@ -34,7 +34,7 @@ interface ProductQrData {
 }
 
 interface Member {
-  _id: string;
+  id: string;
   username: string;
   memberName: string;
   phone: string;
@@ -231,7 +231,7 @@ export default function ScanAttendancePage() {
           location: scanResult.location,
           activity: scanResult.activityName,
           activityId: scanResult.activityId,
-          memberId: member._id
+          memberId: member.id
         }),
       });
 

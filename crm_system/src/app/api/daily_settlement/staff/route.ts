@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { db } from "@/lib/db";
+import { AccountRow } from "@/types/auth";
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
@@ -18,14 +19,19 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const [rows] = await db.query(
-      `SELECT s.username, s.center, s.role
-       FROM staff s
-       JOIN account_management a ON a.username = s.username
-       WHERE a.isActive = 1`
+    const [rows] = await db.query<AccountRow[]>(
+      `SELECT username, locations, role
+       FROM account_management
+       WHERE isActive = 1`
     );
 
-    return NextResponse.json({ staff: rows });
+    const staff = rows.map((row) => ({
+      username: row.username,
+      center: row.locations?.[0] ?? "",
+      role: row.role,
+    }));
+
+    return NextResponse.json({ staff: staff });
   } catch (err) {
     console.error("staff route error:", err);
     return NextResponse.json({ error: "無法取得職員列表" }, { status: 500 });

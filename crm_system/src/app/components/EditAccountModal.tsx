@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import LocationPermissionEditor from './LocationPermissionEditor';
+import { LocationCode } from '@/types/location';
 
 interface Account {
-  id: number;
+  id: string;
   username: string;
   password: string;
   role: string;
   isActive: boolean;
-  locations: string[];
+  locations: LocationCode[];
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
@@ -33,7 +34,7 @@ export default function EditAccountModal({
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    locations: [] as string[]
+    locations: [] as LocationCode[]
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -75,7 +76,7 @@ export default function EditAccountModal({
         setError(result.message || '更新帳戶失敗');
       }
     } catch (error) {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsLoading(false);
     }

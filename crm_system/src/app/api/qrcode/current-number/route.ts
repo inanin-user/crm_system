@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Counter from '@/models/Counter';
+import { getCurrentSequence, padQRCodeNumber } from '@/types/qrCode';
+import { db } from '@/lib/db';
 
 // 获取当前二维码编号
 export async function GET() {
   try {
-    await connectDB();
-
-    const currentSequence = await Counter.getCurrentSequence('qrcode_number');
+    const currentSequence = await getCurrentSequence('qrcode_number');
     const nextNumber = currentSequence + 1;
 
     // 如果超过9999，重置为1
-    const finalNumber = nextNumber > 9999 ? 1 : nextNumber;
-    const qrCodeNumber = finalNumber.toString().padStart(4, '0');
+    const finalNumber = nextNumber > 99999 ? 1 : nextNumber;
+    const qrCodeNumber = padQRCodeNumber(finalNumber);
 
     return NextResponse.json({
       success: true,
@@ -22,9 +20,9 @@ export async function GET() {
       }
     });
   } catch (error) {
-    console.error('获取当前编号失败:', error);
+    console.error('獲取當前編號失敗:', error);
     return NextResponse.json(
-      { success: false, message: '获取当前编号失败' },
+      { success: false, message: '獲取當前編號失敗' },
       { status: 500 }
     );
   }

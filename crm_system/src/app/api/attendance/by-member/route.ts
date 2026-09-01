@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Attendance from '@/models/Attendance';
+import { AttendanceRow } from '@/types/attendance';
+import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
-
     const searchParams = request.nextUrl.searchParams;
     const name = searchParams.get('name');
     const contact = searchParams.get('contact');
@@ -17,11 +15,16 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
+    const whereClauses : string = "name = ?, contactInfo = ?"
+    const sql : string = `
+      SELECT * 
+      FROM attendance
+      WHERE ${whereClauses}
+      ORDER BY createdAt DESC
+    `;
+
     // 根据姓名和联系方式查找出席记录
-    const attendanceRecords = await Attendance.find({
-      name: name,
-      contactInfo: contact
-    }).sort({ createdAt: -1 }); // 按创建时间倒序
+    const attendanceRecords = await db.query<AttendanceRow[]>(sql);
 
     return NextResponse.json({
       success: true,

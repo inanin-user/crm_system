@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { withBasePath } from "@/lib/basePath";
 
 interface AttendanceRecord {
-  _id: string;
+  id: string;
   name: string;
   contactInfo: string;
   location: string;
@@ -20,7 +20,7 @@ interface PersonSummary {
   records: AttendanceRecord[];
   // 新增會員相關信息
   memberInfo?: {
-    _id: string;
+    id: string;
     role: string;
     memberName: string;
     joinDate: string;
@@ -38,7 +38,7 @@ export default function AttendanceByNamePage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   interface Member {
-    _id: string;
+    id: string;
     name?: string;
     memberName?: string;
     role: string;
@@ -180,7 +180,7 @@ export default function AttendanceByNamePage() {
 
       if (member) {
         person.memberInfo = {
-          _id: member._id,
+          id: member.id,
           role: member.role,
           memberName: member.memberName || member.name || '',
           joinDate: member.joinDate || member.createdAt || new Date().toISOString(),

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 import { withBasePath } from '@/lib/basePath';
+import { LocationCode } from '@/types/location';
 
 interface MemberProfile {
   username: string;
@@ -19,7 +20,7 @@ interface MemberProfile {
   joinDate: string;
   renewalCount: number;
   herbalifePCNumber?: string;
-  locations: string[];
+  locations: LocationCode[];
 }
 
 interface DescriptionItem {

@@ -43,8 +43,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  /* 启用硬件加速 */
-  transform: translateZ(0);
+
   /* 优化字体渲染 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -138,8 +137,6 @@ a:hover {
   }
   
   body {
-    /* 移动设备性能优化 */
-    -webkit-transform: translateZ(0);
     /* 只對文本禁用選擇，不影響互動元素 */
     -webkit-user-select: none;
     user-select: none;
@@ -165,6 +162,17 @@ a:hover {
   p, span, div[contenteditable], input, textarea {
     -webkit-user-select: text;
     user-select: text;
+  }
+}
+
+/* ----------------------------------GPU layer-----------------------------------------*/
+.gpu-layer {
+  transform: translateZ(0);
+}
+
+@media (max-width: 768px) {
+  .gpu-layer {
+    -webkit-transform: translateZ(0);
   }
 }
 
@@ -217,4 +225,11 @@ a:hover {
 /* Section label */
 .label-title {
   @apply text-slate-700 font-bold text-sm mb-2 flex justify-between items-center;
+}
+
+/* Override the mobile button position-fix specifically for the export FAB */
+#export-fab {
+  position: fixed !important;
+  transform: none !important;
+  will-change: auto !important;
 }

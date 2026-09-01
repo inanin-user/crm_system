@@ -3,13 +3,13 @@
 import ModifyHistoryModal, { HistoryEntry } from "@/app/components/ModifyHistoryModal";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CENTER_CODES, CENTER_LABELS } from "@/types/center";
+import StaffSection, { StaffRow, StaffMember } from "@/app/components/StaffSection";
 import { withDailySettlementPath } from "@/lib/basePath";
+import { LocationCode, useLocation } from "@/types/location";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 
-type StaffRow = { id: number; staffName: string; quantity: number };
 type IncomeRow = { id: number; incomeType: string; quantity: number; amount: number };
-type StaffMember = { username: string; center: string; role: string };
 
 let rowIdCounter = 0;
 const nextId = () => ++rowIdCounter;
@@ -25,6 +25,9 @@ const toIncomeRows = (rows: { incomeType: string; quantity: number; amount: numb
         : [{ id: nextId(), incomeType: "試", quantity: 0, amount: 0 }];
 
 function EditPageInner() {
+
+    const { setDisableGPULayer } = useSidebar();
+    
     const searchParams = useSearchParams();
     const recordUsername = searchParams.get("username") || "";
     const recordSubmittedAt = searchParams.get("submittedAt") || "";
@@ -46,6 +49,12 @@ function EditPageInner() {
     const [showHistory, setShowHistory] = useState(false);
     const [history, setHistory] = useState<HistoryEntry[] | null>(null);
     const [historyLoading, setHistoryLoading] = useState(false);
+    const { label } = useLocation();
+
+    useEffect(() => {
+        setDisableGPULayer(true);
+        return () => setDisableGPULayer(false);
+    }, [setDisableGPULayer]);
 
     useEffect(() => {
         if (!recordUsername || !recordSubmittedAt) {
@@ -171,7 +180,7 @@ function EditPageInner() {
     if (notFound) return <div className="p-10 text-center text-red-500">找不到此記錄</div>;
 
     return (
-        <div id="edit-screen">
+        <div id="edit-screen" className="">
             <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200">
                 <div className="relative bg-slate-800 p-6 text-white">
                     <button
@@ -213,8 +222,10 @@ function EditPageInner() {
                     <div>
                         <label className="block text-xs font-bold text-slate-500 mb-1">分店</label>
                         <select value={center} onChange={(e) => setCenter(e.target.value)} className="input-field w-full">
-                            {CENTER_CODES.map((code) => (
-                                <option key={code} value={code}>{CENTER_LABELS[code]}</option>
+                            {Object.values(LocationCode).map((code) => (
+                                <option key={code} value={code}>
+                                    {label(code)}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -225,16 +236,13 @@ function EditPageInner() {
                     <StaffSection title="2. 教班 (人數)" rows={classItems} staffList={staffList}
                         onAdd={() => addRow(setClassItems)} onRemove={(id) => removeRow(setClassItems, id)}
                         onChange={(id, f, v) => updateRow(setClassItems, id, f, v)} />
-                    <StaffSection title="3. 介紹費" rows={introductionFee} staffList={staffList}
-                        onAdd={() => addRow(setIntroductionFee)} onRemove={(id) => removeRow(setIntroductionFee, id)}
-                        onChange={(id, f, v) => updateRow(setIntroductionFee, id, f, v)} />
+                    
 
                     <hr className="border-slate-200" />
 
                     <div className="section-group">
                         <div className="label-title">
-                            <span>4. 每日收入明細</span>
-                            <span className="text-xs font-normal text-slate-400">{income.length} 筆</span>
+                            <span>3. 每日收入明細</span>
                         </div>
                         <div className="rows-area space-y-2">
                             {income.map((row) => (
@@ -249,13 +257,17 @@ function EditPageInner() {
                                         className="input-field w-20 number" />
                                     <input type="number" min="0" placeholder="$ 金額" value={row.amount}
                                         onChange={(e) => updateIncomeRow(row.id, "amount", Number(e.target.value))}
-                                        className="input-field flex-1 money-input" />
+                                        className="input-field flex-1 min-w-0" />
                                     <span className="btn-icon btn-add" onClick={addIncomeRow}>⊕</span>
                                     <span className="btn-icon btn-del" onClick={() => removeIncomeRow(row.id)}>−</span>
                                 </div>
                             ))}
                         </div>
                     </div>
+
+                    <StaffSection title="4. 介紹費" rows={introductionFee} staffList={staffList}
+                        onAdd={() => addRow(setIntroductionFee)} onRemove={(id) => removeRow(setIntroductionFee, id)}
+                        onChange={(id, f, v) => updateRow(setIntroductionFee, id, f, v)} />
 
                     <div className="bg-slate-900 rounded-xl p-6 text-white flex justify-between items-center shadow-inner">
                         <span className="text-lg font-bold text-slate-400">每日總金額 TOTAL</span>
@@ -288,43 +300,6 @@ function EditPageInner() {
         </div>
     );
 }
-
-function StaffSection({
-    title, rows, staffList, onAdd, onRemove, onChange,
-}: {
-    title: string;
-    rows: StaffRow[];
-    staffList: StaffMember[];
-    onAdd: () => void;
-    onRemove: (id: number) => void;
-    onChange: (id: number, field: "staffName" | "quantity", value: string | number) => void;
-}) {
-    return (
-        <div className="section-group">
-            <div className="label-title">
-                <span>{title}</span>
-                <span className="text-xs font-normal text-slate-400">{rows.length} 筆</span>
-            </div>
-            <div className="rows-area space-y-2">
-                {rows.map((row) => (
-                    <div key={row.id} className="row-container">
-                        <select value={row.staffName} onChange={(e) => onChange(row.id, "staffName", e.target.value)} className="input-field flex-1 staff-select">
-                            <option value="">請選擇職員</option>
-                            {staffList.map((s) => (
-                                <option key={s.username} value={s.username}>{s.username}</option>
-                            ))}
-                        </select>
-                        <input type="number" min="0" placeholder="數量" value={row.quantity}
-                            onChange={(e) => onChange(row.id, "quantity", Number(e.target.value))} className="input-field w-24" />
-                        <span className="btn-icon btn-add" onClick={onAdd}>⊕</span>
-                        <span className="btn-icon btn-del" onClick={() => onRemove(row.id)}>−</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
 export default function EditPage() {
     return (
         <Suspense fallback={<div className="p-10 text-center text-slate-400">載入中...</div>}>

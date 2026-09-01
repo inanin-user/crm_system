@@ -75,7 +75,7 @@ async function fixQuotaFields() {
     const allMembers = await collection.find({ role: { $in: memberRoles } }).toArray();
     console.log('\\n修復後的會員列表:');
     allMembers.forEach(m => {
-      console.log(`ID: ${m._id}, 姓名: ${m.memberName || m.username}, 配額: ${m.quota}, 續卡次數: ${m.renewalCount}`);
+      console.log(`ID: ${m.id}, 姓名: ${m.memberName || m.username}, 配額: ${m.quota}, 續卡次數: ${m.renewalCount}`);
     });
 
   } catch (error) {

@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
-import Account from '@/models/Account';
 import { getAuthUser } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { AccountRow } from '@/types/auth';
+import { AttendanceRow } from '@/types/attendance';
 
 // GET - 按日期获取出席记录
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
-    
+
     // 验证用户身份
     const authUser = getAuthUser(request);
     if (!authUser) {
@@ -19,60 +19,77 @@ export async function GET(request: NextRequest) {
     }
 
     // 获取用户详细信息
-    const user = await Account.findById(authUser.userId);
+    const [rows] = await db.query<AccountRow[]>(
+      `SELECT 
+            username,
+            role,
+            locations
+           FROM account_management WHERE id = ?`,
+      [authUser.userId]
+    );
+    const user = rows[0];
     if (!user) {
       return NextResponse.json(
         { error: '用户不存在' },
         { status: 404 }
       );
     }
-    
+
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
-    
+
     if (!date) {
       return NextResponse.json(
         { error: '請提供日期參數' },
         { status: 400 }
       );
     }
-    
+
     // 解析日期并设置当天的开始和结束时间
     const startDate = new Date(date);
     startDate.setHours(0, 0, 0, 0);
-    
+
     const endDate = new Date(date);
     endDate.setHours(23, 59, 59, 999);
-    
-    // 构建查询条件
-    const query: Record<string, unknown> = {
-      createdAt: {
-        $gte: startDate,
-        $lte: endDate
-      }
-    };
 
-    // 根据用户角色设置查询条件
-    if (user.role === 'admin') {
-      // 管理员可以看到所有出席记录
-    } else if (user.role === 'trainer') {
-      // 教练只能看到他们有权限的地区的出席记录
-      if (!user.locations || user.locations.length === 0) {
-        // 如果教练没有任何地区权限，返回空数组
+    const whereClauses: string[] = [
+      "createdAt >= ?",
+      "createdAt <= ?"
+    ];
+
+    const params: (string | number)[] = [
+      startDate.toISOString().slice(0, 19).replace("T", " "),
+      endDate.toISOString().slice(0, 19).replace("T", " ")
+    ];
+
+    // Role-based filtering
+    if (user.role === "admin") {
+      whereClauses.push("? = 'admin'");
+      params.push(user.role);
+    } else if (user.role === "trainer") {
+      if (user.locations.length === 0) {
         return NextResponse.json([], { status: 200 });
       }
-      query.location = { $in: user.locations };
+
+      const placeholders = user.locations.map(() => "?").join(",");
+      whereClauses.push(`location IN (${placeholders})`);
+      params.push(...user.locations);
     } else {
-      // 其他角色暂时不允许访问出席记录
       return NextResponse.json(
-        { error: '您没有权限查看出席记录' },
+        { error: "您没有权限查看出席记录" },
         { status: 403 }
       );
     }
-    
-    // 查询指定日期范围内的记录
-    const attendances = await Attendance.find(query).sort({ createdAt: -1 });
-    
+
+    const sql = `
+      SELECT *
+      FROM attendance
+      WHERE ${whereClauses.join(" AND ")}
+      ORDER BY createdAt DESC
+    `;
+
+    const [attendances] = await db.query<AttendanceRow[]>(sql, params);
+
     return NextResponse.json(attendances, { status: 200 });
   } catch (error) {
     console.error('按日期获取出席记录失败:', error);

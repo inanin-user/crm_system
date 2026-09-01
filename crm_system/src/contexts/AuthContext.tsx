@@ -4,12 +4,14 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { useRouter, usePathname } from 'next/navigation';
 import AuthLoadingScreen from '@/app/components/AuthLoadingScreen';
 import { withBasePath } from "@/lib/basePath";
+import { DailySettlementRole } from '@/types/auth';
+import { LocationCode } from '@/types/location';
 
 interface User {
   id: string;
   username: string;
-  role: 'admin' | 'user' | 'trainer' | 'member' | 'regular-member' | 'premium-member';
-  locations?: string[];
+  role: DailySettlementRole;
+  locations?: LocationCode[];
   lastLogin?: string;
 }
 

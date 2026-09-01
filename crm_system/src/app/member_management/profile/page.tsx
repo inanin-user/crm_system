@@ -6,7 +6,7 @@ import { useScrollOptimization } from '@/hooks/useScrollOptimization';
 import { withBasePath } from '@/lib/basePath';
 
 interface Member {
-  _id: string;
+  id: string;
   username: string;
   memberName: string;
   phone: string;
@@ -19,7 +19,7 @@ interface Member {
 }
 
 interface AttendanceRecord {
-  _id: string;
+  id: string;
   name: string;
   contactInfo: string;
   location: string;
@@ -60,7 +60,7 @@ export default function MemberProfilePage() {
         setError('獲取會員列表失敗');
       }
     } catch (error) {
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsLoadingMembers(false);
     }
@@ -96,7 +96,7 @@ export default function MemberProfilePage() {
     
     // 獲取會員的最新詳細信息，確保quota是最新的
     try {
-      const response = await fetch(`/api/accounts/${member._id}`);
+      const response = await fetch(`/api/accounts/${member.id}`);
       const result = await response.json();
       
       if (result.success && result.data) {
@@ -110,7 +110,7 @@ export default function MemberProfilePage() {
         };
         setSelectedMember(updatedMember);
         // 同時更新會員列表中的數據
-        setMembers(members.map(m => m._id === member._id ? updatedMember : m));
+        setMembers(members.map(m => m.id === member.id ? updatedMember : m));
       }
     } catch (error) {
       console.error('獲取會員詳細信息失敗:', error);
@@ -137,12 +137,12 @@ export default function MemberProfilePage() {
     try {
       setIsUpdatingQuota(true);
       console.log('開始更新配額...', {
-        memberId: selectedMember._id,
+        memberId: selectedMember.id,
         memberName: selectedMember.memberName,
         quotaValue
       });
 
-      const response = await fetch(`/api/accounts/${selectedMember._id}/quota`, {
+      const response = await fetch(`/api/accounts/${selectedMember.id}/quota`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -165,7 +165,7 @@ export default function MemberProfilePage() {
           initialTickets: result.data.initialTickets || 0
         };
         setSelectedMember(updatedMember);
-        setMembers(members.map(m => m._id === selectedMember._id ? updatedMember : m));
+        setMembers(members.map(m => m.id === selectedMember.id ? updatedMember : m));
         const operation = quotaValue >= 0 ? '增加' : '減少';
         const amount = Math.abs(quotaValue);
         setSuccessMessage(`配额${operation}成功！${operation}了 ${amount} 個配額，當前剩餘配額: ${result.data.quota}`);
@@ -181,7 +181,7 @@ export default function MemberProfilePage() {
       }
     } catch (error) {
       console.error('網絡錯誤:', error);
-      setError('網絡錯誤，請重试');
+      setError('Server error');
     } finally {
       setIsUpdatingQuota(false);
     }
@@ -255,10 +255,10 @@ export default function MemberProfilePage() {
                 <div className="space-y-1 p-2">
                   {members.map((member) => (
                     <button
-                      key={member._id}
+                      key={member.id}
                       onClick={() => handleSelectMember(member)}
                       className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        selectedMember?._id === member._id
+                        selectedMember?.id === member.id
                           ? 'bg-blue-50 border border-blue-200 text-blue-900'
                           : 'hover:bg-gray-50 border border-transparent'
                       }`}
@@ -380,7 +380,7 @@ export default function MemberProfilePage() {
                     ) : (
                       <div className="space-y-3">
                         {attendanceRecords.map((record) => (
-                          <div key={record._id} className="border border-gray-200 rounded-lg p-4">
+                          <div key={record.id} className="border border-gray-200 rounded-lg p-4">
                             <div className="flex justify-between items-start mb-2">
                               <div className="font-medium text-gray-900">{record.activity}</div>
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${

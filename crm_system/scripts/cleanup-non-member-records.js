@@ -85,9 +85,9 @@ async function cleanupNonMemberRecords() {
       // 6. 执行删除操作
       console.log(`\n准备删除 ${nonMemberRecords.length} 条非会员记录...`);
 
-      const nonMemberIds = nonMemberRecords.map(record => record._id);
+      const nonMemberIds = nonMemberRecords.map(record => record.id);
       const deleteResult = await attendanceCollection.deleteMany({
-        _id: { $in: nonMemberIds }
+        id: { $in: nonMemberIds }
       });
 
       console.log(`成功删除 ${deleteResult.deletedCount} 条非会员记录`);

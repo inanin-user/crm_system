@@ -9,12 +9,13 @@ import html2canvas from 'html2canvas';
 import { getPDFConfig } from '@/config/pdfTemplateConfig';
 import CustomSelect from '@/app/components/CustomSelect';
 import { withBasePath } from '@/lib/basePath';
+import { LocationCode, useLocation } from '@/types/location';
 
 interface QRCodeRecord {
-  _id: string;
+  id: string;
   qrCodeNumber: string;
-  regionCode: string;
-  regionName: string;
+  regionCode: LocationCode;
+  regionName: LocationCode;
   productDescription: string;
   price: number;
   qrCodeData: string;
@@ -22,6 +23,8 @@ interface QRCodeRecord {
 }
 
 export default function QRCodeGeneratePage() {
+  const { label } = useLocation();
+  
   const { user } = useAuth();
   const [currentNumber, setCurrentNumber] = useState('0001');
   const [regionCode, setRegionCode] = useState('');
@@ -35,7 +38,10 @@ export default function QRCodeGeneratePage() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [customProducts, setCustomProducts] = useState<string[]>([]);
   const [showProductDropdown, setShowProductDropdown] = useState(false);
-
+  const locationOptions = Object.values(LocationCode).map((code) => ({
+    value: code,
+    label: label(code),
+  }));
   // 獲取當前編號
   const fetchCurrentNumber = async () => {
     try {
@@ -178,7 +184,7 @@ export default function QRCodeGeneratePage() {
           regionCode,
           productDescription: finalProductDescription.trim(),
           price: Number(price),
-          createdBy: user.username,
+          createdBy: user.id,
         }),
       });
 
@@ -330,16 +336,6 @@ export default function QRCodeGeneratePage() {
     }
   };
 
-  // 獲取地區中文名
-  const getRegionName = (code: string) => {
-    const regionNames: Record<string, string> = {
-      'WC': '灣仔',
-      'WTS': '黃大仙',
-      'SM': '石門'
-    };
-    return regionNames[code] || code;
-  };
-
   // 顯示歷史記錄詳情
   const showRecordDetail = async (record: QRCodeRecord) => {
     console.log('點擊記錄:', record.qrCodeNumber);
@@ -405,12 +401,7 @@ export default function QRCodeGeneratePage() {
               <CustomSelect
                 value={regionCode}
                 onChange={setRegionCode}
-                options={[
-                  { value: '', label: '請選擇地區' },
-                  { value: 'WC', label: 'WC-灣仔' },
-                  { value: 'WTS', label: 'WTS-黃大仙' },
-                  { value: 'SM', label: 'SM-石門' },
-                ]}
+                options={locationOptions}
                 placeholder="請選擇地區"
                 required
               />
@@ -614,7 +605,7 @@ export default function QRCodeGeneratePage() {
                 <div className="space-y-2">
                   {qrCodeHistory.map((record) => (
                     <div
-                      key={record._id}
+                      key={record.id}
                       className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer bg-white"
                       onClick={(e) => {
                         e.preventDefault();
@@ -627,7 +618,7 @@ export default function QRCodeGeneratePage() {
                           <span className="font-medium">編號：</span>{record.qrCodeNumber}
                         </div>
                         <div className="flex-1 text-center">
-                          <span className="font-medium">地區：</span>{getRegionName(record.regionCode)}
+                          <span className="font-medium">地區：</span>{label(record.regionCode)}
                         </div>
                         <div className="flex-1 text-right">
                           <span className="font-medium">產品：</span>{record.productDescription}
@@ -703,7 +694,7 @@ export default function QRCodeGeneratePage() {
 
                 <div className="text-left mb-4 space-y-1 px-4">
                   <p className="text-sm text-gray-700 font-medium">編號：{selectedRecord.qrCodeNumber}</p>
-                  <p className="text-sm text-gray-700 font-medium">地區：{getRegionName(selectedRecord.regionCode)}</p>
+                  <p className="text-sm text-gray-700 font-medium">地區：{label(selectedRecord.regionCode)}</p>
                   <p className="text-sm text-gray-700 font-medium">產品：{selectedRecord.productDescription}</p>
                 </div>
 

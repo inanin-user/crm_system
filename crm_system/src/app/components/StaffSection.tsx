@@ -1,8 +1,10 @@
 // components/StaffSection.tsx
 "use client";
 
+import { LocationCode } from "@/types/location";
+
 export type StaffRow = { id: number; staffName: string; quantity: number };
-export type StaffMember = { username: string; center: string; role: string };
+export type StaffMember = { username: string; center: LocationCode; role: string };
 
 type StaffSectionProps = {
   title: string;
@@ -25,7 +27,6 @@ export default function StaffSection({
     <div className="section-group">
       <div className="label-title">
         <span>{title}</span>
-        <span className="text-xs font-normal text-slate-400">{rows.length} 筆</span>
       </div>
       <div className="rows-area space-y-2">
         {rows.map((row) => (
@@ -33,7 +34,7 @@ export default function StaffSection({
             <select
               value={row.staffName}
               onChange={(e) => onChange(row.id, "staffName", e.target.value)}
-              className="input-field flex-1 staff-select"
+              className="input-field flex-1"
             >
               <option value="">請選擇職員</option>
               {staffList.map((s) => (

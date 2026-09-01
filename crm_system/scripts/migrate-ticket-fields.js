@@ -35,7 +35,7 @@ async function migrateTicketFields() {
       };
 
       await accountsCollection.updateOne(
-        { _id: member._id },
+        { id: member.id },
         { $set: updateData }
       );
 
