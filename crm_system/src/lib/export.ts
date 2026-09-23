@@ -1,13 +1,13 @@
 // lib/export.ts
-import { LocationCode, useLocation } from "@/types/location";
+import { CENTER_LABELS, centerLabel } from "@/types/center";
 
 type StaffItem = { staff_name: string; quantity: number };
-type IncomeItem = { income_type: string; quantity: number; amount: number };
-type LabelFn = (code: string) => string;
+type IncomeItem = { income_type: string; quantity: number; amount: number; staff_name?: string };
+
 export type ExportRecord = {
   username: string;
   submittedAt: string;
-  center: LocationCode;
+  center: string;
   docDate: string;
   docTime: string;
   grandTotal: number;
@@ -18,9 +18,9 @@ export type ExportRecord = {
   income: IncomeItem[];
 };
 
-type StaffMember = { username: string; center: LocationCode; role: string };
+type StaffMember = { username: string; role: string; locations?: string[] };
 
-function escapeField(value: unknown): string {
+function escapeField(value: any): string {
   const str = String(value ?? "");
   return /["\,\n\r]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
 }
@@ -43,6 +43,18 @@ function incomeMaps(items: IncomeItem[]) {
   return { qty, amount };
 }
 
+function introFeeFromRecord(record: ExportRecord): StaffItem[] {
+  if (record.introductionFee && record.introductionFee.length > 0) {
+    return record.introductionFee;
+  }
+  return (record.income || [])
+    .filter((item) => item.staff_name)
+    .map((item) => ({
+      staff_name: item.staff_name as string,
+      quantity: Number(item.quantity) || 0,
+    }));
+}
+
 function columnsForSection(
   records: ExportRecord[],
   staffList: StaffMember[],
@@ -52,7 +64,9 @@ function columnsForSection(
   const cols = [...baseCols];
   const seen = new Set(cols);
   records.forEach((record) => {
-    (record[type] || []).forEach((item) => {
+    const items =
+      type === "introductionFee" ? introFeeFromRecord(record) : (record[type] || []);
+    items.forEach((item) => {
       if (!seen.has(item.staff_name)) {
         seen.add(item.staff_name);
         cols.push(item.staff_name);
@@ -84,7 +98,7 @@ function formatSlashDate(dateStr: string): string {
   ).padStart(2, "0")}`;
 }
 
-export function exportToTXT(records: ExportRecord[], staffList: StaffMember[], currentUsername: string, label: LabelFn) {
+export function exportToTXT(records: ExportRecord[], staffList: StaffMember[], currentUsername: string) {
   if (records.length === 0) {
     alert("沒有可匯出的資料");
     return;
@@ -121,10 +135,10 @@ export function exportToTXT(records: ExportRecord[], staffList: StaffMember[], c
     .forEach((record) => {
       const waterbarMap = qtyMap(record.waterbar || []);
       const classMap = qtyMap(record.classItems || []);
-      const introFeeMap = qtyMap(record.introductionFee || []);
+      const introFeeMap = qtyMap(introFeeFromRecord(record));
       const { qty: incomeQtyMap, amount: incomeAmountMap } = incomeMaps(record.income || []);
 
-      const centerName = label(record.center);
+      const centerName = centerLabel(record.center);
       const dateDisplay = formatSlashDate(record.docDate);
 
       rows.push([
@@ -132,7 +146,7 @@ export function exportToTXT(records: ExportRecord[], staffList: StaffMember[], c
         ...waterbarCols.map((col) => String(waterbarMap[col] ?? 0)),
         ...classCols.map((col) => String(classMap[col] ?? 0)),
         ...introFeeCols.map((col) => `$${introFeeMap[col] ?? 0}`),
-        "人數", ...incomeCols.map((col) => String(incomeQtyMap[col] ?? "")),
+        "介紹費", ...incomeCols.map((col) => String(incomeQtyMap[col] ?? "")),
         "",
         record.remarks || "",
       ]);

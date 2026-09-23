@@ -2,13 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { db } from "@/lib/db";
-import { RowDataPacket } from "mysql2";
-import { SettlementIncomeRow, SettlementItemRow, SettlementRow } from "@/types/settlement";
-import { LocationCode } from "@/types/location";
-
-interface StaffCenterRow extends RowDataPacket {
-  locations: LocationCode[];
-}
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 const MAX_RANGE_DAYS = 62; // ~2 months
@@ -50,37 +43,49 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    let settlementRows: SettlementRow[];
+    let settlementRows: any[];
 
     if (role === "admin") {
-      const [rows] = await db.query<SettlementRow[]>(
+      const [rows] = await db.query(
         `SELECT username, submitted_at, center, doc_date, doc_time, grand_total, remarks
          FROM settlements
          WHERE doc_date BETWEEN ? AND ?
          ORDER BY submitted_at DESC`,
         [dateFrom, dateTo]
       );
-      settlementRows = rows;
+      settlementRows = rows as any[];
     } else {
-      // Non-admin: restrict to their own center
-      const [staffRows] = await db.query<StaffCenterRow[]>(
-        "SELECT locations FROM account_management WHERE username = ?",
+      // Non-admin: restrict to locations on their account
+      const [accountRows] = await db.query(
+        "SELECT locations FROM account_management WHERE username = ? AND isActive = 1",
         [username]
       );
-      const staffCenter = staffRows[0].locations[0];
+      const rawLocations = (accountRows as any[])[0]?.locations;
+      let locations: string[] = [];
+      if (Array.isArray(rawLocations)) {
+        locations = rawLocations.map(String).filter(Boolean);
+      } else if (typeof rawLocations === "string" && rawLocations.trim()) {
+        try {
+          const parsed = JSON.parse(rawLocations);
+          locations = Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [rawLocations];
+        } catch {
+          locations = [rawLocations];
+        }
+      }
 
-      if (!staffCenter) {
+      if (locations.length === 0) {
         return NextResponse.json({ error: "找不到所屬分店" }, { status: 403 });
       }
 
-      const [rows] = await db.query<SettlementRow[]>(
+      const locPlaceholders = locations.map(() => "?").join(", ");
+      const [rows] = await db.query(
         `SELECT username, submitted_at, center, doc_date, doc_time, grand_total, remarks
          FROM settlements
-         WHERE center = ? AND doc_date BETWEEN ? AND ?
+         WHERE center IN (${locPlaceholders}) AND doc_date BETWEEN ? AND ?
          ORDER BY submitted_at DESC`,
-        [staffCenter, dateFrom, dateTo]
+        [...locations, dateFrom, dateTo]
       );
-      settlementRows = rows;
+      settlementRows = rows as any[];
     }
 
     if (settlementRows.length === 0) {
@@ -91,32 +96,32 @@ export async function GET(req: NextRequest) {
     const keys = settlementRows.map((r) => [r.username, r.submitted_at]);
     const placeholders = keys.map(() => "(?, ?)").join(", ");
     const flatParams = keys.flat();
-
-    const [itemRows] = await db.query<SettlementItemRow[]>(
-      `SELECT username, submitted_at, section_type, staff_name, quantity
+    
+    const [itemRows] = await db.query(
+      `SELECT username, submitted_at, section_type, staff_name, quantity, income_type, amount
        FROM settlement_items
        WHERE (username, submitted_at) IN (${placeholders})`,
       flatParams
     );
 
-    const [incomeRows] = await db.query<SettlementIncomeRow[]>(
-      `SELECT username, submitted_at, income_type, quantity, amount
+    const [incomeRows] = await db.query(
+      `SELECT username, submitted_at, income_type, quantity, amount, staff_name
        FROM settlement_income
        WHERE (username, submitted_at) IN (${placeholders})`,
       flatParams
     );
 
     // Group items/income by their parent (username, submitted_at)
-    const keyOf = (u: string, t: string) => `${u}__${new Date(t).toISOString()}`;
+    const keyOf = (u: string, t: any) => `${u}__${new Date(t).toISOString()}`;
 
-    const itemsByKey: Record<string, SettlementItemRow[]> = {};
-    for (const item of itemRows) {
+    const itemsByKey: Record<string, any[]> = {};
+    for (const item of itemRows as any[]) {
       const key = keyOf(item.username, item.submitted_at);
       (itemsByKey[key] ||= []).push(item);
     }
 
-    const incomeByKey: Record<string, SettlementIncomeRow[]> = {};
-    for (const inc of incomeRows) {
+    const incomeByKey: Record<string, any[]> = {};
+    for (const inc of incomeRows as any[]) {
       const key = keyOf(inc.username, inc.submitted_at);
       (incomeByKey[key] ||= []).push(inc);
     }
@@ -135,7 +140,21 @@ export async function GET(req: NextRequest) {
         waterbar: items.filter((i) => i.section_type === "waterbar"),
         classItems: items.filter((i) => i.section_type === "class"),
         introductionFee: items.filter((i) => i.section_type === "introductionFee"),
-        income: incomeByKey[key] || [],
+        income: (() => {
+          const rows = incomeByKey[key] || [];
+          const filled = rows.filter(
+            (r) => r.staff_name || Number(r.amount) || Number(r.quantity)
+          );
+          if (filled.length) return filled;
+          return items
+            .filter((i) => i.section_type === "introductionFee")
+            .map((i) => ({
+              income_type: i.income_type || "試",
+              quantity: i.quantity,
+              amount: i.amount,
+              staff_name: i.staff_name,
+            }));
+        })(),
       };
     });
 

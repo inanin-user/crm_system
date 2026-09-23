@@ -1,9 +1,6 @@
 // components/ModifyHistoryModal.tsx
 "use client";
 
-import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
-
 export type HistoryEntry = {
   id: number;
   modified_by: string;
@@ -11,15 +8,6 @@ export type HistoryEntry = {
   field_name: string;
   previous_value: string;
   updated_value: string;
-};
-
-type StaffDiffRow = { staffName: string; quantity: number };
-type IncomeDiffRow = { incomeType: string; quantity: number; amount: number };
-type DiffRow = StaffDiffRow | IncomeDiffRow;
-
-type DiffPayload = {
-  count: number;
-  rows: DiffRow[];
 };
 
 type ModifyHistoryModalProps = {
@@ -44,32 +32,31 @@ const FIELD_LABELS: Record<string, string> = {
 function baseFieldOf(fieldName: string) {
   return fieldName.replace(/_added$|_removed$/, "");
 }
+
 function fieldLabel(fieldName: string) {
   return FIELD_LABELS[baseFieldOf(fieldName)] || baseFieldOf(fieldName);
 }
 
-// Type guard to distinguish income rows from staff rows at runtime
-function isIncomeRow(row: DiffRow): row is IncomeDiffRow {
-  return "incomeType" in row;
+function formatRow(baseField: string, row: any): string {
+  if (baseField === "income" || baseField === "introductionFee") {
+    const type = row.incomeType ? `${row.incomeType} ` : "";
+    const amount = `$ ${row.amount ?? 0}`;
+    const staff = row.staffName || "";
+    return `${type}收入 ${amount} · 介紹人 ${staff} · 介紹費 $ ${row.quantity ?? 0}`;
+  }
+  // waterbar / classItems
+  return `${row.staffName} × ${row.quantity}`;
 }
 
-function formatRow(baseField: string, row: DiffRow): string {
-  if (baseField === "income" && isIncomeRow(row)) {
-    return `${row.incomeType} × ${row.quantity} — $ ${row.amount}`;
-  }
-  if ("staffName" in row) {
-    return `${row.staffName} × ${row.quantity}`;
-  }
-  return "";
-}
+export default function ModifyHistoryModal({
+  open,
+  onClose,
+  loading,
+  history,
+}: ModifyHistoryModalProps) {
+  if (!open) return null;
 
-export default function ModifyHistoryModal({ open, onClose, loading, history }: ModifyHistoryModalProps) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  if (!open || !mounted) return null;
-
-  const modalContent = (
+  return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
       onClick={onClose}
@@ -105,13 +92,14 @@ export default function ModifyHistoryModal({ open, onClose, loading, history }: 
               const isRemoved = h.field_name.endsWith("_removed");
               const baseField = baseFieldOf(h.field_name);
 
-              let addedData: DiffPayload | null = null;
-              let removedData: DiffPayload | null = null;
+              let addedData: { count: number; rows: any[] } | null = null;
+              let removedData: { count: number; rows: any[] } | null = null;
               try {
-                if (isAdded) addedData = JSON.parse(h.updated_value) as DiffPayload;
-                if (isRemoved) removedData = JSON.parse(h.previous_value) as DiffPayload;
+                if (isAdded) addedData = JSON.parse(h.updated_value);
+                console.log(h.updated_value);
+                if (isRemoved) removedData = JSON.parse(h.previous_value);
               } catch {
-                // fall through to plain rendering below
+                // fall through to plain rendering below if parsing fails
               }
 
               return (
@@ -149,7 +137,9 @@ export default function ModifyHistoryModal({ open, onClose, loading, history }: 
                     </>
                   ) : (
                     <div className="flex items-start gap-2">
-                      <span className="text-red-500 line-through break-all flex-1">{h.previous_value}</span>
+                      <span className="text-red-500 line-through break-all flex-1">
+                        {h.previous_value}
+                      </span>
                       <span className="text-slate-300">→</span>
                       <span className="text-green-600 break-all flex-1">{h.updated_value}</span>
                     </div>
@@ -170,6 +160,4 @@ export default function ModifyHistoryModal({ open, onClose, loading, history }: 
       </div>
     </div>
   );
-
-  return createPortal(modalContent, document.body);
 }

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { db } from "@/lib/db";
-import { SettlementRow, SettlementItemRow, SettlementIncomeRow } from "@/types/settlement";
+
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function GET(req: NextRequest) {
@@ -29,29 +29,29 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const [settlementRows] = await db.query<SettlementRow[]>(
+    const [settlementRows] = await db.query(
       `SELECT username, submitted_at, center, doc_date, doc_time, grand_total, remarks
-      FROM settlements WHERE username = ? AND submitted_at = ?`,
+       FROM settlements WHERE username = ? AND submitted_at = ?`,
       [username, submittedAt]
     );
-    const settlement = settlementRows[0];
+    const settlement = (settlementRows as any[])[0];
     if (!settlement) {
       return NextResponse.json({ error: "找不到記錄" }, { status: 404 });
     }
 
-    const [itemRows] = await db.query<SettlementItemRow[]>(
-      `SELECT section_type, staff_name, quantity FROM settlement_items
-      WHERE username = ? AND submitted_at = ?`,
+    const [itemRows] = await db.query(
+      `SELECT section_type, staff_name, quantity, income_type, amount FROM settlement_items
+       WHERE username = ? AND submitted_at = ?`,
       [username, submittedAt]
     );
-    const [incomeRows] = await db.query<SettlementIncomeRow[]>(
-      `SELECT income_type, quantity, amount FROM settlement_income
-      WHERE username = ? AND submitted_at = ?`,
+    const [incomeRows] = await db.query(
+      `SELECT income_type, quantity, amount, staff_name FROM settlement_income
+       WHERE username = ? AND submitted_at = ?`,
       [username, submittedAt]
     );
 
-    const items = itemRows; // was: itemRows as any[]
-    const income = incomeRows;
+    const items = itemRows as any[];
+    const income = incomeRows as any[];
 
     return NextResponse.json({
       username: settlement.username,
@@ -66,12 +66,30 @@ export async function GET(req: NextRequest) {
       classItems: items.filter((i) => i.section_type === "class")
         .map((i) => ({ staffName: i.staff_name, quantity: i.quantity })),
       introductionFee: items.filter((i) => i.section_type === "introductionFee")
-        .map((i) => ({ staffName: i.staff_name, quantity: i.quantity })),
-      income: income.map((i) => ({
-        incomeType: i.income_type,
-        quantity: i.quantity,
-        amount: Number(i.amount),
-      })),
+        .map((i) => ({
+          staffName: i.staff_name,
+          quantity: i.quantity,
+          incomeType: i.income_type || "試",
+          amount: Number(i.amount) || 0,
+        })),
+      income: (() => {
+        const mapped = income.map((i) => ({
+          incomeType: i.income_type,
+          quantity: Number(i.quantity) || 0,
+          amount: Number(i.amount) || 0,
+          staffName: i.staff_name || "",
+        }));
+        const filled = mapped.filter((r) => r.staffName || r.amount || r.quantity);
+        if (filled.length) return filled;
+        return items
+          .filter((i) => i.section_type === "introductionFee")
+          .map((i) => ({
+            incomeType: i.income_type || "試",
+            quantity: Number(i.quantity) || 0,
+            amount: Number(i.amount) || 0,
+            staffName: i.staff_name || "",
+          }));
+      })(),
     });
   } catch (err) {
     console.error("settlement route error:", err);

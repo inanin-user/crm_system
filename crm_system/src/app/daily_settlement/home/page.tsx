@@ -1,14 +1,17 @@
 // app/daily_settlement/home/page.tsx
 "use client";
-import StaffSection, { StaffRow, StaffMember } from "@/app/components/StaffSection";
+import StaffSection, { StaffRow, StaffMember, parseAccountList } from "@/app/components/StaffSection";
+import IntroductionFeeSection, {
+  IntroductionFeeRow,
+  emptyIntroductionFeeRow,
+  incomeRowTotal,
+} from "@/app/components/IntroductionFeeSection";
 import { useEffect, useMemo, useState } from "react";
-import { withDailySettlementPath } from "@/lib/basePath";
+import { withBasePath, withDailySettlementPath } from "@/lib/basePath";
 import { LocationCode, useLocation } from "@/types/location";
 import { useSidebar } from "@/contexts/SidebarContext";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
-
-type IncomeRow = { id: number; incomeType: string; quantity: number; amount: number };
 
 let rowIdCounter = 0;
 const nextId = () => ++rowIdCounter;
@@ -30,8 +33,7 @@ export default function HomeScreen() {
 
   const [waterbar, setWaterbar] = useState<StaffRow[]>([{ id: nextId(), staffName: "", quantity: 0 }]);
   const [classItems, setClassItems] = useState<StaffRow[]>([{ id: nextId(), staffName: "", quantity: 0 }]);
-  const [introductionFee, setIntroductionFee] = useState<StaffRow[]>([{ id: nextId(), staffName: "", quantity: 0 }]);
-  const [income, setIncome] = useState<IncomeRow[]>([{ id: nextId(), incomeType: "試", quantity: 0, amount: 0 }]);
+    const [income, setIncome] = useState<IntroductionFeeRow[]>([emptyIntroductionFeeRow(nextId())]);
 
   const [remarks, setRemarks] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -42,20 +44,20 @@ export default function HomeScreen() {
   }, [setDisableGPULayer]);
 
   useEffect(() => {
-    fetch(withDailySettlementPath("/api/staff"))
+    fetch(withBasePath("/api/accounts"))
       .then((res) => {
         if (!res.ok) throw new Error("staff fetch failed");
         return res.json();
       })
       .then((data) => {
-        const list: StaffMember[] = data.staff || [];
+        const list = parseAccountList(data.data);
         setStaffList(list);
 
         // Initialize center from the current logged-in user's own staff record,
         // but only for non-admins — admins pick a center manually via the selector.
         if (username && role !== "admin") {
           const self = list.find((s) => s.username === username);
-          if (self) setCenter(self.center);
+          if (self?.locations[0]) setCenter(self.locations[0]);
         }
       })
       .catch((err) => {
@@ -82,23 +84,8 @@ export default function HomeScreen() {
       });
   }, []);
 
-  useEffect(() => {
-    fetch(withDailySettlementPath("/api/staff"))
-      .then((res) => {
-        if (!res.ok) throw new Error("staff fetch failed");
-        return res.json();
-      })
-      .then((data) => {
-        setStaffList(data.staff || []);
-      })
-      .catch((err) => {
-        console.error("Failed to load staff list:", err);
-        // non-fatal — dropdown just stays empty; don't redirect
-      });
-  }, []);
-
   const grandTotal = useMemo(
-    () => income.reduce((sum, row) => sum + (Number(row.amount * row.quantity) || 0), 0),
+    () => income.reduce((sum, row) => sum + incomeRowTotal(row), 0),
     [income]
   );
 
@@ -117,13 +104,14 @@ export default function HomeScreen() {
     setter((rows) => rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
   };
 
+
   const addIncomeRow = () => {
-    setIncome((rows) => [...rows, { id: nextId(), incomeType: "試", quantity: 0, amount: 0 }]);
+    setIncome((rows) => [...rows, emptyIntroductionFeeRow(nextId())]);
   };
   const removeIncomeRow = (id: number) => {
     setIncome((rows) => (rows.length > 1 ? rows.filter((r) => r.id !== id) : rows));
   };
-  const updateIncomeRow = (id: number, field: keyof IncomeRow, value: number | string) => {
+  const updateIncomeRow = (id: number, field: keyof IntroductionFeeRow, value: number | string) => {
     setIncome((rows) => rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
   };
 
@@ -134,7 +122,7 @@ export default function HomeScreen() {
     // }
     setSubmitting(true);
     try {
-      const res = await fetch(`${BASE_PATH}/api/update-data`, {
+      const res = await fetch(withDailySettlementPath("/api/update-data"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -145,8 +133,7 @@ export default function HomeScreen() {
           remarks,
           waterbar: waterbar.filter((r) => r.staffName),
           classItems: classItems.filter((r) => r.staffName),
-          introductionFee: introductionFee.filter((r) => r.staffName),
-          income: income.filter((r) => r.incomeType),
+          income: income.filter((r) => r.staffName || r.amount || r.quantity),
         }),
       });
       const data = await res.json();
@@ -171,8 +158,7 @@ export default function HomeScreen() {
 
     setWaterbar([{ id: nextId(), staffName: "", quantity: 0 }]);
     setClassItems([{ id: nextId(), staffName: "", quantity: 0 }]);
-    setIntroductionFee([{ id: nextId(), staffName: "", quantity: 0 }]);
-    setIncome([{ id: nextId(), incomeType: "試", quantity: 0, amount: 0 }]);
+    setIncome([emptyIntroductionFeeRow(nextId())]);
 
     setRemarks("");
   };
@@ -184,6 +170,7 @@ export default function HomeScreen() {
       window.location.href = `${BASE_PATH}/login`;
     }
   };
+
   return (
     <div id="home-screen" className="">
       <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200">
@@ -284,8 +271,8 @@ export default function HomeScreen() {
           
 
           <hr className="border-slate-200" />
+{/* 
 
-          {/* Income */}
           <div className="section-group">
             <div className="label-title">
               <span>3. 每日收入明細</span>
@@ -324,14 +311,15 @@ export default function HomeScreen() {
               ))}
             </div>
           </div>
+*/}
 
-          <StaffSection
-            title="4. 介紹費"
-            rows={introductionFee}
+          <IntroductionFeeSection
+            title="3. 每日收入明細"
+            rows={income}
             staffList={staffList}
-            onAdd={() => addRow(setIntroductionFee)}
-            onRemove={(id) => removeRow(setIntroductionFee, id)}
-            onChange={(id, field, value) => updateRow(setIntroductionFee, id, field, value)}
+            onAdd={addIncomeRow}
+            onRemove={removeIncomeRow}
+            onChange={updateIncomeRow}
           />
 
           {/* Total */}

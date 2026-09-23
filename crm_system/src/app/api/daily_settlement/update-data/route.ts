@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { db } from "@/lib/db";
-import { SettlementRow, SettlementItemRow, SettlementIncomeRow, StaffDiffRow, IncomeDiffRow } from "@/types/settlement";
+
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function POST(req: NextRequest) {
@@ -39,6 +39,22 @@ export async function POST(req: NextRequest) {
 
   const submittedAt = new Date(); // part of the composite primary key
 
+  const filledIncome = (rows: any[]) =>
+    (rows || []).filter(
+      (r) => r.staffName || Number(r.amount) || Number(r.quantity)
+    );
+  const sourceIncome = filledIncome(income).length ? income : introductionFee;
+  const incomeRows = filledIncome(sourceIncome).map((row: any) => ({
+    incomeType: row.incomeType || "",
+    amount: Number(row.amount) || 0,
+    staffName: row.staffName || "",
+    quantity: Number(row.quantity) || 0,
+  }));
+  const computedTotal = incomeRows.reduce(
+    (sum: number, row: { amount: number }) => sum + (Number(row.amount) || 0),
+    0
+  );
+
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
@@ -46,7 +62,7 @@ export async function POST(req: NextRequest) {
     await conn.execute(
       `INSERT INTO settlements (username, submitted_at, center, doc_date, doc_time, grand_total, remarks)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [username, submittedAt, center, docDate, docTime, grandTotal || 0, remarks || null]
+      [username, submittedAt, center, docDate, docTime, computedTotal, remarks || null]
     );
 
     const insertItems = async (
@@ -65,14 +81,12 @@ export async function POST(req: NextRequest) {
 
     await insertItems("waterbar", waterbar);
     await insertItems("class", classItems);
-    await insertItems("introductionFee", introductionFee);
 
-    for (const row of income) {
-      if (!row.incomeType) continue;
+    for (const row of incomeRows) {
       await conn.execute(
-        `INSERT INTO settlement_income (username, submitted_at, income_type, quantity, amount)
-         VALUES (?, ?, ?, ?, ?)`,
-        [username, submittedAt, row.incomeType, row.quantity || 0, row.amount || 0]
+        `INSERT INTO settlement_income (username, submitted_at, income_type, quantity, amount, staff_name)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [username, submittedAt, row.incomeType, row.quantity, row.amount, row.staffName || null]
       );
     }
 
@@ -121,56 +135,68 @@ export async function PUT(req: NextRequest) {
   if (!username || !submittedAt) {
     return NextResponse.json({ error: "缺少記錄識別碼" }, { status: 400 });
   }
-  type RawStaffRow = { staffName: string; quantity: number | string };
-  type RawIncomeRow = { incomeType: string; quantity: number | string; amount: number | string };
-  const normStaffRows = (rows: RawStaffRow[]) =>
+
+  const normStaffRows = (rows: any[]) =>
     rows
       .filter((r) => r.staffName)
       .map((r) => ({ staffName: r.staffName, quantity: Number(r.quantity) || 0 }));
 
-  const normIncomeRows = (rows: RawIncomeRow[]) =>
+  const normIntroductionFeeRows = (rows: any[]) =>
     rows
-      .filter((r) => r.incomeType)
+      .filter((r) => r.staffName)
       .map((r) => ({
-        incomeType: r.incomeType,
-        quantity: Number(r.quantity) || 0,
+        incomeType: r.incomeType || "",
         amount: Number(r.amount) || 0,
+        staffName: r.staffName,
+        quantity: Number(r.quantity) || 0,
+      }));
+
+  const normIncomeRows = (rows: any[]) =>
+    rows
+      .filter((r) => r.staffName || Number(r.amount) || Number(r.quantity))
+      .map((r) => ({
+        incomeType: r.incomeType || "",
+        amount: Number(r.amount) || 0,
+        staffName: r.staffName || "",
+        quantity: Number(r.quantity) || 0,
       }));
 
   const newWaterbar = normStaffRows(waterbar);
   const newClassItems = normStaffRows(classItems);
-  const newIntroductionFee = normStaffRows(introductionFee);
-  const newIncome = normIncomeRows(income);
+  const sourceIncome = normIncomeRows(income).length ? income : introductionFee;
+  const newIncome = normIncomeRows(sourceIncome);
+  const computedTotal = newIncome.reduce(
+    (sum, row) => sum + (Number(row.amount) || 0),
+    0
+  );
 
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
 
-    const [existingRows] = await conn.query<SettlementRow[]>(
+    const [existingRows] = await conn.query(
       `SELECT center, doc_date, doc_time, grand_total, remarks
-      FROM settlements WHERE username = ? AND submitted_at = ? FOR UPDATE`,
+       FROM settlements WHERE username = ? AND submitted_at = ? FOR UPDATE`,
       [username, submittedAt]
     );
-    const existing = existingRows[0]; // was: (existingRows as any[])[0]
-
+    const existing = (existingRows as any[])[0];
     if (!existing) {
       await conn.rollback();
       return NextResponse.json({ error: "找不到記錄" }, { status: 404 });
     }
 
-    
-    const [existingItemRows] = await conn.query<SettlementItemRow[]>(
-      `SELECT section_type, staff_name, quantity FROM settlement_items
-      WHERE username = ? AND submitted_at = ?`,
+    const [existingItemRows] = await conn.query(
+      `SELECT section_type, staff_name, quantity, income_type, amount FROM settlement_items
+       WHERE username = ? AND submitted_at = ?`,
       [username, submittedAt]
     );
-    const [existingIncomeRows] = await conn.query<SettlementIncomeRow[]>(
-      `SELECT income_type, quantity, amount FROM settlement_income
-      WHERE username = ? AND submitted_at = ?`,
+    const [existingIncomeRows] = await conn.query(
+      `SELECT income_type, quantity, amount, staff_name FROM settlement_income
+       WHERE username = ? AND submitted_at = ?`,
       [username, submittedAt]
     );
 
-    const existingItems = existingItemRows;
+    const existingItems = existingItemRows as any[];
     const oldWaterbar = normStaffRows(
       existingItems.filter((i) => i.section_type === "waterbar")
         .map((i) => ({ staffName: i.staff_name, quantity: i.quantity }))
@@ -179,28 +205,29 @@ export async function PUT(req: NextRequest) {
       existingItems.filter((i) => i.section_type === "class")
         .map((i) => ({ staffName: i.staff_name, quantity: i.quantity }))
     );
-    const oldIntroductionFee = normStaffRows(
+    const oldIntroductionFee = normIntroductionFeeRows(
       existingItems.filter((i) => i.section_type === "introductionFee")
-        .map((i) => ({ staffName: i.staff_name, quantity: i.quantity }))
+        .map((i) => ({
+          staffName: i.staff_name,
+          quantity: i.quantity,
+          incomeType: i.income_type || "",
+          amount: i.amount,
+        }))
     );
-    const oldIncome = normIncomeRows(
-      (existingIncomeRows).map((i) => ({
-        incomeType: i.income_type,
-        quantity: i.quantity,
-        amount: i.amount,
-      }))
-    );
+    const mappedExistingIncome = (existingIncomeRows as any[]).map((i) => ({
+      incomeType: i.income_type,
+      quantity: i.quantity,
+      amount: i.amount,
+      staffName: i.staff_name || "",
+    }));
+    const oldIncome = normIncomeRows(mappedExistingIncome).length
+      ? normIncomeRows(mappedExistingIncome)
+      : oldIntroductionFee;
 
     // Build diff list: [fieldName, previousValue, updatedValue]
-    type DiffEntry = { field: string; prev: string; updated: string };
+    const diffs: { field: string; prev: string; updated: string }[] = [];
 
-    const diffs: DiffEntry[] = [];
-    const compareScalar = (
-      field: string,
-      prev: string | number,
-      updated: string | number,
-      diffs: DiffEntry[]
-    ) => {
+    const compareScalar = (field: string, prev: any, updated: any) => {
       if (String(prev) !== String(updated)) {
         diffs.push({ field, prev: String(prev), updated: String(updated) });
       }
@@ -209,9 +236,9 @@ export async function PUT(req: NextRequest) {
     // Matches items between two arrays by deep equality, returns what's uniquely
     // added in `newArr` and what's uniquely removed from `oldArr` — robust even if
     // rows were reordered, not just appended/removed at the end.
-    const diffMultiset = <T>(oldArr: T[], newArr: T[]) => {
+    const diffMultiset = (oldArr: any[], newArr: any[]) => {
       const oldPool = [...oldArr];
-      const added: T[] = [];
+      const added: any[] = [];
       for (const item of newArr) {
         const idx = oldPool.findIndex((o) => JSON.stringify(o) === JSON.stringify(item));
         if (idx === -1) added.push(item);
@@ -221,12 +248,12 @@ export async function PUT(req: NextRequest) {
       return { added, removed };
     }
 
-    const compareArrayField = <T extends StaffDiffRow | IncomeDiffRow>(
-        field: string,
-        oldArr: T[],
-        newArr: T[],
-        diffs: DiffEntry[]
-      ) => {
+    const compareArrayField = (
+      field: string,
+      oldArr: any[],
+      newArr: any[],
+      diffs: { field: string; prev: string; updated: string }[]
+    ) => {
       const oldStr = JSON.stringify(oldArr);
       const newStr = JSON.stringify(newArr);
       if (oldStr === newStr) return;
@@ -253,13 +280,12 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    compareScalar("center", existing.center, center, diffs);
-    compareScalar("grandTotal", Number(existing.grand_total), Number(grandTotal) || 0, diffs);
-    compareScalar("remarks", existing.remarks || "", remarks || "", diffs);
-    compareArrayField<StaffDiffRow>("waterbar", oldWaterbar, newWaterbar, diffs);
-    compareArrayField<StaffDiffRow>("classItems", oldClassItems, newClassItems, diffs);
-    compareArrayField<StaffDiffRow>("introductionFee", oldIntroductionFee, newIntroductionFee, diffs);
-    compareArrayField<IncomeDiffRow>("income", oldIncome, newIncome, diffs);
+    compareScalar("center", existing.center, center);
+    compareScalar("grandTotal", Number(existing.grand_total), computedTotal);
+    compareScalar("remarks", existing.remarks || "", remarks || "");
+    compareArrayField("waterbar", oldWaterbar, newWaterbar, diffs);
+    compareArrayField("classItems", oldClassItems, newClassItems, diffs);
+    compareArrayField("income", oldIncome, newIncome, diffs);
 
     if (diffs.length === 0) {
       await conn.rollback();
@@ -270,14 +296,17 @@ export async function PUT(req: NextRequest) {
     await conn.execute(
       `UPDATE settlements SET center = ?, doc_date = ?, doc_time = ?, grand_total = ?, remarks = ?
       WHERE username = ? AND submitted_at = ?`,
-      [center, existing.doc_date, existing.doc_time, grandTotal || 0, remarks || null, username, submittedAt]
+      [center, existing.doc_date, existing.doc_time, computedTotal, remarks || null, username, submittedAt]
     );
 
     await conn.execute(
       `DELETE FROM settlement_items WHERE username = ? AND submitted_at = ?`,
       [username, submittedAt]
     );
-    const insertItems = async (sectionType: string, rows: { staffName: string; quantity: number }[]) => {
+    const insertItems = async (
+      sectionType: string,
+      rows: { staffName: string; quantity: number }[]
+    ) => {
       for (const row of rows) {
         await conn.execute(
           `INSERT INTO settlement_items (username, submitted_at, section_type, staff_name, quantity)
@@ -288,7 +317,6 @@ export async function PUT(req: NextRequest) {
     };
     await insertItems("waterbar", newWaterbar);
     await insertItems("class", newClassItems);
-    await insertItems("introductionFee", newIntroductionFee);
 
     await conn.execute(
       `DELETE FROM settlement_income WHERE username = ? AND submitted_at = ?`,
@@ -296,18 +324,18 @@ export async function PUT(req: NextRequest) {
     );
     for (const row of newIncome) {
       await conn.execute(
-        `INSERT INTO settlement_income (username, submitted_at, income_type, quantity, amount)
-         VALUES (?, ?, ?, ?, ?)`,
-        [username, submittedAt, row.incomeType, row.quantity, row.amount]
+        `INSERT INTO settlement_income (username, submitted_at, income_type, quantity, amount, staff_name)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [username, submittedAt, row.incomeType, row.quantity, row.amount, row.staffName || null]
       );
     }
 
     // Write history rows
     for (const d of diffs) {
       await conn.execute(
-        `INSERT INTO modify_history (settlement_username, settlement_submitted_at, modified_by, field_name, previous_value, updated_value)
+        `INSERT INTO modify_history (settlement_username, settlement_submitted_at, modified_by, modified_at, field_name, previous_value, updated_value)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [username, submittedAt, editor, d.field, d.prev, d.updated]
+        [username, submittedAt, editor, new Date(), d.field, d.prev, d.updated]
       );
     }
 

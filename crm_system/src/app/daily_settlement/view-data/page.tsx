@@ -8,6 +8,8 @@ import { withDailySettlementPath } from "@/lib/basePath";
 import { LocationCode, useLocation } from "@/types/location";
 import ExportFab from "@/app/components/ExportFab";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { parseAccountList } from "@/app/components/StaffSection";
+import { withBasePath } from '@/lib/basePath';
 
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
@@ -22,8 +24,8 @@ type Record = {
   remarks: string | null;
   waterbar: { staff_name: string; quantity: number }[];
   classItems: { staff_name: string; quantity: number }[];
-  introductionFee: { staff_name: string; quantity: number }[];
-  income: { income_type: string; quantity: number; amount: number }[];
+  introductionFee: { staff_name: string; quantity: number; income_type?: string; amount?: number }[];
+  income: { income_type: string; quantity: number; amount: number; staff_name?: string }[];
 };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -46,7 +48,7 @@ export default function ViewDataPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [staffList, setStaffList] = useState<{ username: string; center: LocationCode; role: string }[]>([]);
+  const [staffList, setStaffList] = useState<{ username: string; role: string; locations: string[] }[]>([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [exporting, setExporting] = useState(false);
   const { label } = useLocation();
@@ -56,9 +58,9 @@ export default function ViewDataPage() {
   }, [setDisableGPULayer]);
 
   useEffect(() => {
-    fetch(withDailySettlementPath("/api/staff"))
+    fetch(withBasePath("/api/accounts"))
       .then((res) => res.json())
-      .then((data) => setStaffList(data.staff || []))
+      .then((data) => setStaffList(parseAccountList(data)))
       .catch(() => {});
   }, []);
 
@@ -90,7 +92,7 @@ export default function ViewDataPage() {
   // };
 
   const handleExportTXT = () => {
-    exportToTXT(records, staffList, username, label);
+    exportToTXT(records, staffList, username);
   };
 
   const fetchRecords = async () => {
@@ -244,32 +246,27 @@ export default function ViewDataPage() {
 
               {rec.income.length > 0 && (
                 <div className="mb-2">
-                  <p className="text-xs font-bold text-slate-500 mb-1">收入明細</p>
+                  <p className="text-xs font-bold text-slate-500 mb-1">每日收入明細</p>
                   <div className="flex flex-wrap gap-2">
                     {rec.income.map((inc, i) => (
                       <span
                         key={i}
-                        className="text-xs text-slate-900 bg-white border border-slate-200 rounded px-2 py-1"
+                        className="text-xs bg-white border border-slate-200 rounded px-2 py-1"
                       >
-                        {inc.income_type} × {inc.quantity} — $ {inc.amount}
+                        {inc.income_type} · 收入 $ {inc.amount}
+                        {inc.staff_name ? ` · 介紹人 ${inc.staff_name}` : ""}
+                        {" · 介紹費 $ "}{inc.quantity}
                       </span>
                     ))}
                   </div>
                 </div>
               )}
 
-              {rec.introductionFee.length > 0 && (
-                <RecordSection title="介紹費" rows={rec.introductionFee} />
-              )}
-
               {rec.income.length > 0 && (
                 <div className="mt-2">
                   <p className="text-xs font-bold text-slate-500 mb-1">每日總金額</p>
-
                   <div className="flex flex-wrap gap-2">
-                    <span className="text-xs font-bold  text-slate-900 bg-white border border-slate-200 rounded px-2 py-1">
-                      $ {rec.income.reduce((sum, inc) => sum + inc.quantity * inc.amount, 0)}
-                    </span>
+                    <span className="text-xs font-bold">$ {rec.grandTotal}</span>
                   </div>
                 </div>
               )}
@@ -307,7 +304,7 @@ function RecordSection({
       <p className="text-xs font-bold text-slate-500 mb-1">{title}</p>
       <div className="flex flex-wrap gap-2">
         {rows.map((r, i) => (
-          <span key={i} className="text-xs text-slate-900 bg-white border border-slate-200 rounded px-2 py-1">
+          <span key={i} className="text-xs bg-white border border-slate-200 rounded px-2 py-1">
             {r.staff_name} × {r.quantity}
           </span>
         ))}

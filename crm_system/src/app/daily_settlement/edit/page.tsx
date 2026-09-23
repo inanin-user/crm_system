@@ -3,13 +3,18 @@
 import ModifyHistoryModal, { HistoryEntry } from "@/app/components/ModifyHistoryModal";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import StaffSection, { StaffRow, StaffMember } from "@/app/components/StaffSection";
-import { withDailySettlementPath } from "@/lib/basePath";
+import { parseAccountList, StaffMember } from "@/app/components/StaffSection";
+import { withBasePath, withDailySettlementPath } from "@/lib/basePath";
 import { LocationCode, useLocation } from "@/types/location";
+import IntroductionFeeSection, {
+    IntroductionFeeRow,
+    emptyIntroductionFeeRow,
+    incomeRowTotal,
+} from "@/app/components/IntroductionFeeSection";
 import { useSidebar } from "@/contexts/SidebarContext";
 
 
-type IncomeRow = { id: number; incomeType: string; quantity: number; amount: number };
+type StaffRow = { id: number; staffName: string; quantity: number };
 
 let rowIdCounter = 0;
 const nextId = () => ++rowIdCounter;
@@ -19,10 +24,18 @@ const toStaffRows = (rows: { staffName: string; quantity: number }[]): StaffRow[
         ? rows.map((r) => ({ id: nextId(), ...r }))
         : [{ id: nextId(), staffName: "", quantity: 0 }];
 
-const toIncomeRows = (rows: { incomeType: string; quantity: number; amount: number }[]): IncomeRow[] =>
+const toIncomeRows = (
+    rows: { staffName?: string; quantity: number; incomeType?: string; amount?: number }[]
+): IntroductionFeeRow[] =>
     rows.length
-        ? rows.map((r) => ({ id: nextId(), ...r }))
-        : [{ id: nextId(), incomeType: "試", quantity: 0, amount: 0 }];
+        ? rows.map((r) => ({
+            id: nextId(),
+            incomeType: r.incomeType || "試",
+            amount: Number(r.amount) || 0,
+            staffName: r.staffName || "",
+            quantity: Number(r.quantity) || 0,
+        }))
+        : [emptyIntroductionFeeRow(nextId())];
 
 function EditPageInner() {
 
@@ -41,8 +54,7 @@ function EditPageInner() {
     const [docTime, setDocTime] = useState("");
     const [waterbar, setWaterbar] = useState<StaffRow[]>([]);
     const [classItems, setClassItems] = useState<StaffRow[]>([]);
-    const [introductionFee, setIntroductionFee] = useState<StaffRow[]>([]);
-    const [income, setIncome] = useState<IncomeRow[]>([]);
+    const [income, setIncome] = useState<IntroductionFeeRow[]>([]);
     const [remarks, setRemarks] = useState("");
 
     const [submitting, setSubmitting] = useState(false);
@@ -79,21 +91,20 @@ function EditPageInner() {
                 setDocTime(data.docTime.slice(0, 5)); // HH:MM for <input type="time">
                 setWaterbar(toStaffRows(data.waterbar));
                 setClassItems(toStaffRows(data.classItems));
-                setIntroductionFee(toStaffRows(data.introductionFee));
-                setIncome(toIncomeRows(data.income));
+                setIncome(toIncomeRows(data.income?.length ? data.income : (data.introductionFee || [])));
                 setRemarks(data.remarks || "");
             })
             .catch(() => setNotFound(true))
             .finally(() => setLoading(false));
 
-        fetch(withDailySettlementPath("/api/staff"))
+        fetch(withBasePath("/api/accounts"))
             .then((res) => res.json())
-            .then((data) => setStaffList(data.staff || []))
+            .then((data) => setStaffList(parseAccountList(data.data)))
             .catch(() => { });
     }, [recordUsername, recordSubmittedAt]);
 
     const grandTotal = useMemo(
-        () => income.reduce((sum, row) => sum + (Number(row.amount * row.quantity) || 0), 0),
+        () => income.reduce((sum, row) => sum + incomeRowTotal(row), 0),
         [income]
     );
 
@@ -108,11 +119,12 @@ function EditPageInner() {
         value: string | number
     ) => setter((rows) => rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
 
+
     const addIncomeRow = () =>
-        setIncome((rows) => [...rows, { id: nextId(), incomeType: "試", quantity: 0, amount: 0 }]);
+        setIncome((rows) => [...rows, emptyIntroductionFeeRow(nextId())]);
     const removeIncomeRow = (id: number) =>
         setIncome((rows) => (rows.length > 1 ? rows.filter((r) => r.id !== id) : rows));
-    const updateIncomeRow = (id: number, field: keyof IncomeRow, value: string | number) =>
+    const updateIncomeRow = (id: number, field: keyof IntroductionFeeRow, value: string | number) =>
         setIncome((rows) => rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
 
     const handleSubmit = async () => {
@@ -131,8 +143,7 @@ function EditPageInner() {
                     remarks,
                     waterbar: waterbar.filter((r) => r.staffName),
                     classItems: classItems.filter((r) => r.staffName),
-                    introductionFee: introductionFee.filter((r) => r.staffName),
-                    income: income.filter((r) => r.incomeType),
+                    income: income.filter((r) => r.staffName || r.amount || r.quantity),
                 }),
             });
             const data = await res.json();
@@ -180,7 +191,7 @@ function EditPageInner() {
     if (notFound) return <div className="p-10 text-center text-red-500">找不到此記錄</div>;
 
     return (
-        <div id="edit-screen" className="">
+        <div id="edit-screen">
             <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200">
                 <div className="relative bg-slate-800 p-6 text-white">
                     <button
@@ -240,7 +251,7 @@ function EditPageInner() {
 
                     <hr className="border-slate-200" />
 
-                    <div className="section-group">
+                    {/* <div className="section-group">
                         <div className="label-title">
                             <span>3. 每日收入明細</span>
                         </div>
@@ -264,10 +275,12 @@ function EditPageInner() {
                             ))}
                         </div>
                     </div>
+*/}
 
-                    <StaffSection title="4. 介紹費" rows={introductionFee} staffList={staffList}
-                        onAdd={() => addRow(setIntroductionFee)} onRemove={(id) => removeRow(setIntroductionFee, id)}
-                        onChange={(id, f, v) => updateRow(setIntroductionFee, id, f, v)} />
+                    <IntroductionFeeSection title="3. 每日收入明細" rows={income} staffList={staffList}
+                        onAdd={addIncomeRow} onRemove={removeIncomeRow}
+                        onChange={updateIncomeRow} />
+
 
                     <div className="bg-slate-900 rounded-xl p-6 text-white flex justify-between items-center shadow-inner">
                         <span className="text-lg font-bold text-slate-400">每日總金額 TOTAL</span>
@@ -300,6 +313,43 @@ function EditPageInner() {
         </div>
     );
 }
+
+function StaffSection({
+    title, rows, staffList, onAdd, onRemove, onChange,
+}: {
+    title: string;
+    rows: StaffRow[];
+    staffList: StaffMember[];
+    onAdd: () => void;
+    onRemove: (id: number) => void;
+    onChange: (id: number, field: "staffName" | "quantity", value: string | number) => void;
+}) {
+    return (
+        <div className="section-group">
+            <div className="label-title">
+                <span>{title}</span>
+                {/* <span className="text-xs font-normal text-slate-400">{rows.length} 筆</span> */}
+            </div>
+            <div className="rows-area space-y-2">
+                {rows.map((row) => (
+                    <div key={row.id} className="row-container">
+                        <select value={row.staffName} onChange={(e) => onChange(row.id, "staffName", e.target.value)} className="input-field flex-1 staff-select">
+                            <option value="">請選擇職員</option>
+                            {staffList.map((s) => (
+                                <option key={s.username} value={s.username}>{s.username}</option>
+                            ))}
+                        </select>
+                        <input type="number" min="0" placeholder="數量" value={row.quantity}
+                            onChange={(e) => onChange(row.id, "quantity", Number(e.target.value))} className="input-field w-24" />
+                        <span className="btn-icon btn-add" onClick={onAdd}>⊕</span>
+                        <span className="btn-icon btn-del" onClick={() => onRemove(row.id)}>−</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 export default function EditPage() {
     return (
         <Suspense fallback={<div className="p-10 text-center text-slate-400">載入中...</div>}>

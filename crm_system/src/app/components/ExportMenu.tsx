@@ -1,24 +1,18 @@
 // components/ExportMenu.tsx
 "use client";
 
-import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
-
 type ExportMenuProps = {
   open: boolean;
   onClose: () => void;
-  // onExportPDF: () => void;
+//   onExportPDF: () => void;
   onExportTXT: () => void;
   exporting: boolean;
 };
 
 export default function ExportMenu({ open, onClose, onExportTXT, exporting }: ExportMenuProps) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  if (!open) return null;
 
-  if (!open || !mounted) return null;
-
-  const menuContent = (
+  return (
     <div
       onClick={onClose}
       className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-5"
@@ -45,12 +39,13 @@ export default function ExportMenu({ open, onClose, onExportTXT, exporting }: Ex
           匯出 Excel
         </button>
 
-        <button onClick={onClose} className="w-full text-slate-500 text-sm font-semibold py-2">
+        <button
+          onClick={onClose}
+          className="w-full text-slate-500 text-sm font-semibold py-2"
+        >
           取消 Cancel
         </button>
       </div>
     </div>
   );
-
-  return createPortal(menuContent, document.body);
 }
