@@ -251,7 +251,7 @@ export default function ViewDataPage() {
                     {rec.income.map((inc, i) => (
                       <span
                         key={i}
-                        className="text-xs bg-white border border-slate-200 rounded px-2 py-1"
+                        className="text-xs text-slate-900 bg-white border border-slate-200 rounded px-2 py-1"
                       >
                         {inc.income_type} · 收入 $ {inc.amount}
                         {inc.staff_name ? ` · 介紹人 ${inc.staff_name}` : ""}
@@ -266,13 +266,13 @@ export default function ViewDataPage() {
                 <div className="mt-2">
                   <p className="text-xs font-bold text-slate-500 mb-1">每日總金額</p>
                   <div className="flex flex-wrap gap-2">
-                    <span className="text-xs font-bold">$ {rec.grandTotal}</span>
+                    <span className="text-xs text-slate-900 font-bold">$ {rec.grandTotal}</span>
                   </div>
                 </div>
               )}
 
               {rec.remarks && (
-                <p className="text-xs text-slate-500 mt-3 italic">備註：{rec.remarks}</p>
+                <p className="text-xs text-slate-900 mt-3 italic">備註：{rec.remarks}</p>
               )}
             </div>
           ))}
@@ -304,7 +304,7 @@ function RecordSection({
       <p className="text-xs font-bold text-slate-500 mb-1">{title}</p>
       <div className="flex flex-wrap gap-2">
         {rows.map((r, i) => (
-          <span key={i} className="text-xs bg-white border border-slate-200 rounded px-2 py-1">
+          <span key={i} className="text-xs text-slate-900 bg-white border border-slate-200 rounded px-2 py-1">
             {r.staff_name} × {r.quantity}
           </span>
         ))}
