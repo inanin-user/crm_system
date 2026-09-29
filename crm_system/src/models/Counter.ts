@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ICounter extends Document {
-  _id: string;                  // 計數器名稱（例如: 'qrcode_number'）
+  id: string;                  // 計數器名稱（例如: 'qrcode_number'）
   seq: number;                  // 當前序列號
   createdAt: Date;
   updatedAt: Date;

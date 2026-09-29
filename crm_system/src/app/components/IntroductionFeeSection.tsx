@@ -1,7 +1,7 @@
 // components/IntroductionFeeSection.tsx
 "use client";
 
-import { StaffMember } from "@/components/StaffSection";
+import { StaffMember } from "@/app/components/StaffSection";
 
 export const INCOME_TYPES = ["試", "單", "卡"] as const;
 export const DEFAULT_INCOME_TYPE = INCOME_TYPES[0];

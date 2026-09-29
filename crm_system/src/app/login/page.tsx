@@ -302,6 +302,52 @@ function LoginAvatar({
   );
 }
 
+// function LoginAvatar({
+//   glanceProgress,
+//   coveringEyes,
+// }: {
+//   glanceProgress: number;
+//   coveringEyes: boolean;
+// }) {
+//   const eyePosition = useMemo(
+//     () => getGlancePosition(glanceProgress),
+//     [glanceProgress],
+//   );
+//   return (
+//     <div className="relative mx-auto h-48 w-48">
+//       {/* -------------------------------------------------------- */}
+//       {/* Static face                                               */}
+//       {/* -------------------------------------------------------- */}
+
+//       <img
+//         src={withBasePath("/images/face.png")}
+//         alt=""
+//         className="absolute inset-0 h-full w-full object-contain"
+//       />
+
+//       {/* -------------------------------------------------------- */}
+//       {/* Live eyes                                                 */}
+//       {/* -------------------------------------------------------- */}
+
+//       <svg
+//         viewBox="0 0 200 200"
+//         className="absolute inset-0 h-full w-full"
+//         aria-hidden="true"
+//       >
+//         <g
+//           style={{
+//             transform: `translateX(${eyePosition.x}px) translateY(${eyePosition.y}px)`,
+//           }}
+//         >
+//           <circle cx="82" cy="110" r="5" fill="#1B4965" />
+
+//           <circle cx="118" cy="110" r="5" fill="#1B4965" />
+//         </g>
+//       </svg>
+//     </div>
+//   );
+// }
+
 /* ------------------------------------------------------------------ */
 /* Login form                                                         */
 /* ------------------------------------------------------------------ */
@@ -343,9 +389,7 @@ function LoginForm() {
   useEffect(() => {
     const updateWidth = () => {
       if (usernameInputRef.current) {
-        setUsernameInputWidth(
-          usernameInputRef.current.clientWidth,
-        );
+        setUsernameInputWidth(usernameInputRef.current.clientWidth);
       }
     };
 
@@ -373,9 +417,7 @@ function LoginForm() {
    */
   useEffect(() => {
     if (measureRef.current) {
-      setUsernameTextWidth(
-        measureRef.current.getBoundingClientRect().width,
-      );
+      setUsernameTextWidth(measureRef.current.getBoundingClientRect().width);
     }
   }, [formData.username]);
 
@@ -387,13 +429,9 @@ function LoginForm() {
    * 0.5 = halfway
    * 1   = maximum
    */
-  const usernameUsableWidth =
-    Math.max(usernameInputWidth - 32, 1);
+  const usernameUsableWidth = Math.max(usernameInputWidth - 32, 1);
 
-  const glanceProgress = Math.min(
-    usernameTextWidth / usernameUsableWidth,
-    1,
-  );
+  const glanceProgress = Math.min(usernameTextWidth / usernameUsableWidth, 1);
 
   /* -------------------------------------------------------------- */
   /* Session expired message                                        */
@@ -421,9 +459,7 @@ function LoginForm() {
   /* Input                                                          */
   /* -------------------------------------------------------------- */
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -444,25 +480,20 @@ function LoginForm() {
   /* Login                                                          */
   /* -------------------------------------------------------------- */
 
-  const handleSubmit = async (
-    e: React.FormEvent,
-  ) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch(
-        withBasePath("/api/auth/login"),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
+      const response = await fetch(withBasePath("/api/auth/login"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify(formData),
+      });
 
       const data = await response.json();
 
@@ -715,7 +746,6 @@ function LoginForm() {
                       ease: "linear",
                     }}
                   />
-
                   登錄中...
                 </motion.span>
               ) : (
@@ -750,13 +780,14 @@ function LoginForm() {
               delay: 0.4,
             }}
           >
-            <div className="font-medium">
-              測試帳號：
-            </div>
-
-            <div>
-              使用者名稱：test　密碼：test123
-            </div>
+            <a
+              href="https://inanin.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline hover:text-slate-700 transition-colors"
+            >
+              by iNandiN management Ltd
+            </a>
           </motion.div>
         </motion.form>
       </motion.div>
