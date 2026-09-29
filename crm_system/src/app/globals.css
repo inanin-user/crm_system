@@ -203,12 +203,6 @@ a:hover {
 .input-field {
   @apply border-2 border-slate-300 rounded px-3 py-2 focus:border-blue-500 focus:ring-0 transition-all outline-none text-slate-900;
 }
-@supports (-webkit-appearance: none) {
-  select.input-field {
-    -webkit-appearance: auto;
-    appearance: auto;
-  }
-}
 
 /* Row container */
 .row-container {
@@ -221,8 +215,9 @@ a:hover {
 }
 
 .btn-add {
-  @apply bg-blue-600 text-blue-700 hover:bg-blue-900 hover:text-2xl;
+  @apply bg-blue-100 text-blue-500 hover:bg-blue-500 hover:text-white;
 }
+
 
 .btn-del {
   @apply bg-red-100 text-red-500 hover:bg-red-500 hover:text-white;

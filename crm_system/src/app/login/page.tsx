@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, useSpring } from "framer-motion";
+import Avatar from "@/app/components/Avatar";
+import { defaultAvatar } from "@/lib/avatar";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { withBasePath } from "@/lib/basePath";
@@ -105,199 +107,12 @@ function LoginAvatar({
         ease: "easeOut",
       }}
     >
-      <svg
-        viewBox="0 0 200 200"
-        className="h-full w-full overflow-visible"
-        aria-hidden="true"
-      >
-        {/* ---------------------------------------------------------- */}
-        {/* Background                                                 */}
-        {/* ---------------------------------------------------------- */}
-
-        <circle
-          cx="100"
-          cy="100"
-          r="98"
-          fill="#9FD3EC"
-          stroke="#1B4965"
-          strokeWidth="3"
-        />
-
-        <clipPath id="avatarClip">
-          <circle cx="100" cy="100" r="98" />
-        </clipPath>
-
-        <g clipPath="url(#avatarClip)">
-          {/* -------------------------------------------------------- */}
-          {/* Body                                                     */}
-          {/* -------------------------------------------------------- */}
-
-          <motion.ellipse
-            cx="100"
-            cy="215"
-            rx="70"
-            ry="55"
-            fill="#E4F2FB"
-            stroke="#1B4965"
-            strokeWidth="3"
-            initial={{
-              y: 8,
-            }}
-            animate={{
-              y: coveringEyes ? 3 : 8,
-            }}
-            transition={{
-              type: "spring",
-              stiffness: 220,
-              damping: 18,
-            }}
-          />
-
-          {/* -------------------------------------------------------- */}
-          {/* Head                                                     */}
-          {/* -------------------------------------------------------- */}
-
-          <motion.circle
-            cx="100"
-            cy="110"
-            r="52"
-            fill="#F4FAFE"
-            stroke="#1B4965"
-            strokeWidth="3"
-            animate={{
-              y: coveringEyes ? 1 : 0,
-            }}
-            transition={{
-              type: "spring",
-              stiffness: 300,
-              damping: 22,
-            }}
-          />
-
-          {/* -------------------------------------------------------- */}
-          {/* Ears                                                    */}
-          {/* -------------------------------------------------------- */}
-
-          <circle
-            cx="52"
-            cy="112"
-            r="10"
-            fill="#F4FAFE"
-            stroke="#1B4965"
-            strokeWidth="3"
-          />
-
-          <circle
-            cx="148"
-            cy="112"
-            r="10"
-            fill="#F4FAFE"
-            stroke="#1B4965"
-            strokeWidth="3"
-          />
-
-          {/* -------------------------------------------------------- */}
-          {/* Hair                                                     */}
-          {/* -------------------------------------------------------- */}
-
-          <motion.path
-            d="
-              M55 90
-              Q60 35 100 40
-              Q140 35 145 90
-              Q130 60 118 85
-              Q108 50 100 82
-              Q92 50 82 85
-              Q70 60 55 90Z
-            "
-            fill="#F4FAFE"
-            stroke="#1B4965"
-            strokeWidth="3"
-            strokeLinejoin="round"
-            animate={{
-              y: coveringEyes ? -1 : 0,
-            }}
-            transition={{
-              type: "spring",
-              stiffness: 300,
-              damping: 22,
-            }}
-          />
-
-          {/* -------------------------------------------------------- */}
-          {/* Eyes                                                     */}
-          {/* -------------------------------------------------------- */}
-
-          <motion.g
-            style={{
-              x: eyeX,
-              y: eyeY,
-            }}
-          >
-            <circle cx="82" cy="108" r="5" fill="#1B4965" />
-
-            <circle cx="118" cy="108" r="5" fill="#1B4965" />
-          </motion.g>
-
-          {/* -------------------------------------------------------- */}
-          {/* Mouth                                                    */}
-          {/* -------------------------------------------------------- */}
-
-          <motion.path
-            d="M85 128 Q100 140 115 128"
-            fill="none"
-            stroke="#1B4965"
-            strokeWidth="3"
-            strokeLinecap="round"
-            animate={{
-              scaleX: coveringEyes ? 0.95 : 1,
-            }}
-            transition={{
-              duration: 0.25,
-            }}
-            style={{
-              transformOrigin: "100px 134px",
-            }}
-          />
-
-          {/* -------------------------------------------------------- */}
-          {/* Hands covering eyes                                      */}
-          {/* -------------------------------------------------------- */}
-
-          <motion.g
-            initial={false}
-            animate={{
-              y: coveringEyes ? 0 : 90,
-              opacity: coveringEyes ? 1 : 0,
-            }}
-            transition={{
-              type: "spring",
-              stiffness: 360,
-              damping: 24,
-            }}
-          >
-            {/* left hand */}
-            <motion.circle
-              cx="80"
-              cy="108"
-              r="17"
-              fill="#F4FAFE"
-              stroke="#1B4965"
-              strokeWidth="3"
-            />
-
-            {/* right hand */}
-            <motion.circle
-              cx="120"
-              cy="108"
-              r="17"
-              fill="#F4FAFE"
-              stroke="#1B4965"
-              strokeWidth="3"
-            />
-          </motion.g>
-        </g>
-      </svg>
+      <Avatar
+        config={defaultAvatar}
+        eyeX={eyeX}
+        eyeY={eyeY}
+        coveringEyes={coveringEyes}
+      />
     </motion.div>
   );
 }
@@ -367,7 +182,7 @@ function LoginForm() {
 
   const { user, login } = useAuth();
 
-  const redirectUrl = searchParams.get("redirect") || "/";
+  const redirectUrl = searchParams.get("redirect") || withBasePath("/"); 
 
   /* -------------------------------------------------------------- */
   /* Username → eye progress                                        */
@@ -764,12 +579,8 @@ function LoginForm() {
             </AnimatePresence>
           </motion.button>
 
-          {/* ------------------------------------------------------ */}
-          {/* Test account                                           */}
-          {/* ------------------------------------------------------ */}
-
           <motion.div
-            className="pt-2 text-center text-xs text-slate-500"
+            className="pt-12 text-center text-xs text-slate-300"
             initial={{
               opacity: 0,
             }}
@@ -784,7 +595,7 @@ function LoginForm() {
               href="https://inanin.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:underline hover:text-slate-700 transition-colors"
+              className="transition-colors hover:text-slate-500 hover:underline"
             >
               by iNandiN management Ltd
             </a>

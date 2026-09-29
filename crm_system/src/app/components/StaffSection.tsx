@@ -1,8 +1,14 @@
 // components/StaffSection.tsx
 "use client";
 
+import { useState } from "react";
+
 export type StaffRow = { id: number; staffName: string; quantity: number };
-export type StaffMember = { username: string; locations: string[]; role: string };
+export type StaffMember = {
+  username: string;
+  locations: string[];
+  role: string;
+};
 
 export function parseLocations(locations: unknown): string[] {
   if (Array.isArray(locations)) return locations.map(String).filter(Boolean);
@@ -23,7 +29,9 @@ export function parseLocations(locations: unknown): string[] {
 export function parseAccountList(data: unknown): StaffMember[] {
   const rows = Array.isArray(data) ? data : [];
   return rows
-    .filter((row): row is Record<string, unknown> => Boolean(row && typeof row === "object" && (row as any).username))
+    .filter((row): row is Record<string, unknown> =>
+      Boolean(row && typeof row === "object" && (row as any).username),
+    )
     .map((row) => ({
       username: String(row.username),
       role: String(row.role || ""),
@@ -31,14 +39,17 @@ export function parseAccountList(data: unknown): StaffMember[] {
     }));
 }
 
-
 type StaffSectionProps = {
   title: string;
   rows: StaffRow[];
   staffList: StaffMember[];
   onAdd: () => void;
   onRemove: (id: number) => void;
-  onChange: (id: number, field: "staffName" | "quantity", value: string | number) => void;
+  onChange: (
+    id: number,
+    field: "staffName" | "quantity",
+    value: string | number,
+  ) => void;
 };
 
 export default function StaffSection({
@@ -49,6 +60,9 @@ export default function StaffSection({
   onRemove,
   onChange,
 }: StaffSectionProps) {
+  const [focusedQuantityId, setFocusedQuantityId] = useState<string | null | number>(
+    null,
+  );
   return (
     <div className="section-group">
       <div className="label-title">
@@ -61,7 +75,7 @@ export default function StaffSection({
             <select
               value={row.staffName}
               onChange={(e) => onChange(row.id, "staffName", e.target.value)}
-              className="input-field flex-1 staff-select"
+              className="input-field flex-1"
             >
               <option value="">請選擇職員</option>
               {staffList.map((s) => (
@@ -74,12 +88,41 @@ export default function StaffSection({
               type="number"
               min="0"
               placeholder="數量"
-              value={row.quantity}
-              onChange={(e) => onChange(row.id, "quantity", Number(e.target.value))}
+              value={
+                focusedQuantityId === row.id
+                  ? row.quantity === 0
+                    ? ""
+                    : row.quantity
+                  : row.quantity || 0
+              }
+              onFocus={(e) => {
+                setFocusedQuantityId(row.id);
+
+                // If current value is 0, show an empty input
+                if (row.quantity === 0) {
+                  onChange(row.id, "quantity", 0);
+                }
+              }}
+              onChange={(e) =>{
+                const value = e.target.value;
+                if (value === "") {
+                  onChange(row.id, "quantity", 0);
+                  return;
+                }
+                onChange(row.id, "quantity", Number(e.target.value))
+                }
+              }
+              onBlur={() => {
+                setFocusedQuantityId(null);
+              }}
               className="input-field w-24"
             />
-            <span className="btn-icon btn-add" onClick={onAdd}>⊕</span>
-            <span className="btn-icon btn-del" onClick={() => onRemove(row.id)}>−</span>
+            <span className="btn-icon btn-add" onClick={onAdd}>
+              ⊕
+            </span>
+            <span className="btn-icon btn-del" onClick={() => onRemove(row.id)}>
+              −
+            </span>
           </div>
         ))}
       </div>

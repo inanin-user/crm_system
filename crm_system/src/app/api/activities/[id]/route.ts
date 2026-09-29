@@ -1,50 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ActivityRow } from "@/types/activity";
 import { AccountRow } from "@/types/auth";
-import { v4 as uuid } from "uuid";
+import { NextRequest, NextResponse } from "next/server";
 
-// GET - 获取所有活动
-export async function GET() {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
-    const [activities] = await db.query<ActivityRow[]>(
-      `SELECT id, activityName, trainerId, trainerName, startTime, endTime,
-              duration, participants, location, description, isActive,
-              createdAt, updatedAt
-      FROM activities
-      WHERE isActive = 1
-      ORDER BY startTime DESC`,
-    );
-
-    return NextResponse.json({
-      success: true,
-      data: activities,
-      message: `找到 ${activities.length} 个活動`,
-    });
-  } catch (error: unknown) {
-    console.error("活動列表獲取失敗:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        message: "活動列表獲取失敗",
-        error:
-          process.env.NODE_ENV === "development"
-            ? error instanceof Error
-              ? error.message
-              : "Unknown error"
-            : undefined,
-      },
-      { status: 500 },
-    );
-  }
-}
-
-// POST - 创建新活动
-export async function POST(request: NextRequest) {
-  try {
-    // 验证用户身份
+    // 驗證用戶身份
     const authUser = getAuthUser(request);
+
     if (!authUser) {
       return NextResponse.json(
         {
@@ -55,11 +22,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 驗證用戶是否存在
     const [userRows] = await db.query<AccountRow[]>(
       "SELECT * FROM account_management WHERE id = ?",
       [authUser.userId],
     );
+
     const user = userRows[0];
+
     if (!user) {
       return NextResponse.json(
         {
@@ -70,18 +40,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 检查权限（只有管理员和教练可以创建活动）
+    // 檢查權限
+    // 只有管理員和教練可以修改活動
     if (user.role !== "admin" && user.role !== "trainer") {
       return NextResponse.json(
         {
           success: false,
-          message: "未有權限建立活動",
+          message: "未有權限修改活動",
         },
         { status: 403 },
       );
     }
 
+    // 取得 activity ID
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "活動 ID 不存在",
+        },
+        { status: 400 },
+      );
+    }
+
+    // 確認活動存在
+    const [activityRows] = await db.query<ActivityRow[]>(
+      "SELECT * FROM activities WHERE id = ?",
+      [id],
+    );
+
+    const activity = activityRows[0];
+
+    if (!activity) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "活動不存在",
+        },
+        { status: 404 },
+      );
+    }
+
+    // 取得 request body
     const body = await request.json();
+
     const {
       activityName,
       trainerId,
@@ -92,7 +96,7 @@ export async function POST(request: NextRequest) {
       description,
     } = body;
 
-    // 验证必需字段
+    // 驗證必需字段
     if (!activityName || !trainerId || !startTime || !endTime || !location) {
       return NextResponse.json(
         {
@@ -103,16 +107,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 確認指定教練存在
     const [trainerRows] = await db.query<AccountRow[]>(
       "SELECT * FROM account_management WHERE id = ?",
       [trainerId],
     );
+
     const trainer = trainerRows[0];
 
     if (!trainer) {
-      return NextResponse.json({ error: "Trainer not found" }, { status: 404 });
+      console.log("指定的教练不存在");
+      return NextResponse.json(
+        {
+          success: false,
+          message: "指定的教练不存在",
+        },
+        { status: 404 },
+      );
     }
-    if (!trainer || trainer.role !== "trainer") {
+
+    // 確認指定帳戶確實是教練
+    if (trainer.role !== "trainer") {
       return NextResponse.json(
         {
           success: false,
@@ -122,71 +137,88 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 验证时间
+    // 驗證時間
     const start = new Date(startTime);
     const end = new Date(endTime);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "開始時間或結束時間格式錯誤",
+        },
+        { status: 400 },
+      );
+    }
 
     if (end <= start) {
       return NextResponse.json(
         {
           success: false,
-          message: "结束时间必须晚于开始时间",
+          message: "結束時間必須晚於開始時間",
         },
         { status: 400 },
       );
     }
 
+    // 不允許修改成已經過去的活動
     if (start < new Date()) {
       return NextResponse.json(
         {
           success: false,
-          message: "开始时间不能早于当前时间",
+          message: "開始時間不能早於當前時間",
         },
         { status: 400 },
       );
     }
 
-    const id = uuid();
-
+    // 更新活動
     await db.execute(
-      `INSERT INTO activities
-     (id, activityName, trainerId, trainerName, startTime, endTime,
-      location, description, participants, isActive)
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `UPDATE activities
+       SET
+         activityName = ?,
+         trainerId = ?,
+         trainerName = ?,
+         startTime = ?,
+         endTime = ?,
+         location = ?,
+         description = ?
+       WHERE id = ?`,
       [
-        id,
         activityName.trim(),
         trainerId,
-        trainerName || trainer.username,
+        trainerName?.trim() || trainer.username,
         start,
         end,
         location.trim(),
         description?.trim() || "",
-        JSON.stringify([]),
-        1,
+        id,
       ],
     );
 
-    const [savedRows] = await db.query<ActivityRow[]>(
+    // 取得更新後的活動
+    const [updatedRows] = await db.query<ActivityRow[]>(
       "SELECT * FROM activities WHERE id = ?",
       [id],
     );
-    const savedActivity = savedRows[0];
+
+    const updatedActivity = updatedRows[0];
 
     return NextResponse.json(
       {
         success: true,
-        data: savedActivity,
-        message: "建立活動成功",
+        data: updatedActivity,
+        message: "修改活動成功",
       },
-      { status: 201 },
+      { status: 200 },
     );
   } catch (error: unknown) {
-    console.error("建立活動失敗:", error);
+    console.error("修改活動失敗:", error);
+
     return NextResponse.json(
       {
         success: false,
-        message: "建立活動失敗",
+        message: "修改活動失敗",
         error:
           process.env.NODE_ENV === "development"
             ? error instanceof Error

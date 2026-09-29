@@ -1,0 +1,241 @@
+"use client";
+
+import { motion } from "framer-motion";
+import type { AvatarProps } from "@/lib/avatar";
+import { defaultAvatar } from "@/lib/avatar";
+
+export default function Avatar({
+  config = defaultAvatar,
+  eyeX,
+  eyeY,
+  coveringEyes,
+}: AvatarProps) {
+  const {
+    colors,
+    background,
+    body,
+    head,
+    ears,
+    hair,
+    eyes,
+    mouth,
+    hands,
+  } = config;
+
+  return (
+    <svg
+      viewBox="0 0 200 200"
+      className="h-full w-full overflow-visible"
+      aria-hidden="true"
+    >
+      {/* ---------------------------------------------------------- */}
+      {/* Background                                                  */}
+      {/* ---------------------------------------------------------- */}
+
+      <circle
+        cx={background.cx}
+        cy={background.cy}
+        r={background.radius}
+        fill={colors.background}
+        stroke={colors.outline}
+        strokeWidth={background.strokeWidth}
+      />
+
+      {/* ---------------------------------------------------------- */}
+      {/* Clip avatar contents inside background circle               */}
+      {/* ---------------------------------------------------------- */}
+
+      <clipPath id="avatarClip">
+        <circle
+          cx={background.cx}
+          cy={background.cy}
+          r={background.radius}
+        />
+      </clipPath>
+
+      <g clipPath="url(#avatarClip)">
+        {/* -------------------------------------------------------- */}
+        {/* Body                                                     */}
+        {/* -------------------------------------------------------- */}
+
+        <motion.ellipse
+          cx={body.cx}
+          cy={body.cy}
+          rx={body.rx}
+          ry={body.ry}
+          fill={colors.body}
+          stroke={colors.outline}
+          strokeWidth={body.strokeWidth}
+          initial={{ y: 8 }}
+          animate={{
+            y: coveringEyes ? 3 : 8,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 220,
+            damping: 18,
+          }}
+        />
+        {body.text && (
+        <motion.text
+            x={body.text.x}
+            y={body.text.y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={body.text.fontSize}
+            fontWeight={body.text.fontWeight ?? 400}
+            fill={body.text.fill}
+        >
+            {body.text.value}
+        </motion.text>
+        )}
+
+        {/* -------------------------------------------------------- */}
+        {/* Head                                                     */}
+        {/* -------------------------------------------------------- */}
+
+        <motion.circle
+          cx={head.cx}
+          cy={head.cy}
+          r={head.radius}
+          fill={colors.head}
+          stroke={colors.outline}
+          strokeWidth={head.strokeWidth}
+          animate={{
+            y: coveringEyes ? 1 : 0,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 22,
+          }}
+        />
+
+        {/* -------------------------------------------------------- */}
+        {/* Ears                                                     */}
+        {/* -------------------------------------------------------- */}
+
+        <circle
+          cx={ears.leftX}
+          cy={ears.y}
+          r={ears.radius}
+          fill={colors.head}
+          stroke={colors.outline}
+          strokeWidth={ears.strokeWidth}
+        />
+
+        <circle
+          cx={ears.rightX}
+          cy={ears.y}
+          r={ears.radius}
+          fill={colors.head}
+          stroke={colors.outline}
+          strokeWidth={ears.strokeWidth}
+        />
+
+        {/* -------------------------------------------------------- */}
+        {/* Hair                                                     */}
+        {/* -------------------------------------------------------- */}
+
+        <motion.path
+          d={hair.path}
+          fill={colors.hair}
+          stroke={colors.outline}
+          strokeWidth={hair.strokeWidth}
+          strokeLinejoin="round"
+          animate={{
+            y: coveringEyes ? -1 : 0,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 22,
+          }}
+        />
+
+        {/* -------------------------------------------------------- */}
+        {/* Eyes                                                     */}
+        {/* -------------------------------------------------------- */}
+
+        <motion.g
+          style={{
+            x: eyeX,
+            y: eyeY,
+          }}
+        >
+          <circle
+            cx={eyes.leftX}
+            cy={eyes.y}
+            r={eyes.radius}
+            fill={colors.eye}
+          />
+
+          <circle
+            cx={eyes.rightX}
+            cy={eyes.y}
+            r={eyes.radius}
+            fill={colors.eye}
+          />
+        </motion.g>
+
+        {/* -------------------------------------------------------- */}
+        {/* Mouth                                                    */}
+        {/* -------------------------------------------------------- */}
+
+        <motion.path
+          d={mouth.path}
+          fill="none"
+          stroke={colors.mouth}
+          strokeWidth={mouth.strokeWidth}
+          strokeLinecap="round"
+          animate={{
+            scaleX: coveringEyes
+              ? mouth.scaleWhenCoveringEyes
+              : 1,
+          }}
+          transition={{
+            duration: 0.25,
+          }}
+          style={{
+            transformOrigin: "100px 134px",
+          }}
+        />
+
+        {/* -------------------------------------------------------- */}
+        {/* Hands covering eyes                                      */}
+        {/* -------------------------------------------------------- */}
+
+        <motion.g
+          initial={false}
+          animate={{
+            y: coveringEyes ? 0 : 90,
+            opacity: coveringEyes ? 1 : 0,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 360,
+            damping: 24,
+          }}
+        >
+          <motion.circle
+            cx={hands.leftX}
+            cy={hands.y}
+            r={hands.radius}
+            fill={colors.hand}
+            stroke={colors.outline}
+            strokeWidth={hands.strokeWidth}
+          />
+
+          <motion.circle
+            cx={hands.rightX}
+            cy={hands.y}
+            r={hands.radius}
+            fill={colors.hand}
+            stroke={colors.outline}
+            strokeWidth={hands.strokeWidth}
+          />
+        </motion.g>
+      </g>
+    </svg>
+  );
+}
