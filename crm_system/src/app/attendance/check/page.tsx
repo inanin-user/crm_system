@@ -102,10 +102,10 @@ export default function CheckPage() {
         prevRecords.map((record) =>
           record.id === recordId
             ? {
-                ...record,
-                status: updatedRecord.status,
-                updatedAt: updatedRecord.updatedAt,
-              }
+              ...record,
+              status: updatedRecord.status,
+              updatedAt: updatedRecord.updatedAt,
+            }
             : record,
         ),
       );
@@ -116,9 +116,9 @@ export default function CheckPage() {
         prevRecords.map((record) =>
           record.id === recordId
             ? {
-                ...record,
-                status: record.status === newStatus ? "出席" : record.status,
-              }
+              ...record,
+              status: record.status === newStatus ? "出席" : record.status,
+            }
             : record,
         ),
       );
@@ -247,96 +247,97 @@ export default function CheckPage() {
                 </p>
               </div>
 
-              <div className="rounded-lg border border-gray-200 shadow-sm">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        名稱
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        時間
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        活動內容
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        地點
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        狀態
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {records.map((record, index) => (
-                      <tr
-                        key={record.id}
-                        className={`transition-colors duration-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50
-    [&:has(.z-50)>td]:align-top`}
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {record.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatTime(record.createdAt)}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          <div
-                            className="max-w-xs truncate"
-                            title={record.activity}
-                          >
-                            {record.activity}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {label(record.location)}
-                        </td>
-                        <td className="relative px-6 py-4 whitespace-nowrap text-sm text-gray-500 [&:has(.z-50)]:h-[150px]">
-                          <CustomSelect
-                            value={record.status || "出席"}
-                            onChange={(value) => updateStatus(record.id, value)}
-                            options={[
-                              { value: "出席", label: "出席" },
-                              { value: "早退", label: "早退" },
-                            ]}
-                            disabled={updatingStatus === record.id}
-                            className={`inline-block w-20 ${
-                              record.status === "早退"
-                                ? "[&_button]:border-orange-200 [&_button]:bg-orange-50 [&_button]:text-orange-700 [&_button]:hover:bg-orange-100"
-                                : "[&_button]:border-green-200 [&_button]:bg-green-50 [&_button]:text-green-700 [&_button]:hover:bg-green-100"
-                            } ${
-                              updatingStatus === record.id
-                                ? "[&_button]:opacity-60 [&_button]:cursor-wait"
-                                : "[&_button]:hover:shadow-sm"
-                            }`}
-                          />
-                          {updatingStatus === record.id && (
-                            <div className="absolute inset-y-0 right-8 flex items-center pointer-events-none">
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
-                            </div>
-                          )}
-                        </td>
+              <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <div className="max-h-[60vh] overflow-y-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          名稱
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          時間
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          活動內容
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          地點
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          狀態
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {records.map((record, index) => (
+                        <tr
+                          key={record.id}
+                          className={`transition-colors duration-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50
+    [&:has(.z-50)>td]:align-top`}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {record.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatTime(record.createdAt)}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            <div
+                              className="max-w-xs truncate"
+                              title={record.activity}
+                            >
+                              {record.activity}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {label(record.location)}
+                          </td>
+                          <td className="relative px-6 py-4 whitespace-nowrap text-sm text-gray-500 [&:has(.z-50)]:h-[150px]">
+                            <CustomSelect
+                              value={record.status || "出席"}
+                              onChange={(value) => updateStatus(record.id, value)}
+                              options={[
+                                { value: "出席", label: "出席" },
+                                { value: "早退", label: "早退" },
+                              ]}
+                              disabled={updatingStatus === record.id}
+                              className={`inline-block w-20 ${record.status === "早退"
+                                  ? "[&_button]:border-orange-200 [&_button]:bg-orange-50 [&_button]:text-orange-700 [&_button]:hover:bg-orange-100"
+                                  : "[&_button]:border-green-200 [&_button]:bg-green-50 [&_button]:text-green-700 [&_button]:hover:bg-green-100"
+                                } ${updatingStatus === record.id
+                                  ? "[&_button]:opacity-60 [&_button]:cursor-wait"
+                                  : "[&_button]:hover:shadow-sm"
+                                }`}
+                            />
+                            {updatingStatus === record.id && (
+                              <div className="absolute inset-y-0 right-8 flex items-center pointer-events-none">
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+
             </div>
           )}
         </div>
