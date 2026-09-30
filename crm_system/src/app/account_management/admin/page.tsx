@@ -28,6 +28,8 @@ interface AccountDetail extends Account {
 export default function AdminManagementPage() {
   const {} = useAuth();
   useScrollOptimization();
+  const { isMobile } = useMobileDetection();
+  const [showDetails, setShowDetails] = useState(!isMobile); // 移动端默认顯示列表，桌面端默认顯示詳情
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<AccountDetail | null>(
@@ -76,6 +78,9 @@ export default function AdminManagementPage() {
 
       if (result.success) {
         setSelectedAccount(result.data);
+        if (isMobile) {
+          setShowDetails(true);
+        }
       } else {
         setError("獲取帳戶詳情失敗");
       }
@@ -174,20 +179,54 @@ export default function AdminManagementPage() {
       )}
 
       {/* 主要内容区域 */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="flex h-96">
-          {/* 左侧 - 管理员列表 */}
-          <div className="w-1/3 border-r border-gray-200">
-            <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
-                管理員列表
-              </h2>
-              <p className="text-sm text-gray-600">
-                共 {accounts.length} 個管理員
-              </p>
-            </div>
+      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        {/* 移动端标题栏 */}
+        {isMobile && (
+          <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {showDetails ? "帳戶詳情" : "管理員列表"}
+            </h2>
+            {showDetails && selectedAccount && (
+              <button
+                onClick={() => setShowDetails(false)}
+                className="text-gray-600 hover:text-gray-900 flex items-center"
+              >
+                <svg
+                  className="w-5 h-5 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                返回列表
+              </button>
+            )}
+          </div>
+        )}
 
-            <div className="overflow-y-auto h-80">
+        <div className="flex flex-col lg:flex-row min-h-96">
+          {/* 左侧 - 管理員列表 */}
+          <div
+            className={`w-full lg:w-1/3 lg:border-r border-gray-200 ${isMobile ? (showDetails ? "hidden" : "block") : "block"}`}
+          >
+            {!isMobile && (
+              <div className="p-4 bg-gray-50 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  管理員列表
+                </h2>
+                <p className="text-sm text-gray-600">
+                  共 {accounts.length} 個管理員
+                </p>
+              </div>
+            )}
+
+            <div className="overflow-y-auto max-h-80 lg:h-80">
               {isLoadingAccounts ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -236,18 +275,24 @@ export default function AdminManagementPage() {
           </div>
 
           {/* 右侧 - 帳戶詳情 */}
-          <div className="flex-1">
-            <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">帳戶詳情</h2>
-            </div>
+          <div
+            className={`flex-1 border-t lg:border-t-0 lg:border-l border-gray-200 ${isMobile ? (showDetails ? "block" : "hidden") : "block"}`}
+          >
+            {!isMobile && (
+              <div className="p-4 bg-gray-50 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  帳戶詳情
+                </h2>
+              </div>
+            )}
 
-            <div className="p-6 overflow-y-auto h-80">
+            <div className="p-6">
               {!selectedAccount ? (
-                <div className="flex items-center justify-center h-64 text-gray-500">
-                  請從左側選擇一個管理員帳戶
+                <div className="flex items-center justify-center min-h-64 lg:h-64 text-gray-500">
+                  請從列表中選擇一個管理員帳戶
                 </div>
               ) : isLoadingDetail ? (
-                <div className="flex items-center justify-center h-64">
+                <div className="flex items-center justify-center min-h-64 lg:h-64">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
               ) : (
@@ -265,7 +310,7 @@ export default function AdminManagementPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       密碼
                     </label>
-                    <div className="font-mono text-gray-600 bg-gray-50 p-3 rounded-md">
+                    <div className="font-mono text-gray-600 bg-gray-50 p-3 rounded-md break-all">
                       {selectedAccount.password}
                     </div>
                   </div>

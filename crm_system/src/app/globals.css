@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./mobile-optimizations.css";
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
@@ -9,15 +10,21 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+  backface-visibility: hidden;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  scrollbar-gutter: stable;
 }
 
 /* 性能优化 - 启用硬件加速和滚动优化 */
@@ -39,26 +46,7 @@ html {
   scroll-padding-top: 0;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 
-  /* 优化字体渲染 */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  /* 优化文本渲染 */
-  text-rendering: optimizeSpeed;
-  /* 减少重绘 */
-  backface-visibility: hidden;
-  /* 优化滚动 */
-  overflow-x: hidden;
-  /* 移除默认边距 */
-  margin: 0;
-  padding: 0;
-  /* 防止滚动条导致的布局偏移 */
-  scrollbar-gutter: stable;
-}
 
 /* 优化滚动条样式和性能 */
 ::-webkit-scrollbar {
@@ -178,7 +166,6 @@ a:hover {
 
 
 /* ------------------------------daily settlement--------------------------------- */
-@tailwind utilities;
 
 /* Hide screens */
 .screen-hidden {

@@ -108,7 +108,7 @@ export default function FinancialByName() {
     }
 
     try {
-      const response = await fetch(`/api/financial-records/${recordId}`, {
+      const response = await fetch(withBasePath(`/api/financial-records/${recordId}`), {
         method: 'DELETE',
       });
 

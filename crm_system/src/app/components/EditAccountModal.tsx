@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import LocationPermissionEditor from './LocationPermissionEditor';
 import { LocationCode } from '@/types/location';
+import { withBasePath } from '@/lib/basePath';
 
 interface Account {
   id: string;
@@ -58,7 +59,7 @@ export default function EditAccountModal({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/accounts/${account.id}`, {
+      const response = await fetch(withBasePath(`/api/accounts/${account.id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 // components/StaffSection.tsx
 "use client";
 
+import { useHorizontalOverflow } from "@/hooks/useHorizontalOverflow";
 import { useState } from "react";
 
 export type StaffRow = { id: number; staffName: string; quantity: number };
@@ -60,71 +61,105 @@ export default function StaffSection({
   onRemove,
   onChange,
 }: StaffSectionProps) {
-  const [focusedQuantityId, setFocusedQuantityId] = useState<string | null | number>(
-    null,
-  );
+  const [focusedQuantityId, setFocusedQuantityId] = useState<
+    string | null | number
+  >(null);
+  const { containerRef, isOverflowing } =
+    useHorizontalOverflow<HTMLDivElement>();
   return (
     <div className="section-group">
       <div className="label-title">
         <span>{title}</span>
-        {/* <span className="text-xs font-normal text-slate-400">{rows.length} 筆</span> */}
       </div>
-      <div className="rows-area space-y-2">
-        {rows.map((row) => (
-          <div key={row.id} className="row-container">
-            <select
-              value={row.staffName}
-              onChange={(e) => onChange(row.id, "staffName", e.target.value)}
-              className="input-field flex-1"
-            >
-              <option value="">請選擇職員</option>
-              {staffList.map((s) => (
-                <option key={s.username} value={s.username}>
-                  {s.username}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              min="0"
-              placeholder="數量"
-              value={
-                focusedQuantityId === row.id
-                  ? row.quantity === 0
-                    ? ""
-                    : row.quantity
-                  : row.quantity || 0
-              }
-              onFocus={(e) => {
-                setFocusedQuantityId(row.id);
 
-                // If current value is 0, show an empty input
-                if (row.quantity === 0) {
-                  onChange(row.id, "quantity", 0);
-                }
-              }}
-              onChange={(e) =>{
-                const value = e.target.value;
-                if (value === "") {
-                  onChange(row.id, "quantity", 0);
-                  return;
-                }
-                onChange(row.id, "quantity", Number(e.target.value))
-                }
-              }
-              onBlur={() => {
-                setFocusedQuantityId(null);
-              }}
-              className="input-field w-24"
-            />
-            <span className="btn-icon btn-add" onClick={onAdd}>
-              ⊕
-            </span>
-            <span className="btn-icon btn-del" onClick={() => onRemove(row.id)}>
-              −
-            </span>
+      <div
+        ref={containerRef}
+        className={`w-full min-w-0 ${
+          isOverflowing ? "overflow-x-auto" : "overflow-x-visible"
+        }`}
+      >
+        <div className="min-w-max">
+          {/* Header */}
+          <div className="flex items-center gap-3 px-2 mb-1">
+            <div className="w-48 shrink-0 text-xs font-bold text-slate-500">
+              職員
+            </div>
+            <div className="w-24 shrink-0 text-xs font-bold text-slate-500">
+              數量
+            </div>
+            <div className="w-8 shrink-0" />
+            <div className="w-8 shrink-0" />
           </div>
-        ))}
+
+          {/* Rows */}
+          <div className="rows-area space-y-2">
+            {rows.map((row) => (
+              <div key={row.id} className="row-container flex-nowrap">
+                <select
+                  value={row.staffName}
+                  onChange={(e) =>
+                    onChange(row.id, "staffName", e.target.value)
+                  }
+                  className="input-field flex-1"
+                >
+                  <option value="">請選擇職員</option>
+                  {staffList.map((s) => (
+                    <option key={s.username} value={s.username}>
+                      {s.username}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  placeholder="數量"
+                  value={
+                    focusedQuantityId === row.id
+                      ? row.quantity === 0
+                        ? ""
+                        : row.quantity
+                      : row.quantity || 0
+                  }
+                  onFocus={() => {
+                    setFocusedQuantityId(row.id);
+
+                    // If current value is 0, show an empty input
+                    if (row.quantity === 0) {
+                      onChange(row.id, "quantity", 0);
+                    }
+                  }}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    if (value === "") {
+                      onChange(row.id, "quantity", 0);
+                      return;
+                    }
+
+                    onChange(row.id, "quantity", Number(value));
+                  }}
+                  onBlur={() => {
+                    setFocusedQuantityId(null);
+                  }}
+                  className="input-field w-24 shrink-0 no-spinner"
+                />
+
+                <span className="btn-icon btn-add shrink-0" onClick={onAdd}>
+                  ⊕
+                </span>
+
+                <span
+                  className="btn-icon btn-del shrink-0"
+                  onClick={() => onRemove(row.id)}
+                >
+                  −
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

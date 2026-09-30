@@ -23,19 +23,21 @@ export async function GET(request: NextRequest) {
    ORDER BY startTime DESC`,
       [trainerId]
     );
-
-    // participants is stored as `longtext`, not a native JSON column, so it
-    // always needs manual parsing — unlike a true `JSON` column type, mysql2
-    // will never auto-parse this for you.
-    const activities = activityRows.map((row) => ({
-      ...row,
-      participants: (() => {
+    const parseParticipants = (value: unknown): string[] => {
+      if (Array.isArray(value)) return value;        // JSON column, already parsed
+      if (typeof value === 'string' && value.trim()) {
         try {
-          return JSON.parse(row[0].participants);
+          const parsed = JSON.parse(value);          // TEXT/VARCHAR column
+          return Array.isArray(parsed) ? parsed : [];
         } catch {
           return [];
         }
-      })(),
+      }
+      return [];
+    };
+    const activities = activityRows.map((row) => ({
+      ...row,
+      participants: parseParticipants(row.participants)
     }));
 
     return NextResponse.json({

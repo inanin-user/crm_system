@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import CustomSelect from '@/app/components/CustomSelect';
+import { useState, useEffect } from "react";
+import CustomSelect from "@/app/components/CustomSelect";
 import { useLocation, LocationCode } from "@/types/location";
-import { withBasePath } from '@/lib/basePath';
+import { withBasePath } from "@/lib/basePath";
+import { nowLocalDateTime, toDateTimeInputValue } from "@/lib/datetime";
 interface FinancialRecord {
   id: string;
-  recordType: 'income' | 'expense';
+  recordType: "income" | "expense";
   memberName: string;
   item: string;
   details?: string;
@@ -28,7 +29,7 @@ export default function EditFinancialRecordModal({
   isOpen,
   onClose,
   record,
-  onUpdate
+  onUpdate,
 }: EditFinancialRecordModalProps) {
   const { label } = useLocation();
 
@@ -37,7 +38,7 @@ export default function EditFinancialRecordModal({
     label: label(code),
   }));
 
-    type FormData = {
+  type FormData = {
     recordType: string;
     memberName: string;
     item: string;
@@ -48,14 +49,14 @@ export default function EditFinancialRecordModal({
     recordDate: string;
   };
   const [formData, setFormData] = useState<FormData>({
-    recordType: 'income',
-    memberName: '',
-    item: '',
-    details: '',
+    recordType: "income",
+    memberName: "",
+    item: "",
+    details: "",
     location: LocationCode.WC,
     unitPrice: 0,
     quantity: 1,
-    recordDate: new Date().toISOString().split('T')[0]
+    recordDate: nowLocalDateTime("Asia/Hong_Kong"),
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
@@ -67,11 +68,11 @@ export default function EditFinancialRecordModal({
         recordType: record.recordType,
         memberName: record.memberName,
         item: record.item,
-        details: record.details || '',
+        details: record.details || "",
         location: record.location,
         unitPrice: record.unitPrice,
         quantity: record.quantity,
-        recordDate: new Date(record.recordDate).toISOString().split('T')[0]
+        recordDate: toDateTimeInputValue(record.recordDate),
       });
       setTotalAmount(record.unitPrice * record.quantity);
     }
@@ -83,54 +84,69 @@ export default function EditFinancialRecordModal({
   }, [formData.unitPrice, formData.quantity]);
 
   // 處理表單輸入變化
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: name === 'unitPrice' || name === 'quantity' ? parseFloat(value) || 0 : value
+      [name]:
+        name === "unitPrice" || name === "quantity"
+          ? parseFloat(value) || 0
+          : value,
     }));
   };
 
   // 處理表單提交
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!record || !formData.memberName || !formData.item || formData.unitPrice <= 0) {
-      alert('請填寫所有必填字段');
+
+    if (
+      !record ||
+      !formData.memberName ||
+      !formData.item ||
+      formData.unitPrice <= 0
+    ) {
+      alert("請填寫所有必填字段");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      
-      const response = await fetch(withBasePath(`/api/financial-records/${record.id}`), {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+
+      const response = await fetch(
+        withBasePath(`/api/financial-records/${record.id}`),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...formData,
+            unitPrice: parseFloat(formData.unitPrice.toString()),
+            quantity: parseInt(formData.quantity.toString()),
+          }),
         },
-        body: JSON.stringify({
-          ...formData,
-          unitPrice: parseFloat(formData.unitPrice.toString()),
-          quantity: parseInt(formData.quantity.toString())
-        }),
-      });
+      );
 
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          alert('財務記錄修改成功！');
+          alert("財務記錄修改成功！");
           onUpdate();
           onClose();
         } else {
-          alert(result.message || '修改失敗');
+          alert(result.message || "修改失敗");
         }
       } else {
         const errorText = await response.text();
         alert(`修改失敗 (${response.status}): ${errorText}`);
       }
     } catch (error) {
-      console.error('修改財務記錄失敗:', error);
-      alert('修改失敗，請稍後重試');
+      console.error("修改財務記錄失敗:", error);
+      alert("修改失敗，請稍後重試");
     } finally {
       setIsSubmitting(false);
     }
@@ -148,8 +164,18 @@ export default function EditFinancialRecordModal({
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -167,7 +193,7 @@ export default function EditFinancialRecordModal({
                   type="radio"
                   name="recordType"
                   value="income"
-                  checked={formData.recordType === 'income'}
+                  checked={formData.recordType === "income"}
                   onChange={handleInputChange}
                   className="mr-2 text-blue-600 focus:ring-blue-500"
                 />
@@ -178,7 +204,7 @@ export default function EditFinancialRecordModal({
                   type="radio"
                   name="recordType"
                   value="expense"
-                  checked={formData.recordType === 'expense'}
+                  checked={formData.recordType === "expense"}
                   onChange={handleInputChange}
                   className="mr-2 text-blue-600 focus:ring-blue-500"
                 />
@@ -189,7 +215,10 @@ export default function EditFinancialRecordModal({
 
           {/* 成員姓名 */}
           <div>
-            <label htmlFor="memberName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="memberName"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               成員 *
             </label>
             <input
@@ -206,7 +235,10 @@ export default function EditFinancialRecordModal({
 
           {/* 項目名稱 */}
           <div>
-            <label htmlFor="item" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="item"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               項目 *
             </label>
             <input
@@ -223,12 +255,20 @@ export default function EditFinancialRecordModal({
 
           {/* 地點 */}
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="location"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               地點
             </label>
             <CustomSelect
               value={formData.location}
-              onChange={(value) => setFormData(prev => ({ ...prev, location: value as LocationCode }))}
+              onChange={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  location: value as LocationCode,
+                }))
+              }
               options={locationOptions}
               placeholder="請選擇地點"
             />
@@ -237,7 +277,10 @@ export default function EditFinancialRecordModal({
           {/* 單價和數量 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="unitPrice" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="unitPrice"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 單價 *
               </label>
               <input
@@ -253,7 +296,10 @@ export default function EditFinancialRecordModal({
               />
             </div>
             <div>
-              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="quantity"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 數量 *
               </label>
               <input
@@ -272,7 +318,10 @@ export default function EditFinancialRecordModal({
 
           {/* 詳細描述 */}
           <div>
-            <label htmlFor="details" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="details"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               詳情
             </label>
             <textarea
@@ -288,15 +337,27 @@ export default function EditFinancialRecordModal({
 
           {/* 記錄日期 */}
           <div>
-            <label htmlFor="recordDate" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="recordDate"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               記錄日期
             </label>
             <input
               type="date"
               id="recordDate"
               name="recordDate"
-              value={formData.recordDate}
-              onChange={handleInputChange}
+              value={toDateTimeInputValue(formData.recordDate).slice(0, 10)}
+              onChange={(e) => {
+                const date = e.target.value;
+                setFormData((prev) => {
+                  const prevValue = toDateTimeInputValue(prev.recordDate);
+                  const time =
+                    prevValue.slice(11, 16) ||
+                    nowLocalDateTime("Asia/Hong_Kong").slice(11, 16);
+                  return { ...prev, recordDate: date ? `${date}T${time}` : "" };
+                });
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
             />
           </div>
@@ -325,11 +386,11 @@ export default function EditFinancialRecordModal({
               disabled={isSubmitting}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSubmitting ? '修改中...' : '保存修改'}
+              {isSubmitting ? "修改中..." : "保存修改"}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-} 
+}

@@ -1,5 +1,6 @@
 'use client';
 
+import { withBasePath } from '@/lib/basePath';
 import { useState } from 'react';
 
 interface Account {
@@ -37,7 +38,7 @@ export default function DeleteAccountModal({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/accounts/${account.id}`, {
+      const response = await fetch(withBasePath(`/api/accounts/${account.id}`), {
         method: 'DELETE',
       });
 

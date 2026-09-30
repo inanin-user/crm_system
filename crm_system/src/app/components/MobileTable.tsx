@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { ReactNode, memo, useMemo } from 'react';
-import { useMobileDetection } from '@/hooks/useMobileDetection';
+import { ReactNode, memo, useMemo } from "react";
+import { useMobileDetection } from "@/hooks/useMobileDetection";
 
 interface MobileTableProps<T = Record<string, unknown>> {
   data: T[];
@@ -11,6 +11,7 @@ interface MobileTableProps<T = Record<string, unknown>> {
     render?: (item: T) => ReactNode;
     mobileLabel?: string; // 移動端顯示的標籤
     hideOnMobile?: boolean; // 在移動端隱藏此列
+    mobileFullWidth?: boolean;
   }[];
   onRowClick?: (item: T) => void;
   className?: string;
@@ -20,13 +21,13 @@ const MobileTable = memo(function MobileTable<T = Record<string, unknown>>({
   data,
   columns,
   onRowClick,
-  className = ''
+  className = "",
 }: MobileTableProps<T>) {
   const { isMobile } = useMobileDetection();
 
   // 預計算過濾的列以避免重複計算
   const filteredColumns = useMemo(() => {
-    return columns.filter(column => !column.hideOnMobile);
+    return columns.filter((column) => !column.hideOnMobile);
   }, [columns]);
 
   if (!isMobile) {
@@ -51,11 +52,15 @@ const MobileTable = memo(function MobileTable<T = Record<string, unknown>>({
               <tr
                 key={index}
                 onClick={() => onRowClick?.(item)}
-                className={onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}
+                className={onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}
               >
                 {columns.map((column) => (
                   <td key={column.key} className="px-6 py-4 whitespace-nowrap">
-                    {column.render ? column.render(item) : (item as Record<string, unknown>)[column.key] as ReactNode}
+                    {column.render
+                      ? column.render(item)
+                      : ((item as Record<string, unknown>)[
+                          column.key
+                        ] as ReactNode)}
                   </td>
                 ))}
               </tr>
@@ -74,27 +79,42 @@ const MobileTable = memo(function MobileTable<T = Record<string, unknown>>({
           key={index}
           onClick={() => onRowClick?.(item)}
           className={`bg-white rounded-lg border border-gray-200 p-4 ${
-            onRowClick ? 'cursor-pointer active:bg-gray-50' : ''
+            onRowClick ? "cursor-pointer active:bg-gray-50" : ""
           }`}
         >
           {filteredColumns.map((column) => {
-              const value = column.render ? column.render(item) : (item as Record<string, unknown>)[column.key] as ReactNode;
-              const label = column.mobileLabel || column.header;
-              
+            const value = column.render
+              ? column.render(item)
+              : ((item as Record<string, unknown>)[column.key] as ReactNode);
+            const label = column.mobileLabel || column.header;
+
+            if (column.mobileFullWidth) {
               return (
-                <div key={column.key} className="flex justify-between items-start mb-2 last:mb-0">
-                  <span className="text-sm font-medium text-gray-600 min-w-0 flex-1">
+                <div key={column.key} className="mb-2 last:mb-0">
+                  <div className="text-sm font-medium text-gray-600 mb-1">
                     {label}:
-                  </span>
-                  <span className="text-sm text-gray-900 ml-2 text-right min-w-0 flex-1">
-                    {value}
-                  </span>
+                  </div>
+                  <div className="text-sm text-gray-900">{value}</div>
                 </div>
               );
-            })}
+            }
+            return (
+              <div
+                key={column.key}
+                className="flex justify-between items-start mb-2 last:mb-0"
+              >
+                <span className="text-sm font-medium text-gray-600 min-w-0 flex-1">
+                  {label}:
+                </span>
+                <span className="text-sm text-gray-900 ml-2 text-right min-w-0 flex-1">
+                  {value}
+                </span>
+              </div>
+            );
+          })}
         </div>
       ))}
-      
+
       {data.length === 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
           <p className="text-gray-500">暫無資料</p>

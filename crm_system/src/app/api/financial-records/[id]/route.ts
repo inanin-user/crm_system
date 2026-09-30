@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FinancialRecordRow } from '@/types/financialRecord';
 import { db } from '@/lib/db';
+import { toDbDateTime } from '@/lib/datetime';
 
 // 修改財務記錄
 export async function PUT(
@@ -75,10 +76,9 @@ export async function PUT(
     }
     if (recordDate !== undefined) {
       updateFields.push("recordDate = ?");
-      const formattedDate = (recordDate ? new Date(recordDate) : new Date())
-        .toISOString()
-        .slice(0, 19) // "YYYY-MM-DDTHH:mm:ss"
-        .replace("T", " "); // "YYYY-MM-DD HH:mm:ss"
+
+      const formattedDate = toDbDateTime(recordDate)
+      console.log('recordDate in:', recordDate, '→ db:', formattedDate);
       updateValues.push(formattedDate);
     }
 
@@ -152,10 +152,10 @@ export async function DELETE(
         { status: 404 }
       );
     }
-
+    
     // Step 2 — Delete record
     await db.query("DELETE FROM financial_records WHERE id = ?", [id.trim()]);
-
+    
     return NextResponse.json({
       success: true,
       message: '財務記錄刪除成功'

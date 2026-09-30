@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useScrollOptimization } from "@/hooks/useScrollOptimization";
 import { withBasePath } from "@/lib/basePath";
+import { useMobileDetection } from "@/hooks/useMobileDetection";
 
 interface Member {
   id: string;
@@ -31,7 +32,8 @@ interface AttendanceRecord {
 export default function MemberProfilePage() {
   const { user } = useAuth();
   useScrollOptimization();
-
+  const { isMobile } = useMobileDetection();
+  const [showDetails, setShowDetails] = useState(!isMobile); // 移动端默认顯示列表，桌面端默认顯示詳情
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [attendanceRecords, setAttendanceRecords] = useState<
@@ -93,6 +95,9 @@ export default function MemberProfilePage() {
   // 選擇會員
   const handleSelectMember = async (member: Member) => {
     setSelectedMember(member);
+    if (isMobile) {
+      setShowDetails(true);
+    }
     setNewQuota("");
     fetchMemberAttendance(member);
     setError("");
@@ -100,7 +105,7 @@ export default function MemberProfilePage() {
 
     // 獲取會員的最新詳細信息，確保quota是最新的
     try {
-      const response = await fetch(`/api/accounts/${member.id}`);
+      const response = await fetch(withBasePath(`/api/accounts/${member.id}`));
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -150,7 +155,7 @@ export default function MemberProfilePage() {
         quotaValue,
       });
 
-      const response = await fetch(`/api/accounts/${selectedMember.id}/quota`, {
+      const response = await fetch(withBasePath(`/api/accounts/${selectedMember.id}/quota`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -247,16 +252,53 @@ export default function MemberProfilePage() {
       )}
 
       {/* 主要内容区域 */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="flex h-auto min-h-96">
+      {/* 主要内容区域 */}
+      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        {/* 移动端标题栏 */}
+        {isMobile && (
+          <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {showDetails ? "會員詳情" : "會員列表"}
+            </h2>
+            {showDetails && selectedMember && (
+              <button
+                onClick={() => setShowDetails(false)}
+                className="text-gray-600 hover:text-gray-900 flex items-center"
+              >
+                <svg
+                  className="w-5 h-5 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                返回列表
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-col lg:flex-row min-h-96">
           {/* 左侧 - 會員列表 */}
-          <div className="w-1/3 border-r border-gray-200">
-            <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">會員列表</h2>
-              <p className="text-sm text-gray-600">
-                共 {members.length} 位會員
-              </p>
-            </div>
+          <div
+            className={`w-full lg:w-1/3 lg:border-r border-gray-200 ${isMobile ? (showDetails ? "hidden" : "block") : "block"}`}
+          >
+            {!isMobile && (
+              <div className="p-4 bg-gray-50 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  會員列表
+                </h2>
+                <p className="text-sm text-gray-600">
+                  共 {members.length} 位會員
+                </p>
+              </div>
+            )}
 
             <div className="overflow-y-auto max-h-96">
               {isLoadingMembers ? (
@@ -304,21 +346,23 @@ export default function MemberProfilePage() {
           </div>
 
           {/* 右侧 - 會員詳情和配额管理 */}
-          <div className="flex-1 flex flex-col">
+          <div
+            className={`flex-1 flex-col min-w-0 border-t lg:border-t-0 lg:border-l border-gray-200 ${isMobile ? (showDetails ? "flex" : "hidden") : "flex"}`}
+          >
             {!selectedMember ? (
-              <div className="flex items-center justify-center h-96 text-gray-500">
-                請從左側選擇一位會員
+              <div className="flex items-center justify-center min-h-64 lg:h-96 text-gray-500">
+                請從列表中選擇一位會員
               </div>
             ) : (
               <>
                 {/* 會員基本信息 */}
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex justify-between items-start mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">
+                <div className="p-4 sm:p-6 border-b border-gray-200">
+                  <div className="flex justify-between items-start gap-3 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900 break-all">
                       {selectedMember.memberName}
                     </h2>
                     <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      className={`shrink-0 px-3 py-1 rounded-full text-sm font-medium ${
                         selectedMember.isActive
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
@@ -328,7 +372,7 @@ export default function MemberProfilePage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         電話號碼
@@ -342,7 +386,7 @@ export default function MemberProfilePage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         教練介紹人
                       </label>
-                      <div className="text-gray-900">
+                      <div className="text-gray-900 break-words">
                         {selectedMember.trainerIntroducer}
                       </div>
                     </div>
@@ -351,7 +395,7 @@ export default function MemberProfilePage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         帳號名
                       </label>
-                      <div className="text-gray-900">
+                      <div className="text-gray-900 break-all">
                         {selectedMember.username}
                       </div>
                     </div>
@@ -376,7 +420,7 @@ export default function MemberProfilePage() {
                   </div>
 
                   {/* 配额管理 */}
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="mt-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <h3 className="text-lg font-medium text-gray-900">
@@ -391,12 +435,12 @@ export default function MemberProfilePage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <input
                         type="number"
                         value={newQuota}
                         onChange={(e) => setNewQuota(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                         placeholder="輸入數字添加配額，'-'號減少配額"
                       />
                       <button
@@ -404,7 +448,7 @@ export default function MemberProfilePage() {
                         disabled={
                           isUpdatingQuota || !newQuota || newQuota === "0"
                         }
-                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md font-medium transition-colors"
+                        className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md font-medium transition-colors"
                       >
                         {isUpdatingQuota ? "更新中..." : "更新配額"}
                       </button>
@@ -413,7 +457,7 @@ export default function MemberProfilePage() {
                 </div>
 
                 {/* 出席記錄 */}
-                <div className="flex-1 p-6">
+                <div className="flex-1 p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">
                       出席記錄
@@ -437,14 +481,14 @@ export default function MemberProfilePage() {
                         {attendanceRecords.map((record) => (
                           <div
                             key={record.id}
-                            className="border border-gray-200 rounded-lg p-4"
+                            className="border border-gray-200 rounded-lg p-3 sm:p-4"
                           >
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="font-medium text-gray-900">
+                            <div className="flex justify-between items-start gap-3 mb-2">
+                              <div className="font-medium text-gray-900 break-words min-w-0">
                                 {record.activity}
                               </div>
                               <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                className={`shrink-0 px-2 py-1 rounded-full text-xs font-medium ${
                                   record.status === "出席"
                                     ? "bg-green-100 text-green-800"
                                     : "bg-yellow-100 text-yellow-800"
@@ -455,7 +499,9 @@ export default function MemberProfilePage() {
                             </div>
                             <div className="text-sm text-gray-600 space-y-1">
                               <div>地點: {record.location}</div>
-                              <div>聯絡方式: {record.contactInfo}</div>
+                              <div className="break-words">
+                                聯絡方式: {record.contactInfo}
+                              </div>
                               <div>時間: {formatDate(record.createdAt)}</div>
                             </div>
                           </div>

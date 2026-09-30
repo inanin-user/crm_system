@@ -247,7 +247,7 @@ export default function CheckPage() {
                 </p>
               </div>
 
-              <div className="overflow-x-auto overflow-y-visible">
+              <div className="rounded-lg border border-gray-200 shadow-sm">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -287,7 +287,8 @@ export default function CheckPage() {
                     {records.map((record, index) => (
                       <tr
                         key={record.id}
-                        className={`transition-colors duration-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50`}
+                        className={`transition-colors duration-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50
+    [&:has(.z-50)>td]:align-top`}
                       >
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {record.name}
@@ -306,41 +307,30 @@ export default function CheckPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {label(record.location)}
                         </td>
-                        <td
-                          className={`relative px-6 py-4 whitespace-nowrap text-sm text-gray-500 ${
-                            updatingStatus === record.id ? "z-50" : "z-0"
-                          }`}
-                        >
-                          <div className="relative inline-block w-20 z-50">
-                            <CustomSelect
-                              value={record.status || "出席"}
-                              onChange={(value) =>
-                                updateStatus(record.id, value)
-                              }
-                              options={[
-                                { value: "出席", label: "出席" },
-                                { value: "早退", label: "早退" },
-                              ]}
-                              disabled={updatingStatus === record.id}
-                              className={`
-                                ${
-                                  record.status === "早退"
-                                    ? "[&_button]:border-orange-200 [&_button]:bg-orange-50 [&_button]:text-orange-700 [&_button]:hover:bg-orange-100"
-                                    : "[&_button]:border-green-200 [&_button]:bg-green-50 [&_button]:text-green-700 [&_button]:hover:bg-green-100"
-                                }
-                                ${
-                                  updatingStatus === record.id
-                                    ? "[&_button]:opacity-60 [&_button]:cursor-wait"
-                                    : "[&_button]:hover:shadow-sm"
-                                }
-                              `}
-                            />
-                            {updatingStatus === record.id && (
-                              <div className="absolute inset-y-0 right-8 flex items-center pointer-events-none">
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
-                              </div>
-                            )}
-                          </div>
+                        <td className="relative px-6 py-4 whitespace-nowrap text-sm text-gray-500 [&:has(.z-50)]:h-[150px]">
+                          <CustomSelect
+                            value={record.status || "出席"}
+                            onChange={(value) => updateStatus(record.id, value)}
+                            options={[
+                              { value: "出席", label: "出席" },
+                              { value: "早退", label: "早退" },
+                            ]}
+                            disabled={updatingStatus === record.id}
+                            className={`inline-block w-20 ${
+                              record.status === "早退"
+                                ? "[&_button]:border-orange-200 [&_button]:bg-orange-50 [&_button]:text-orange-700 [&_button]:hover:bg-orange-100"
+                                : "[&_button]:border-green-200 [&_button]:bg-green-50 [&_button]:text-green-700 [&_button]:hover:bg-green-100"
+                            } ${
+                              updatingStatus === record.id
+                                ? "[&_button]:opacity-60 [&_button]:cursor-wait"
+                                : "[&_button]:hover:shadow-sm"
+                            }`}
+                          />
+                          {updatingStatus === record.id && (
+                            <div className="absolute inset-y-0 right-8 flex items-center pointer-events-none">
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}

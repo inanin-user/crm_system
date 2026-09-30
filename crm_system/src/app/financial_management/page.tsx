@@ -73,7 +73,7 @@ export default function FinancialOverview() {
         params.append('memberName', searchTerm);
       }
       
-      const response = await fetch(`/api/financial-records?${params.toString()}`);
+      const response = await fetch(withBasePath(`/api/financial-records?${params.toString()}`));
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -102,7 +102,7 @@ export default function FinancialOverview() {
     }
 
     try {
-      const response = await fetch(`/api/financial-records/${recordId}`, {
+      const response = await fetch(withBasePath(`/api/financial-records/${recordId}`), {
         method: 'DELETE',
       });
 
@@ -133,14 +133,14 @@ export default function FinancialOverview() {
   }, []);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('zh-TW', {
+    return new Intl.NumberFormat('zh-HK', {
       style: 'currency',
-      currency: 'TWD'
+      currency: 'HKD'
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('zh-TW', {
+    return new Date(dateString).toLocaleDateString('zh-HK', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',

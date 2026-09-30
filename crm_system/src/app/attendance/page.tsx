@@ -699,8 +699,8 @@ export default function AttendancePage() {
           </div>
         </div>
 
-        {/* 響應式表格/卡片容器 */}
-        <div className={isMobile ? "" : "max-h-96 overflow-y-auto"}>
+        {/* 響應式表格/卡片容器  max-h-96 overflow-y-auto */}
+        <div className={isMobile ? "" : " bg-white rounded-lg shadow overflow-hidden"}> 
           {/* 桌面端：全選複選框 */}
           {!isMobile && isUpdateMode && (
             <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">

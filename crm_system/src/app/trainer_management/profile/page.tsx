@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useScrollOptimization } from "@/hooks/useScrollOptimization";
 import { withBasePath } from "@/lib/basePath";
 import { LocationCode, useLocation } from "@/types/location";
+import { useMobileDetection } from "@/hooks/useMobileDetection";
 
 interface Trainer {
   id: string;
@@ -38,6 +39,8 @@ interface TrainerProfile {
 export default function TrainerProfilePage() {
   const { user } = useAuth();
   useScrollOptimization();
+  const { isMobile } = useMobileDetection();
+  const [showDetails, setShowDetails] = useState(!isMobile); // 移动端默认顯示列表，桌面端默认顯示詳情
   const { label } = useLocation();
 
   const [trainers, setTrainers] = useState<Trainer[]>([]);
@@ -88,7 +91,7 @@ export default function TrainerProfilePage() {
         withBasePath(`/api/activities/by-trainer?trainerId=${trainerId}`),
       );
       const result = await response.json();
-
+      console.log("fetchTrainerActivities result:", result.data);
       if (result.success) {
         setTrainerActivities(result.data);
       } else {
@@ -142,6 +145,9 @@ export default function TrainerProfilePage() {
   // 選擇教练
   const handleSelectTrainer = (trainer: Trainer) => {
     setSelectedTrainer(trainer);
+    if (isMobile) {
+      setShowDetails(true);
+    }
     fetchTrainerActivities(trainer.id);
     fetchTrainerProfile(trainer.id);
     setError("");
@@ -206,6 +212,14 @@ export default function TrainerProfilePage() {
     return teachingHours + otherHours;
   };
 
+  // Shows up to 2 decimals, but at least 1 (12 → "12.0", 12.5 → "12.5", 12.256 → "12.26")
+  const formatHours = (value: unknown): string => {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "0.0";
+    const s = n.toFixed(2);
+    return s.endsWith("0") ? s.slice(0, -1) : s;
+  };
+
   // 格式化时间顯示
   const formatDateTime = (dateString: string) => {
     if (!dateString) return "无时间";
@@ -261,16 +275,53 @@ export default function TrainerProfilePage() {
       )}
 
       {/* 主要内容区域 */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="flex h-auto min-h-96">
+      {/* 主要内容区域 */}
+      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        {/* 移动端标题栏 */}
+        {isMobile && (
+          <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {showDetails ? "教練詳情" : "教練列表"}
+            </h2>
+            {showDetails && selectedTrainer && (
+              <button
+                onClick={() => setShowDetails(false)}
+                className="text-gray-600 hover:text-gray-900 flex items-center"
+              >
+                <svg
+                  className="w-5 h-5 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                返回列表
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-col lg:flex-row min-h-96">
           {/* 左侧 - 教练列表 */}
-          <div className="w-1/3 border-r border-gray-200">
-            <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">教練列表</h2>
-              <p className="text-sm text-gray-600">
-                共 {trainers.length} 位教練
-              </p>
-            </div>
+          <div
+            className={`w-full lg:w-1/3 lg:border-r border-gray-200 ${isMobile ? (showDetails ? "hidden" : "block") : "block"}`}
+          >
+            {!isMobile && (
+              <div className="p-4 bg-gray-50 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  教練列表
+                </h2>
+                <p className="text-sm text-gray-600">
+                  共 {trainers.length} 位教練
+                </p>
+              </div>
+            )}
 
             <div className="overflow-y-auto max-h-96">
               {isLoadingTrainers ? (
@@ -331,21 +382,23 @@ export default function TrainerProfilePage() {
           </div>
 
           {/* 右侧 - 教练詳情和工作时间 */}
-          <div className="flex-1 flex flex-col">
+          <div
+            className={`flex-1 flex flex-col min-w-0 border-t lg:border-t-0 lg:border-l border-gray-200 ${isMobile ? (showDetails ? "flex" : "hidden") : "flex"}`}
+          >
             {!selectedTrainer ? (
-              <div className="flex items-center justify-center h-96 text-gray-500">
-                請從左側選擇一位教練
+              <div className="flex items-center justify-center min-h-64 lg:h-96 text-gray-500">
+                請從列表中選擇一位教練
               </div>
             ) : (
               <>
                 {/* 教练基本信息 */}
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex justify-between items-start mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">
+                <div className="p-4 sm:p-6 border-b border-gray-200">
+                  <div className="flex justify-between items-start gap-3 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900 break-all">
                       {selectedTrainer.username}
                     </h2>
                     <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      className={`shrink-0 px-3 py-1 rounded-full text-sm font-medium ${
                         selectedTrainer.isActive
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
@@ -355,12 +408,12 @@ export default function TrainerProfilePage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         教練帳號
                       </label>
-                      <div className="text-gray-900">
+                      <div className="text-gray-900 break-all">
                         {selectedTrainer.username}
                       </div>
                     </div>
@@ -396,31 +449,35 @@ export default function TrainerProfilePage() {
                   </div>
 
                   {/* 工作时间统计 */}
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="mt-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">
                       工作時間統計
                     </h3>
 
-                    <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {getTotalTeachingHours()}h
+                        <div className="text-xl sm:text-2xl font-bold text-blue-600">
+                          {formatHours(getTotalTeachingHours())}h
                         </div>
-                        <div className="text-sm text-gray-600">帶隊時間</div>
+                        <div className="text-xs sm:text-sm text-gray-600">
+                          帶隊時間
+                        </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">
-                          {trainerProfile?.otherWorkHours || 0}h
+                        <div className="text-xl sm:text-2xl font-bold text-green-600">
+                          {formatHours(trainerProfile?.otherWorkHours || 0)}h
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-xs sm:text-sm text-gray-600">
                           其他工作時間
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">
-                          {getTotalWorkHours()}h
+                        <div className="text-xl sm:text-2xl font-bold text-purple-600">
+                          {formatHours(getTotalWorkHours())}h
                         </div>
-                        <div className="text-sm text-gray-600">總工作時間</div>
+                        <div className="text-xs sm:text-sm text-gray-600">
+                          總工作時間
+                        </div>
                       </div>
                     </div>
 
@@ -436,7 +493,7 @@ export default function TrainerProfilePage() {
                           step="0.5"
                           value={otherWorkHours}
                           onChange={(e) => setOtherWorkHours(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                           placeholder="輸入其他工作時間"
                         />
                       </div>
@@ -449,7 +506,7 @@ export default function TrainerProfilePage() {
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
                           rows={2}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                           placeholder="輸入工作備註（可選）"
                         />
                       </div>
@@ -466,7 +523,7 @@ export default function TrainerProfilePage() {
                 </div>
 
                 {/* 带队記錄 */}
-                <div className="flex-1 p-6">
+                <div className="flex-1 p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">
                       帶隊記錄
@@ -490,15 +547,15 @@ export default function TrainerProfilePage() {
                         {trainerActivities.map((activity) => (
                           <div
                             key={activity.id}
-                            className="border border-gray-200 rounded-lg p-4"
+                            className="border border-gray-200 rounded-lg p-3 sm:p-4"
                           >
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="font-medium text-gray-900">
+                            <div className="flex justify-between items-start gap-3 mb-2">
+                              <div className="font-medium text-gray-900 break-words min-w-0">
                                 {activity.activityName}
                               </div>
-                              <div className="text-right">
+                              <div className="text-right shrink-0">
                                 <div className="font-semibold text-blue-600">
-                                  {activity.duration}h
+                                  {formatHours(activity.duration)}h
                                 </div>
                                 <div className="text-xs text-gray-500">
                                   帶隊時間
@@ -507,7 +564,7 @@ export default function TrainerProfilePage() {
                             </div>
                             <div className="text-sm text-gray-600 space-y-1">
                               <div>地點: {label(activity.location)}</div>
-                              <div>
+                              <div className="break-words">
                                 時間: {formatDateTime(activity.startTime)} -{" "}
                                 {formatDateTime(activity.endTime)}
                               </div>

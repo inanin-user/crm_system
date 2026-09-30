@@ -271,47 +271,6 @@ export default function HomeScreen() {
           
 
           <hr className="border-slate-200" />
-{/* 
-
-          <div className="section-group">
-            <div className="label-title">
-              <span>3. 每日收入明細</span>
-            </div>
-            <div className="rows-area space-y-2">
-              {income.map((row) => (
-                <div key={row.id} className="row-container bg-blue-50/50">
-                  <select
-                    value={row.incomeType}
-                    onChange={(e) => updateIncomeRow(row.id, "incomeType", e.target.value)}
-                    className="input-field w-28"
-                  >
-                    <option value="試">試</option>
-                    <option value="單">單</option>
-                    <option value="卡">卡</option>
-                  </select>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="數量"
-                    value={row.quantity}
-                    onChange={(e) => updateIncomeRow(row.id, "quantity", Number(e.target.value))}
-                    className="input-field w-20 number"
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="$ 金額"
-                    value={row.amount}
-                    onChange={(e) => updateIncomeRow(row.id, "amount", Number(e.target.value))}
-                    className="input-field flex-1 min-w-0"
-                  />
-                  <span className="btn-icon btn-add" onClick={addIncomeRow}>⊕</span>
-                  <span className="btn-icon btn-del" onClick={() => removeIncomeRow(row.id)}>−</span>
-                </div>
-              ))}
-            </div>
-          </div>
-*/}
 
           <IntroductionFeeSection
             title="3. 每日收入明細"
