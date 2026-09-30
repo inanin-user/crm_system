@@ -8,6 +8,7 @@ import ActivityModal, {
 } from "@/app/components/ActivityModal";
 import { withBasePath } from "@/lib/basePath";
 import { LocationCode, useLocation } from "@/types/location";
+import { useMobileDetection } from "@/hooks/useMobileDetection";
 
 interface Activity {
   id: string;
@@ -42,6 +43,7 @@ const emptyActivityForm: ActivityFormData = {
 
 export default function ActivityManagementPage() {
   useScrollOptimization();
+  const { isMobile } = useMobileDetection();
 
   const { label } = useLocation();
 
@@ -53,6 +55,7 @@ export default function ActivityManagementPage() {
 
   const [isLoadingActivities, setIsLoadingActivities] = useState(true);
   const [, setIsLoadingTrainers] = useState(true);
+  const [showDetails, setShowDetails] = useState(!isMobile); // 移动端默认顯示列表，桌面端默认顯示詳情
 
   // Activity modal
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
@@ -468,17 +471,53 @@ export default function ActivityManagementPage() {
       )}
 
       {/* 主要內容區域 */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="flex h-auto min-h-96">
-          {/* 左側 - 活動列表 */}
-          <div className="w-1/3 border-r border-gray-200">
-            <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">活動列表</h2>
+      {/* 主要內容區域 */}
+      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        {/* 移动端标题栏 */}
+        {isMobile && (
+          <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {showDetails ? "活動詳情" : "活動列表"}
+            </h2>
+            {showDetails && selectedActivity && (
+              <button
+                onClick={() => setShowDetails(false)}
+                className="text-gray-600 hover:text-gray-900 flex items-center"
+              >
+                <svg
+                  className="w-5 h-5 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                返回列表
+              </button>
+            )}
+          </div>
+        )}
 
-              <p className="text-sm text-gray-600">
-                共 {activities.length} 個活動
-              </p>
-            </div>
+        <div className="flex flex-col lg:flex-row min-h-96">
+          {/* 左側 - 活動列表 */}
+          <div
+            className={`w-full lg:w-1/3 lg:border-r border-gray-200 ${isMobile ? (showDetails ? "hidden" : "block") : "block"}`}
+          >
+            {!isMobile && (
+              <div className="p-4 bg-gray-50 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  活動列表
+                </h2>
+                <p className="text-sm text-gray-600">
+                  共 {activities.length} 個活動
+                </p>
+              </div>
+            )}
 
             <div className="overflow-y-auto max-h-96">
               {isLoadingActivities ? (
@@ -547,22 +586,24 @@ export default function ActivityManagementPage() {
           </div>
 
           {/* 右側 - 活動詳情 */}
-          <div className="flex-1 flex flex-col">
+          <div
+            className={`flex-1 flex-col min-w-0 border-t lg:border-t-0 lg:border-l border-gray-200 ${isMobile ? (showDetails ? "flex" : "hidden") : "flex"}`}
+          >
             {!selectedActivity ? (
-              <div className="flex items-center justify-center h-96 text-gray-500">
-                請從左側選擇一個活動
+              <div className="flex items-center justify-center min-h-64 lg:h-96 text-gray-500">
+                請從列表中選擇一個活動
               </div>
             ) : (
               <>
                 {/* 活動基本信息 */}
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex justify-between items-start mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">
+                <div className="p-4 sm:p-6 border-b border-gray-200">
+                  <div className="flex justify-between items-start gap-3 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900 break-words min-w-0">
                       {selectedActivity.activityName}
                     </h2>
 
                     <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      className={`shrink-0 px-3 py-1 rounded-full text-sm font-medium ${
                         selectedActivity.isActive
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
@@ -572,13 +613,12 @@ export default function ActivityManagementPage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         負責教練
                       </label>
-
-                      <div className="text-gray-900">
+                      <div className="text-gray-900 break-words">
                         {selectedActivity.trainerName}
                       </div>
                     </div>
@@ -587,7 +627,6 @@ export default function ActivityManagementPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         活動地點
                       </label>
-
                       <div className="text-gray-900">
                         {label(selectedActivity.location)}
                       </div>
@@ -597,7 +636,6 @@ export default function ActivityManagementPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         開始時間
                       </label>
-
                       <div className="text-gray-900">
                         {formatDateTime(selectedActivity.startTime)}
                       </div>
@@ -607,7 +645,6 @@ export default function ActivityManagementPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         結束時間
                       </label>
-
                       <div className="text-gray-900">
                         {formatDateTime(selectedActivity.endTime)}
                       </div>
@@ -617,8 +654,7 @@ export default function ActivityManagementPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         持續時間
                       </label>
-
-                      <div className="text-gray-900 font-semibold text-blue-600">
+                      <div className="font-semibold text-blue-600">
                         {selectedActivity.duration}h
                       </div>
                     </div>
@@ -627,7 +663,6 @@ export default function ActivityManagementPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         參與人數
                       </label>
-
                       <div className="text-gray-900">
                         {selectedActivity.participants.length} 人
                       </div>
@@ -639,8 +674,7 @@ export default function ActivityManagementPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         活動描述
                       </label>
-
-                      <div className="text-gray-900 bg-gray-50 p-3 rounded-md">
+                      <div className="text-gray-900 bg-gray-50 p-3 rounded-md break-words">
                         {selectedActivity.description}
                       </div>
                     </div>
@@ -648,12 +682,11 @@ export default function ActivityManagementPage() {
                 </div>
 
                 {/* 參與者列表 */}
-                <div className="flex-1 p-6">
+                <div className="flex-1 p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">
                       參與者列表
                     </h3>
-
                     <span className="text-sm text-gray-600">
                       共 {selectedActivity.participants.length} 位參與者
                     </span>
@@ -665,17 +698,16 @@ export default function ActivityManagementPage() {
                         暫無參與者
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {selectedActivity.participants.map(
                           (participant, index) => (
                             <div
                               key={index}
                               className="border border-gray-200 rounded-lg p-3"
                             >
-                              <div className="font-medium text-gray-900">
+                              <div className="font-medium text-gray-900 break-words">
                                 {participant}
                               </div>
-
                               <div className="text-sm text-gray-500">
                                 參與者 #{index + 1}
                               </div>
