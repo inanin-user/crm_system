@@ -146,7 +146,7 @@ export default function ActivityModal({
                 name="activityName"
                 value={formData.activityName}
                 onChange={onChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                 placeholder="輸入活動名稱"
                 required
               />
@@ -206,7 +206,7 @@ export default function ActivityModal({
                 name="startTime"
                 value={formData.startTime}
                 onChange={onChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md  text-slate-900"
                 required
               />
             </div>
@@ -226,7 +226,7 @@ export default function ActivityModal({
                 name="endTime"
                 value={formData.endTime}
                 onChange={onChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                 required
               />
             </div>
@@ -273,7 +273,7 @@ export default function ActivityModal({
               value={formData.description}
               onChange={onChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
               placeholder="輸入活動描述（可選）"
             />
           </div>

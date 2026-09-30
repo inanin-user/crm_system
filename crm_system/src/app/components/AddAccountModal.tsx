@@ -151,7 +151,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
               id="username"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
               placeholder={isMember ? "請輸入會員帳號名稱" : "請輸入帳號名稱"}
               required
             />
@@ -167,7 +167,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
               id="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
               placeholder="請輸入密碼"
               required
             />
@@ -186,7 +186,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
                     id="memberName"
                     value={formData.memberName}
                     onChange={(e) => setFormData({ ...formData, memberName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
                     placeholder="請輸入會員真實姓名"
                     required
                   />
@@ -201,7 +201,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
                     id="phone"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
                     placeholder="請輸入電話號碼"
                     required
                   />
@@ -218,7 +218,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
                     id="herbalifePCNumber"
                     value={formData.herbalifePCNumber}
                     onChange={(e) => setFormData({ ...formData, herbalifePCNumber: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
                     placeholder="請輸入康寶萊PC/會員號碼"
                     required
                   />
@@ -233,7 +233,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
                     id="joinDate"
                     value={formData.joinDate}
                     onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
                     required
                   />
                 </div>
@@ -268,7 +268,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
                     id="referrer"
                     value={formData.referrer}
                     onChange={(e) => setFormData({ ...formData, referrer: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
                     placeholder="請輸入轉介人（可選）"
                   />
                 </div>
@@ -284,7 +284,7 @@ export default function AddAccountModal({ isOpen, onClose, onSuccess, defaultRol
                   min="0"
                   value={formData.quota}
                   onChange={(e) => setFormData({ ...formData, quota: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
                   placeholder="請輸入初始配額（默認為0）"
                 />
                 <p className="text-xs text-gray-500 mt-1">

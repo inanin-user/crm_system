@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     if (!name || !contact) {
       return NextResponse.json({
         success: false,
-        message: '请提供会员姓名和联系方式'
+        message: '請提供會員姓名和聯絡方式'
       }, { status: 400 });
     }
 
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     if (!member) {
       return NextResponse.json({
         success: false,
-        message: '找不到匹配的会员记录'
+        message: '找不到匹配的會員記錄'
       }, { status: 404 });
     }
 

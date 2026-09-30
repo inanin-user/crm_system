@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useScrollOptimization } from '@/hooks/useScrollOptimization';
-import { useMobileDetection } from '@/hooks/useMobileDetection';
-import AddAccountModal from '@/app/components/AddAccountModal';
-import DeleteAccountModal from '@/app/components/DeleteAccountModal';
-import EditAccountModal from '@/app/components/EditAccountModal';
-import { withBasePath } from '@/lib/basePath';
-import { LocationCode } from '@/types/location';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useScrollOptimization } from "@/hooks/useScrollOptimization";
+import { useMobileDetection } from "@/hooks/useMobileDetection";
+import AddAccountModal from "@/app/components/AddAccountModal";
+import DeleteAccountModal from "@/app/components/DeleteAccountModal";
+import EditAccountModal from "@/app/components/EditAccountModal";
+import { withBasePath } from "@/lib/basePath";
+import { LocationCode } from "@/types/location";
 
 interface Account {
   id: string;
@@ -26,27 +26,31 @@ interface AccountDetail extends Account {
 }
 
 export default function AdminManagementPage() {
-  const { } = useAuth();
+  const {} = useAuth();
   useScrollOptimization();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<AccountDetail | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<AccountDetail | null>(
+    null,
+  );
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [accountToEdit, setAccountToEdit] = useState<AccountDetail | null>(null);
-  const [error, setError] = useState('');
+  const [accountToEdit, setAccountToEdit] = useState<AccountDetail | null>(
+    null,
+  );
+  const [error, setError] = useState("");
 
   // 獲取管理员列表
   const fetchAdminAccounts = async () => {
     try {
       setIsLoadingAccounts(true);
-      const response = await fetch(withBasePath('/api/accounts?role=admin'));
+      const response = await fetch(withBasePath("/api/accounts?role=admin"));
       const result = await response.json();
-      
+
       if (result.success) {
         setAccounts(result.data);
         // 如果有帳戶且没有选中的帳戶，默认选中第一个
@@ -54,10 +58,10 @@ export default function AdminManagementPage() {
           handleSelectAccount(result.data[0].id);
         }
       } else {
-        setError('獲取管理员列表失敗');
+        setError("獲取管理员列表失敗");
       }
     } catch {
-      setError('Server error');
+      setError("Server error");
     } finally {
       setIsLoadingAccounts(false);
     }
@@ -69,14 +73,14 @@ export default function AdminManagementPage() {
       setIsLoadingDetail(true);
       const response = await fetch(withBasePath(`/api/accounts/${accountId}`));
       const result = await response.json();
-      
+
       if (result.success) {
         setSelectedAccount(result.data);
       } else {
-        setError('獲取帳戶詳情失敗');
+        setError("獲取帳戶詳情失敗");
       }
     } catch {
-      setError('Server error');
+      setError("Server error");
     } finally {
       setIsLoadingDetail(false);
     }
@@ -120,8 +124,8 @@ export default function AdminManagementPage() {
 
   // 格式化日期
   const formatDate = (dateString: string) => {
-    if (!dateString) return '從未登錄';
-    return new Date(dateString).toLocaleString('zh-CN');
+    if (!dateString) return "從未登錄";
+    return new Date(dateString).toLocaleString("zh-CN");
   };
 
   useEffect(() => {
@@ -134,7 +138,9 @@ export default function AdminManagementPage() {
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">管理員帳號管理</h1>
-          <p className="mt-2 text-gray-600">管理系統管理員帳號，包括查看詳情和新增管理員</p>
+          <p className="mt-2 text-gray-600">
+            管理系統管理員帳號，包括查看詳情和新增管理員
+          </p>
         </div>
         <div className="flex gap-3">
           <button
@@ -173,10 +179,14 @@ export default function AdminManagementPage() {
           {/* 左侧 - 管理员列表 */}
           <div className="w-1/3 border-r border-gray-200">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">管理員列表</h2>
-              <p className="text-sm text-gray-600">共 {accounts.length} 個管理員</p>
+              <h2 className="text-lg font-semibold text-gray-900">
+                管理員列表
+              </h2>
+              <p className="text-sm text-gray-600">
+                共 {accounts.length} 個管理員
+              </p>
             </div>
-            
+
             <div className="overflow-y-auto h-80">
               {isLoadingAccounts ? (
                 <div className="flex items-center justify-center h-full">
@@ -194,13 +204,29 @@ export default function AdminManagementPage() {
                       onClick={() => handleSelectAccount(account.id)}
                       className={`w-full text-left p-3 rounded-lg transition-colors ${
                         selectedAccount?.id === account.id
-                          ? 'bg-blue-50 border border-blue-200 text-blue-900'
-                          : 'hover:bg-gray-50 border border-transparent'
+                          ? "bg-blue-50 border border-blue-200 text-blue-900"
+                          : "hover:bg-gray-50 border border-transparent"
                       }`}
                     >
-                      <div className="font-medium">{account.username}</div>
-                      <div className="text-sm text-gray-500">
-                        {account.isActive ? '活躍' : '已禁用'} · 創建於 {formatDate(account.createdAt).split(' ')[0]}
+                      <div
+                        className={`font-medium ${
+                          selectedAccount?.id === account.id
+                            ? "text-black"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {account.username}
+                      </div>
+
+                      <div
+                        className={`text-sm ${
+                          selectedAccount?.id === account.id
+                            ? "text-black"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {account.isActive ? "活躍" : "已禁用"} · 創建於{" "}
+                        {formatDate(account.createdAt).split(" ")[0]}
                       </div>
                     </button>
                   ))}
@@ -214,7 +240,7 @@ export default function AdminManagementPage() {
             <div className="p-4 bg-gray-50 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">帳戶詳情</h2>
             </div>
-            
+
             <div className="p-6 overflow-y-auto h-80">
               {!selectedAccount ? (
                 <div className="flex items-center justify-center h-64 text-gray-500">
@@ -249,11 +275,11 @@ export default function AdminManagementPage() {
                       角色
                     </label>
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                      {selectedAccount.role === 'admin' ? '管理員' : selectedAccount.role}
+                      {selectedAccount.role === "admin"
+                        ? "管理員"
+                        : selectedAccount.role}
                     </span>
                   </div>
-
-
 
                   <div className="grid grid-cols-1 gap-4">
                     <div>
@@ -270,7 +296,7 @@ export default function AdminManagementPage() {
                         最後登錄
                       </label>
                       <div className="text-gray-600">
-                        {formatDate(selectedAccount.lastLogin || '')}
+                        {formatDate(selectedAccount.lastLogin || "")}
                       </div>
                     </div>
                   </div>
@@ -288,7 +314,7 @@ export default function AdminManagementPage() {
         onSuccess={handleAddSuccess}
         defaultRole="admin"
       />
-      
+
       <DeleteAccountModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -296,7 +322,7 @@ export default function AdminManagementPage() {
         account={accountToDelete}
         currentRole="admin"
       />
-      
+
       <EditAccountModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -306,4 +332,4 @@ export default function AdminManagementPage() {
       />
     </div>
   );
-} 
+}

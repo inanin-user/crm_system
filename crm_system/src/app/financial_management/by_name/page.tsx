@@ -53,6 +53,7 @@ export default function FinancialByName() {
       const response = await fetch(withBasePath('/api/financial-records'));
       if (response.ok) {
         const data = await response.json();
+        console.log('成員列表數據:', data); // 調試輸出
         if (data.success) {
           const uniqueMembers = [...new Set(data.data.records.map((record: FinancialRecord) => record.memberName))];
           setMembers(['全部成員', ...uniqueMembers.sort()] as string[]);
@@ -72,7 +73,7 @@ export default function FinancialByName() {
         params.append('memberName', memberName);
       }
       
-      const response = await fetch(`/api/financial-records?${params.toString()}`);
+      const response = await fetch(withBasePath(`/api/financial-records?${params.toString()}`));
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -175,7 +176,7 @@ export default function FinancialByName() {
             id="memberSelect"
             value={selectedMember}
             onChange={(e) => handleMemberChange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
           >
             {members.map((member) => (
               <option key={member} value={member}>

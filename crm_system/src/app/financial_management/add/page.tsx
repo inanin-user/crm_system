@@ -181,7 +181,7 @@ export default function AddFinancialRecord() {
               value={formData.memberName}
               onChange={handleInputChange}
               placeholder="輸入成員姓名"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
               required
             />
           </div>
@@ -198,7 +198,7 @@ export default function AddFinancialRecord() {
               value={formData.item}
               onChange={handleInputChange}
               placeholder="輸入項目名稱"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
               required
             />
           </div>
@@ -230,7 +230,7 @@ export default function AddFinancialRecord() {
                 onChange={handleInputChange}
                 min="0"
                 step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
                 required
               />
             </div>
@@ -246,7 +246,7 @@ export default function AddFinancialRecord() {
                 onChange={handleInputChange}
                 min="1"
                 step="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
                 required
               />
             </div>
@@ -264,7 +264,7 @@ export default function AddFinancialRecord() {
               onChange={handleInputChange}
               placeholder="輸入詳細描述"
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
             />
           </div>
 
@@ -279,7 +279,7 @@ export default function AddFinancialRecord() {
               name="recordDate"
               value={formData.recordDate}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
             />
           </div>
 

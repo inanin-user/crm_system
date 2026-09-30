@@ -150,7 +150,7 @@ export default function FinancialReport() {
             id="periodSelect"
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
           >
             <option value="本月">本月</option>
             <option value="上月">上月</option>

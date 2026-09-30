@@ -1,12 +1,13 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useScrollOptimization } from '@/hooks/useScrollOptimization';
-import { useMobileDetection } from '@/hooks/useMobileDetection';
-import MobileTable from '@/app/components/MobileTable';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useScrollOptimization } from "@/hooks/useScrollOptimization";
+import { useMobileDetection } from "@/hooks/useMobileDetection";
+import MobileTable from "@/app/components/MobileTable";
 import { withBasePath } from "@/lib/basePath";
-import { LocationCode, useLocation } from '@/types/location';
+import { LocationCode, useLocation } from "@/types/location";
+import CustomSelect from "../components/CustomSelect";
 
 interface AttendanceRecord {
   id: string;
@@ -23,11 +24,13 @@ interface AttendanceRecord {
 export default function AttendancePage() {
   const router = useRouter();
   const { isMobile } = useMobileDetection();
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<
+    AttendanceRecord[]
+  >([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const { label } = useLocation();
-  
+
   // 启用滚动性能优化
   useScrollOptimization();
   // 新增状态：更新模式相关
@@ -40,6 +43,10 @@ export default function AttendancePage() {
   const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const locationOptions = Object.values(LocationCode).map((code) => ({
+    value: code,
+    label: label(code),
+  }));
 
   useEffect(() => {
     fetchAttendanceRecords();
@@ -47,55 +54,66 @@ export default function AttendancePage() {
 
   const fetchAttendanceRecords = async () => {
     try {
-      const response = await fetch(withBasePath('/api/attendance/accessible'));
+      const response = await fetch(withBasePath("/api/attendance/accessible"));
       const data = await response.json();
       if (response.ok && data.success) {
         const records = data.data;
-        
+
         // 獲取所有會員信息來匹配quota
-        const membersResponse = await fetch(withBasePath('/api/accounts?role=member'));
+        const membersResponse = await fetch(
+          withBasePath("/api/accounts?role=member"),
+        );
         const membersData = await membersResponse.json();
-        
+
         if (membersResponse.ok && membersData.success) {
           const members = membersData.data;
-          
+
           // 為每個出席記錄匹配對應的quota
           const recordsWithQuota = records.map((record: AttendanceRecord) => {
             // 雙層驗證：首先按姓名匹配，然後按電話號碼確認
-            const matchingMember = members.find((member: { memberName?: string; username: string; phone: string; quota?: number }) => {
-              // 檢查姓名匹配（會員真實姓名或用戶名）
-              const nameMatch = member.memberName === record.name || member.username === record.name;
-              // 檢查電話號碼匹配
-              const phoneMatch = member.phone === record.contactInfo;
-              
-              // 必須同時滿足姓名和電話號碼匹配
-              return nameMatch && phoneMatch;
-            });
-            
+            const matchingMember = members.find(
+              (member: {
+                memberName?: string;
+                username: string;
+                phone: string;
+                quota?: number;
+              }) => {
+                // 檢查姓名匹配（會員真實姓名或用戶名）
+                const nameMatch =
+                  member.memberName === record.name ||
+                  member.username === record.name;
+                // 檢查電話號碼匹配
+                const phoneMatch = member.phone === record.contactInfo;
+
+                // 必須同時滿足姓名和電話號碼匹配
+                return nameMatch && phoneMatch;
+              },
+            );
+
             return {
               ...record,
-              quota: matchingMember ? matchingMember.quota : undefined
+              quota: matchingMember ? matchingMember.quota : undefined,
             };
           });
-          
+
           setAttendanceRecords(recordsWithQuota);
         } else {
           // 如果無法獲取會員信息，仍然顯示出席記錄但不顯示quota
           setAttendanceRecords(records);
         }
-        
+
         // 如果用户是教练且没有地区權限，顯示提示信息
         if (records.length === 0 && data.message) {
           console.info(data.message);
         }
       } else {
-        console.error('獲取數據失敗:', data.message || data.error);
+        console.error("獲取數據失敗:", data.message || data.error);
         if (response.status === 403) {
-          alert('您沒有權限查看出席記錄');
+          alert("您沒有權限查看出席記錄");
         }
       }
     } catch (error) {
-      console.error('獲取數據失敗:', error);
+      console.error("獲取數據失敗:", error);
     } finally {
       setLoading(false);
     }
@@ -104,13 +122,13 @@ export default function AttendancePage() {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleString('zh-TW', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
+      return date.toLocaleString("zh-TW", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
       });
     } catch (error) {
       return dateString;
@@ -137,18 +155,19 @@ export default function AttendancePage() {
     const newEditedRecords = [...editedRecords];
     newEditedRecords[index] = {
       ...newEditedRecords[index],
-      [field]: value
+      [field]: value,
     };
     setEditedRecords(newEditedRecords);
-    
+
     // 计算修改的記錄数量
     const changedCount = newEditedRecords.filter((record) => {
-      const original = attendanceRecords.find(orig => orig.id === record.id);
-      return original && (
-        record.name !== original.name ||
-        record.contactInfo !== original.contactInfo ||
-        record.location !== original.location ||
-        record.activity !== original.activity
+      const original = attendanceRecords.find((orig) => orig.id === record.id);
+      return (
+        original &&
+        (record.name !== original.name ||
+          record.contactInfo !== original.contactInfo ||
+          record.location !== original.location ||
+          record.activity !== original.activity)
       );
     }).length;
     setUpdatedCount(changedCount);
@@ -156,9 +175,9 @@ export default function AttendancePage() {
 
   // 新增函数：处理記錄選擇
   const handleRecordSelect = (recordId: string) => {
-    setSelectedRecords(prev => {
+    setSelectedRecords((prev) => {
       if (prev.includes(recordId)) {
-        return prev.filter(id => id !== recordId);
+        return prev.filter((id) => id !== recordId);
       } else {
         return [...prev, recordId];
       }
@@ -170,7 +189,7 @@ export default function AttendancePage() {
     if (selectedRecords.length === filteredRecords.length) {
       setSelectedRecords([]);
     } else {
-      setSelectedRecords(filteredRecords.map(record => record.id));
+      setSelectedRecords(filteredRecords.map((record) => record.id));
     }
   };
 
@@ -186,10 +205,13 @@ export default function AttendancePage() {
     setIsDeleting(true);
     try {
       const deletePromises = selectedRecords.map(async (recordId) => {
-        const response = await fetch(withBasePath(`/api/attendance/${recordId}`), {
-          method: 'DELETE',
-        });
-        
+        const response = await fetch(
+          withBasePath(`/api/attendance/${recordId}`),
+          {
+            method: "DELETE",
+          },
+        );
+
         if (!response.ok) {
           throw new Error(`刪除記錄 ${recordId} 失敗`);
         }
@@ -197,18 +219,18 @@ export default function AttendancePage() {
       });
 
       await Promise.all(deletePromises);
-      
+
       // 重新獲取資料
       await fetchAttendanceRecords();
-      
+
       // 退出更新模式
       exitUpdateMode();
       setShowDeleteModal(false);
-      
+
       alert(`成功刪除 ${selectedRecords.length} 筆記錄！`);
     } catch (error) {
-      console.error('刪除失敗:', error);
-      alert('刪除失敗，請稍後重試');
+      console.error("刪除失敗:", error);
+      alert("刪除失敗，請稍後重試");
     } finally {
       setIsDeleting(false);
     }
@@ -224,26 +246,32 @@ export default function AttendancePage() {
     setIsUpdating(true);
     try {
       const updatePromises = editedRecords.map(async (record) => {
-        const original = attendanceRecords.find(orig => orig.id === record.id);
-        if (original && (
-          record.name !== original.name ||
-          record.contactInfo !== original.contactInfo ||
-          record.location !== original.location ||
-          record.activity !== original.activity
-        )) {
-          const response = await fetch(withBasePath(`/api/attendance/${record.id}`), {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
+        const original = attendanceRecords.find(
+          (orig) => orig.id === record.id,
+        );
+        if (
+          original &&
+          (record.name !== original.name ||
+            record.contactInfo !== original.contactInfo ||
+            record.location !== original.location ||
+            record.activity !== original.activity)
+        ) {
+          const response = await fetch(
+            withBasePath(`/api/attendance/${record.id}`),
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                name: record.name,
+                contactInfo: record.contactInfo,
+                location: record.location,
+                activity: record.activity,
+              }),
             },
-            body: JSON.stringify({
-              name: record.name,
-              contactInfo: record.contactInfo,
-              location: record.location,
-              activity: record.activity
-            })
-          });
-          
+          );
+
           if (!response.ok) {
             throw new Error(`更新記錄 ${record.name} 失敗`);
           }
@@ -253,24 +281,24 @@ export default function AttendancePage() {
       });
 
       await Promise.all(updatePromises);
-      
+
       // 重新獲取資料
       await fetchAttendanceRecords();
-      
+
       // 退出更新模式
       exitUpdateMode();
       setShowConfirmModal(false);
-      
+
       alert(`成功更新 ${updatedCount} 筆記錄！`);
     } catch (error) {
-      console.error('更新失敗:', error);
-      alert('更新失敗，請稍後重試');
+      console.error("更新失敗:", error);
+      alert("更新失敗，請稍後重試");
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const filteredRecords = attendanceRecords.filter(record => {
+  const filteredRecords = attendanceRecords.filter((record) => {
     if (!searchTerm.trim()) return true;
 
     const searchTermLower = searchTerm.toLowerCase();
@@ -279,122 +307,151 @@ export default function AttendancePage() {
       record.contactInfo.toLowerCase().includes(searchTermLower) ||
       record.location.toLowerCase().includes(searchTermLower) ||
       record.activity.toLowerCase().includes(searchTermLower) ||
-      (record.trainerName && record.trainerName.toLowerCase().includes(searchTermLower))
+      (record.trainerName &&
+        record.trainerName.toLowerCase().includes(searchTermLower))
     );
   });
 
   // 定義表格列配置
   const tableColumns = [
     {
-      key: 'checkbox',
-      header: '',
+      key: "checkbox",
+      header: "",
       hideOnMobile: false,
       render: (item: unknown) => {
         const record = item as AttendanceRecord;
         if (!isUpdateMode) return null;
         return (
-          <input
-            type="checkbox"
-            checked={selectedRecords.includes(record.id)}
-            onChange={() => handleRecordSelect(record.id)}
-            className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-          />
+          <label className="relative flex items-center justify-center w-5 h-5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selectedRecords.includes(record.id)}
+              onChange={() => handleRecordSelect(record.id)}
+              className="peer absolute w-4 h-4 opacity-0 cursor-pointer"
+            />
+
+            <span className="flex items-center justify-center w-4 h-4 rounded border-2 border-gray-500 bg-white shadow-sm transition-all peer-focus:ring-2 peer-focus:ring-blue-300 peer-focus:ring-offset-1">
+              {selectedRecords.includes(record.id) && (
+                <span className="w-2 h-2 rounded-full bg-blue-600" />
+              )}
+            </span>
+          </label>
         );
-      }
+      },
     },
     {
-      key: 'name',
-      header: '參加者姓名',
-      mobileLabel: '姓名',
+      key: "name",
+      header: "參加者姓名",
+      mobileLabel: "姓名",
       render: (item: unknown) => {
         const record = item as AttendanceRecord;
         if (!isUpdateMode) {
-          return <div className="text-sm font-medium text-gray-900">{record.name}</div>;
+          return (
+            <div className="text-sm font-medium text-gray-900">
+              {record.name}
+            </div>
+          );
         }
-        const editIndex = editedRecords.findIndex(r => r.id === record.id);
+        const editIndex = editedRecords.findIndex((r) => r.id === record.id);
         const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
         return (
           <input
             type="text"
             value={editedRecord.name}
-            onChange={(e) => handleRecordEdit(editIndex, 'name', e.target.value)}
-            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) =>
+              handleRecordEdit(editIndex, "name", e.target.value)
+            }
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
           />
         );
-      }
+      },
     },
     {
-      key: 'contactInfo',
-      header: '聯絡方式',
-      mobileLabel: '聯絡方式',
+      key: "contactInfo",
+      header: "聯絡方式",
+      mobileLabel: "聯絡方式",
       hideOnMobile: isMobile && isUpdateMode, // 編輯模式時在手機上隱藏以節省空間
       render: (item: unknown) => {
         const record = item as AttendanceRecord;
         if (!isUpdateMode) {
-          return <div className="text-sm text-gray-900">{record.contactInfo}</div>;
+          return (
+            <div className="text-sm text-gray-900">{record.contactInfo}</div>
+          );
         }
-        const editIndex = editedRecords.findIndex(r => r.id === record.id);
+        const editIndex = editedRecords.findIndex((r) => r.id === record.id);
         const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
         return (
           <input
             type="text"
             value={editedRecord.contactInfo}
-            onChange={(e) => handleRecordEdit(editIndex, 'contactInfo', e.target.value)}
-            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) =>
+              handleRecordEdit(editIndex, "contactInfo", e.target.value)
+            }
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
           />
         );
-      }
+      },
     },
     {
-      key: 'location',
-      header: '地點',
-      mobileLabel: '地點',
-      render: (item: unknown) => {
-        const record = item as AttendanceRecord;
-        if (!isUpdateMode) {
-          return <div className="text-sm text-gray-900">{label(record.location)}</div>;
-        }
-        const editIndex = editedRecords.findIndex(r => r.id === record.id);
-        const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
-        return (
-          <input
-            type="text"
-            value={editedRecord.location}
-            onChange={(e) => handleRecordEdit(editIndex, 'location', e.target.value)}
-            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        );
-      }
-    },
-    {
-      key: 'activity',
-      header: '活動內容',
-      mobileLabel: '活動',
+      key: "location",
+      header: "地點",
+      mobileLabel: "地點",
       render: (item: unknown) => {
         const record = item as AttendanceRecord;
         if (!isUpdateMode) {
           return (
-            <div className="text-sm text-gray-500 max-w-xs truncate" title={record.activity}>
+            <div className="text-sm text-gray-900">
+              {label(record.location)}
+            </div>
+          );
+        }
+        const editIndex = editedRecords.findIndex((r) => r.id === record.id);
+        const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
+        return (
+          <CustomSelect
+            value={editedRecord.location}
+            onChange={(value) => handleRecordEdit(editIndex, "location", value)}
+            options={locationOptions}
+            placeholder="選擇地點"
+            required
+          />
+        );
+      },
+    },
+    {
+      key: "activity",
+      header: "活動內容",
+      mobileLabel: "活動",
+      render: (item: unknown) => {
+        const record = item as AttendanceRecord;
+        if (!isUpdateMode) {
+          return (
+            <div
+              className="text-sm text-gray-500 max-w-xs truncate"
+              title={record.activity}
+            >
               {record.activity}
             </div>
           );
         }
-        const editIndex = editedRecords.findIndex(r => r.id === record.id);
+        const editIndex = editedRecords.findIndex((r) => r.id === record.id);
         const editedRecord = editIndex >= 0 ? editedRecords[editIndex] : record;
         return (
           <textarea
             value={editedRecord.activity}
-            onChange={(e) => handleRecordEdit(editIndex, 'activity', e.target.value)}
-            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            onChange={(e) =>
+              handleRecordEdit(editIndex, "activity", e.target.value)
+            }
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 resize-none"
             rows={2}
           />
         );
-      }
+      },
     },
     {
-      key: 'trainerName',
-      header: '負責教練',
-      mobileLabel: '教練',
+      key: "trainerName",
+      header: "負責教練",
+      mobileLabel: "教練",
       hideOnMobile: isMobile && isUpdateMode,
       render: (item: unknown) => {
         const record = item as AttendanceRecord;
@@ -409,23 +466,25 @@ export default function AttendancePage() {
             )}
           </div>
         );
-      }
+      },
     },
     {
-      key: 'quota',
-      header: '剩餘配額',
-      mobileLabel: '配額',
+      key: "quota",
+      header: "剩餘配額",
+      mobileLabel: "配額",
       hideOnMobile: isMobile && isUpdateMode,
       render: (item: unknown) => {
         const record = item as AttendanceRecord;
         return (
           <div className="text-sm font-medium text-gray-900">
             {record.quota !== undefined ? (
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                record.quota > 0
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-red-100 text-red-800'
-              }`}>
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  record.quota > 0
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
                 {record.quota}
               </span>
             ) : (
@@ -433,12 +492,12 @@ export default function AttendancePage() {
             )}
           </div>
         );
-      }
+      },
     },
     {
-      key: 'createdAt',
-      header: '日期',
-      mobileLabel: '日期',
+      key: "createdAt",
+      header: "日期",
+      mobileLabel: "日期",
       render: (item: unknown) => {
         const record = item as AttendanceRecord;
         return (
@@ -446,13 +505,13 @@ export default function AttendancePage() {
             {formatDate(record.createdAt)}
           </div>
         );
-      }
-    }
+      },
+    },
   ];
 
   // 過濾列：在更新模式時移除 checkbox 列（如果不在更新模式）
-  const visibleColumns = tableColumns.filter(col => {
-    if (col.key === 'checkbox') return isUpdateMode;
+  const visibleColumns = tableColumns.filter((col) => {
+    if (col.key === "checkbox") return isUpdateMode;
     return true;
   });
 
@@ -476,7 +535,7 @@ export default function AttendancePage() {
             管理運動班出席、簽到和相關聯絡資訊
           </p>
         </div>
-        
+
         {/* 搜索框 */}
         <div className="relative w-full md:w-64">
           <input
@@ -484,16 +543,26 @@ export default function AttendancePage() {
             placeholder="搜索姓名、聯絡方式、地點、活動或教練..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 pl-10 pr-10 text-base md:text-sm border border-gray-300 rounded-full bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:shadow-md"
+            className="w-full px-4 py-2 pl-10 pr-10 text-base md:text-sm border border-gray-300 rounded-full bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 focus:border-transparent text-slate-900 transition-all hover:shadow-md"
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              className="h-4 w-4 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
           </div>
         </div>
       </div>
-      
+
       {/* 記錄表格 */}
       <div className="bg-white rounded-lg shadow-lg">
         <div className="px-6 py-4 border-b border-gray-200">
@@ -511,16 +580,26 @@ export default function AttendancePage() {
                 </span>
               )}
             </h2>
-            
+
             <div className="flex gap-3">
               {!isUpdateMode ? (
                 <>
                   <button
-                    onClick={() => router.push('/attendance/checkin')}
+                    onClick={() => router.push("/attendance/checkin")}
                     className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
                     </svg>
                     添加記錄
                   </button>
@@ -528,8 +607,18 @@ export default function AttendancePage() {
                     onClick={enterUpdateMode}
                     className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
                     </svg>
                     更新記錄
                   </button>
@@ -541,36 +630,66 @@ export default function AttendancePage() {
                     disabled={updatedCount === 0 || isUpdating}
                     className={`flex items-center px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${
                       updatedCount === 0 || isUpdating
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-green-600 hover:bg-green-700'
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-green-600 hover:bg-green-700"
                     }`}
                   >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
-                    {isUpdating ? '更新中...' : '確認更新'}
+                    {isUpdating ? "更新中..." : "確認更新"}
                   </button>
                   <button
                     onClick={confirmDelete}
                     disabled={selectedRecords.length === 0 || isDeleting}
                     className={`flex items-center px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${
                       selectedRecords.length === 0 || isDeleting
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-red-600 hover:bg-red-700'
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-red-600 hover:bg-red-700"
                     }`}
                   >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
                     </svg>
-                    {isDeleting ? '刪除中...' : '刪除記錄'}
+                    {isDeleting ? "刪除中..." : "刪除記錄"}
                   </button>
                   <button
                     onClick={exitUpdateMode}
                     disabled={isUpdating || isDeleting}
                     className="flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                     取消
                   </button>
@@ -581,16 +700,19 @@ export default function AttendancePage() {
         </div>
 
         {/* 響應式表格/卡片容器 */}
-        <div className={isMobile ? '' : 'max-h-96 overflow-y-auto'}>
+        <div className={isMobile ? "" : "max-h-96 overflow-y-auto"}>
           {/* 桌面端：全選複選框 */}
           {!isMobile && isUpdateMode && (
             <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
               <label className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <input
                   type="checkbox"
-                  checked={selectedRecords.length === filteredRecords.length && filteredRecords.length > 0}
+                  checked={
+                    selectedRecords.length === filteredRecords.length &&
+                    filteredRecords.length > 0
+                  }
                   onChange={handleSelectAll}
-                  className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 mr-2"
+                  className="rounded border-gray-500 border-2 text-blue-600 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 mr-2"
                 />
                 全選
               </label>
@@ -600,13 +722,13 @@ export default function AttendancePage() {
           {/* 使用響應式表格組件 */}
           {filteredRecords.length === 0 ? (
             <div className="px-6 py-8 text-center text-gray-500">
-              {searchTerm ? '未找到符合條件的記錄' : '暫無運動班記錄'}
+              {searchTerm ? "未找到符合條件的記錄" : "暫無運動班記錄"}
             </div>
           ) : (
             <MobileTable
               data={filteredRecords}
               columns={visibleColumns}
-              className={isMobile ? '' : 'rounded-b-lg'}
+              className={isMobile ? "" : "rounded-b-lg"}
             />
           )}
 
@@ -617,11 +739,13 @@ export default function AttendancePage() {
                 onClick={handleSelectAll}
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                   selectedRecords.length === filteredRecords.length
-                    ? 'bg-gray-600 text-white'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? "bg-gray-600 text-white"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
                 }`}
               >
-                {selectedRecords.length === filteredRecords.length ? '取消全選' : '全選'}
+                {selectedRecords.length === filteredRecords.length
+                  ? "取消全選"
+                  : "全選"}
                 {selectedRecords.length > 0 && ` (${selectedRecords.length})`}
               </button>
             </div>
@@ -635,12 +759,17 @@ export default function AttendancePage() {
           <div className="fixed inset-0 bg-gray-600 bg-opacity-20 backdrop-blur-sm"></div>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 z-10">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800">確認更新記錄</h3>
+              <h3 className="text-lg font-semibold text-gray-800">
+                確認更新記錄
+              </h3>
             </div>
             <div className="px-6 py-4">
               <p className="text-gray-600 mb-4">
-                您即將更新 <span className="font-semibold text-orange-600">{updatedCount}</span> 筆記錄，
-                此操作不可撤銷。是否確認執行？
+                您即將更新{" "}
+                <span className="font-semibold text-orange-600">
+                  {updatedCount}
+                </span>{" "}
+                筆記錄， 此操作不可撤銷。是否確認執行？
               </p>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
@@ -655,12 +784,12 @@ export default function AttendancePage() {
                 onClick={executeUpdate}
                 disabled={isUpdating}
                 className={`px-4 py-2 text-white rounded-lg transition-colors ${
-                  isUpdating 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-green-600 hover:bg-green-700'
+                  isUpdating
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700"
                 }`}
               >
-                {isUpdating ? '更新中...' : '確認更新'}
+                {isUpdating ? "更新中..." : "確認更新"}
               </button>
             </div>
           </div>
@@ -673,12 +802,17 @@ export default function AttendancePage() {
           <div className="fixed inset-0 bg-gray-600 bg-opacity-20 backdrop-blur-sm"></div>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 z-10">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800">確認刪除記錄</h3>
+              <h3 className="text-lg font-semibold text-gray-800">
+                確認刪除記錄
+              </h3>
             </div>
             <div className="px-6 py-4">
               <p className="text-gray-600 mb-4">
-                您即將刪除 <span className="font-semibold text-red-600">{selectedRecords.length}</span> 筆記錄，
-                此操作不可撤銷。是否確認執行？
+                您即將刪除{" "}
+                <span className="font-semibold text-red-600">
+                  {selectedRecords.length}
+                </span>{" "}
+                筆記錄， 此操作不可撤銷。是否確認執行？
               </p>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
@@ -693,12 +827,12 @@ export default function AttendancePage() {
                 onClick={executeDelete}
                 disabled={isDeleting}
                 className={`px-4 py-2 text-white rounded-lg transition-colors ${
-                  isDeleting 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-red-600 hover:bg-red-700'
+                  isDeleting
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-700"
                 }`}
               >
-                {isDeleting ? '刪除中...' : '確認刪除'}
+                {isDeleting ? "刪除中..." : "確認刪除"}
               </button>
             </div>
           </div>
@@ -706,4 +840,4 @@ export default function AttendancePage() {
       )}
     </div>
   );
-} 
+}

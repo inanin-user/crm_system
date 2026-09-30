@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useScrollOptimization } from '@/hooks/useScrollOptimization';
-import { withBasePath } from '@/lib/basePath';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useScrollOptimization } from "@/hooks/useScrollOptimization";
+import { withBasePath } from "@/lib/basePath";
 
 interface Member {
   id: string;
@@ -34,21 +34,23 @@ export default function MemberProfilePage() {
 
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<
+    AttendanceRecord[]
+  >([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(true);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
-  const [newQuota, setNewQuota] = useState('');
+  const [newQuota, setNewQuota] = useState("");
   const [isUpdatingQuota, setIsUpdatingQuota] = useState(false);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   // 獲取會員列表
   const fetchMembers = async () => {
     try {
       setIsLoadingMembers(true);
-      const response = await fetch(withBasePath('/api/accounts?role=member'));
+      const response = await fetch(withBasePath("/api/accounts?role=member"));
       const result = await response.json();
-      
+
       if (result.success) {
         setMembers(result.data);
         // 如果有會員且没有选中的會員，默认选中第一个
@@ -57,10 +59,10 @@ export default function MemberProfilePage() {
           fetchMemberAttendance(result.data[0]);
         }
       } else {
-        setError('獲取會員列表失敗');
+        setError("獲取會員列表失敗");
       }
     } catch (error) {
-      setError('Server error');
+      setError("Server error");
     } finally {
       setIsLoadingMembers(false);
     }
@@ -71,9 +73,11 @@ export default function MemberProfilePage() {
     try {
       setIsLoadingRecords(true);
       // 通过姓名和联系方式查找出席記錄
-      const response = await fetch(`/api/attendance/by-member?name=${encodeURIComponent(member.memberName)}&contact=${encodeURIComponent(member.phone)}`);
+      const response = await fetch(
+        `/api/attendance/by-member?name=${encodeURIComponent(member.memberName)}&contact=${encodeURIComponent(member.phone)}`,
+      );
       const result = await response.json();
-      
+
       if (result.success) {
         setAttendanceRecords(result.data);
       } else {
@@ -89,16 +93,16 @@ export default function MemberProfilePage() {
   // 選擇會員
   const handleSelectMember = async (member: Member) => {
     setSelectedMember(member);
-    setNewQuota('');
+    setNewQuota("");
     fetchMemberAttendance(member);
-    setError('');
-    setSuccessMessage('');
-    
+    setError("");
+    setSuccessMessage("");
+
     // 獲取會員的最新詳細信息，確保quota是最新的
     try {
       const response = await fetch(`/api/accounts/${member.id}`);
       const result = await response.json();
-      
+
       if (result.success && result.data) {
         const updatedMember = {
           ...member,
@@ -106,14 +110,16 @@ export default function MemberProfilePage() {
           renewalCount: result.data.renewalCount || 0,
           addedTickets: result.data.addedTickets || 0,
           usedTickets: result.data.usedTickets || 0,
-          initialTickets: result.data.initialTickets || 0
+          initialTickets: result.data.initialTickets || 0,
         };
         setSelectedMember(updatedMember);
         // 同時更新會員列表中的數據
-        setMembers(members.map(m => m.id === member.id ? updatedMember : m));
+        setMembers(
+          members.map((m) => (m.id === member.id ? updatedMember : m)),
+        );
       }
     } catch (error) {
-      console.error('獲取會員詳細信息失敗:', error);
+      console.error("獲取會員詳細信息失敗:", error);
       // 如果獲取失敗，仍然使用原有數據
     }
   };
@@ -121,38 +127,40 @@ export default function MemberProfilePage() {
   // 更新配额
   const handleUpdateQuota = async () => {
     if (!selectedMember) return;
-    
+
     const quotaValue = parseInt(newQuota);
     if (isNaN(quotaValue)) {
-      setError('請輸入有效的數字');
+      setError("請輸入有效的數字");
       return;
     }
-    
+
     // 檢查減少配額後是否會變為負數
     if (quotaValue < 0 && Math.abs(quotaValue) > selectedMember.quota) {
-      setError(`無法減少 ${Math.abs(quotaValue)} 個配額，當前只有 ${selectedMember.quota} 個配額`);
+      setError(
+        `無法減少 ${Math.abs(quotaValue)} 個配額，當前只有 ${selectedMember.quota} 個配額`,
+      );
       return;
     }
 
     try {
       setIsUpdatingQuota(true);
-      console.log('開始更新配額...', {
+      console.log("開始更新配額...", {
         memberId: selectedMember.id,
         memberName: selectedMember.memberName,
-        quotaValue
+        quotaValue,
       });
 
       const response = await fetch(`/api/accounts/${selectedMember.id}/quota`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ quota: quotaValue }),
       });
 
-      console.log('響應狀態:', response.status);
+      console.log("響應狀態:", response.status);
       const result = await response.json();
-      console.log('響應結果:', result);
+      console.log("響應結果:", result);
 
       if (result.success && result.data) {
         // 使用API返回的實際更新後的數據
@@ -162,26 +170,30 @@ export default function MemberProfilePage() {
           renewalCount: result.data.renewalCount || 0, // 使用API返回的實際renewalCount值
           addedTickets: result.data.addedTickets || 0,
           usedTickets: result.data.usedTickets || 0,
-          initialTickets: result.data.initialTickets || 0
+          initialTickets: result.data.initialTickets || 0,
         };
         setSelectedMember(updatedMember);
-        setMembers(members.map(m => m.id === selectedMember.id ? updatedMember : m));
-        const operation = quotaValue >= 0 ? '增加' : '減少';
+        setMembers(
+          members.map((m) => (m.id === selectedMember.id ? updatedMember : m)),
+        );
+        const operation = quotaValue >= 0 ? "增加" : "減少";
         const amount = Math.abs(quotaValue);
-        setSuccessMessage(`配额${operation}成功！${operation}了 ${amount} 個配額，當前剩餘配額: ${result.data.quota}`);
-        setError('');
+        setSuccessMessage(
+          `配额${operation}成功！${operation}了 ${amount} 個配額，當前剩餘配額: ${result.data.quota}`,
+        );
+        setError("");
         // 更新輸入框顯示為新的配額值
-        setNewQuota('');
+        setNewQuota("");
       } else {
-        console.error('API返回錯誤:', result);
-        setError(result.message || '更新配额失敗');
+        console.error("API返回錯誤:", result);
+        setError(result.message || "更新配额失敗");
         if (result.error) {
-          console.error('詳細錯誤:', result.error);
+          console.error("詳細錯誤:", result.error);
         }
       }
     } catch (error) {
-      console.error('網絡錯誤:', error);
-      setError('Server error');
+      console.error("網絡錯誤:", error);
+      setError("Server error");
     } finally {
       setIsUpdatingQuota(false);
     }
@@ -189,14 +201,14 @@ export default function MemberProfilePage() {
 
   // 格式化日期
   const formatDate = (dateString: string) => {
-    if (!dateString) return '无記錄';
-    return new Date(dateString).toLocaleString('zh-CN');
+    if (!dateString) return "无記錄";
+    return new Date(dateString).toLocaleString("zh-CN");
   };
 
   // 格式化日期（仅日期）
   const formatDateOnly = (dateString: string) => {
-    if (!dateString) return '无記錄';
-    return new Date(dateString).toLocaleDateString('zh-CN');
+    if (!dateString) return "无記錄";
+    return new Date(dateString).toLocaleDateString("zh-CN");
   };
 
   useEffect(() => {
@@ -206,7 +218,7 @@ export default function MemberProfilePage() {
   // 清除消息
   useEffect(() => {
     if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(''), 3000);
+      const timer = setTimeout(() => setSuccessMessage(""), 3000);
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
@@ -216,7 +228,9 @@ export default function MemberProfilePage() {
       {/* 頁面標題 */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">續卡管理</h1>
-        <p className="mt-2 text-gray-600">查看和管理會員續卡、配額以及出席記錄</p>
+        <p className="mt-2 text-gray-600">
+          查看和管理會員續卡、配額以及出席記錄
+        </p>
       </div>
 
       {/* 錯誤和成功提示 */}
@@ -225,7 +239,7 @@ export default function MemberProfilePage() {
           <p className="text-sm text-red-600">{error}</p>
         </div>
       )}
-      
+
       {successMessage && (
         <div className="mb-6 bg-green-50 border border-green-200 rounded-md p-4">
           <p className="text-sm text-green-600">{successMessage}</p>
@@ -239,9 +253,11 @@ export default function MemberProfilePage() {
           <div className="w-1/3 border-r border-gray-200">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">會員列表</h2>
-              <p className="text-sm text-gray-600">共 {members.length} 位會員</p>
+              <p className="text-sm text-gray-600">
+                共 {members.length} 位會員
+              </p>
             </div>
-            
+
             <div className="overflow-y-auto max-h-96">
               {isLoadingMembers ? (
                 <div className="flex items-center justify-center h-32">
@@ -259,15 +275,27 @@ export default function MemberProfilePage() {
                       onClick={() => handleSelectMember(member)}
                       className={`w-full text-left p-3 rounded-lg transition-colors ${
                         selectedMember?.id === member.id
-                          ? 'bg-blue-50 border border-blue-200 text-blue-900'
-                          : 'hover:bg-gray-50 border border-transparent'
+                          ? "bg-blue-50 border border-blue-200 text-blue-900"
+                          : "hover:bg-gray-50 border border-transparent"
                       }`}
                     >
-                      <div className="font-medium">{member.memberName}</div>
-                      <div className="text-sm text-gray-500">
-                        配額: {member.quota} · 續卡: {member.renewalCount || 0}次 · {member.isActive ? '活躍' : '已禁用'}
+                      <div
+                        className={
+                          selectedMember?.id === member.id
+                            ? "text-black"
+                            : "text-gray-500"
+                        }
+                      >
+                        <div className="font-medium">{member.memberName}</div>
+
+                        <div className="text-sm">
+                          配額: {member.quota} · 續卡:{" "}
+                          {member.renewalCount || 0}次 ·{" "}
+                          {member.isActive ? "活躍" : "已禁用"}
+                        </div>
+
+                        <div className="text-xs">{member.phone}</div>
                       </div>
-                      <div className="text-xs text-gray-400">{member.phone}</div>
                     </button>
                   ))}
                 </div>
@@ -286,50 +314,64 @@ export default function MemberProfilePage() {
                 {/* 會員基本信息 */}
                 <div className="p-6 border-b border-gray-200">
                   <div className="flex justify-between items-start mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">{selectedMember.memberName}</h2>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      selectedMember.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {selectedMember.isActive ? '活躍' : '已禁用'}
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {selectedMember.memberName}
+                    </h2>
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedMember.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {selectedMember.isActive ? "活躍" : "已禁用"}
                     </span>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         電話號碼
                       </label>
-                      <div className="text-gray-900">{selectedMember.phone}</div>
+                      <div className="text-gray-900">
+                        {selectedMember.phone}
+                      </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         教練介紹人
                       </label>
-                      <div className="text-gray-900">{selectedMember.trainerIntroducer}</div>
+                      <div className="text-gray-900">
+                        {selectedMember.trainerIntroducer}
+                      </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         帳號名
                       </label>
-                      <div className="text-gray-900">{selectedMember.username}</div>
+                      <div className="text-gray-900">
+                        {selectedMember.username}
+                      </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         續卡次數
                       </label>
-                      <div className="text-gray-900">{selectedMember.renewalCount || 0} 次</div>
+                      <div className="text-gray-900">
+                        {selectedMember.renewalCount || 0} 次
+                      </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         加入時間
                       </label>
-                      <div className="text-gray-900">{formatDateOnly(selectedMember.createdAt)}</div>
+                      <div className="text-gray-900">
+                        {formatDateOnly(selectedMember.createdAt)}
+                      </div>
                     </div>
                   </div>
 
@@ -337,11 +379,18 @@ export default function MemberProfilePage() {
                   <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900">配額管理</h3>
-                        <p className="text-sm text-gray-600">當前剩餘配額: <span className="font-semibold text-blue-600">{selectedMember.quota}</span></p>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          配額管理
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          當前剩餘配額:{" "}
+                          <span className="font-semibold text-blue-600">
+                            {selectedMember.quota}
+                          </span>
+                        </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-3">
                       <input
                         type="number"
@@ -352,10 +401,12 @@ export default function MemberProfilePage() {
                       />
                       <button
                         onClick={handleUpdateQuota}
-                        disabled={isUpdatingQuota || !newQuota || newQuota === '0'}
+                        disabled={
+                          isUpdatingQuota || !newQuota || newQuota === "0"
+                        }
                         className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md font-medium transition-colors"
                       >
-                        {isUpdatingQuota ? '更新中...' : '更新配額'}
+                        {isUpdatingQuota ? "更新中..." : "更新配額"}
                       </button>
                     </div>
                   </div>
@@ -364,10 +415,14 @@ export default function MemberProfilePage() {
                 {/* 出席記錄 */}
                 <div className="flex-1 p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">出席記錄</h3>
-                    <span className="text-sm text-gray-600">共 {attendanceRecords.length} 條記錄</span>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      出席記錄
+                    </h3>
+                    <span className="text-sm text-gray-600">
+                      共 {attendanceRecords.length} 條記錄
+                    </span>
                   </div>
-                  
+
                   <div className="overflow-y-auto max-h-64">
                     {isLoadingRecords ? (
                       <div className="flex items-center justify-center h-32">
@@ -380,14 +435,21 @@ export default function MemberProfilePage() {
                     ) : (
                       <div className="space-y-3">
                         {attendanceRecords.map((record) => (
-                          <div key={record.id} className="border border-gray-200 rounded-lg p-4">
+                          <div
+                            key={record.id}
+                            className="border border-gray-200 rounded-lg p-4"
+                          >
                             <div className="flex justify-between items-start mb-2">
-                              <div className="font-medium text-gray-900">{record.activity}</div>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                record.status === '出席' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}>
+                              <div className="font-medium text-gray-900">
+                                {record.activity}
+                              </div>
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  record.status === "出席"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-yellow-100 text-yellow-800"
+                                }`}
+                              >
                                 {record.status}
                               </span>
                             </div>
@@ -409,4 +471,4 @@ export default function MemberProfilePage() {
       </div>
     </div>
   );
-} 
+}

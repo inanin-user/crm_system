@@ -294,7 +294,7 @@ export default function AttendanceByNamePage() {
                 e.currentTarget.blur();
               }
             }}
-            className="w-64 px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-full bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:shadow-md"
+            className="w-64 px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-full bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 transition-all hover:shadow-md"
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

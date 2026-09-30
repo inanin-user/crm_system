@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useScrollOptimization } from '@/hooks/useScrollOptimization';
-import AddAccountModal from '@/app/components/AddAccountModal';
-import DeleteAccountModal from '@/app/components/DeleteAccountModal';
-import EditAccountModal from '@/app/components/EditAccountModal';
+import { useState, useEffect } from "react";
+import { useScrollOptimization } from "@/hooks/useScrollOptimization";
+import AddAccountModal from "@/app/components/AddAccountModal";
+import DeleteAccountModal from "@/app/components/DeleteAccountModal";
+import EditAccountModal from "@/app/components/EditAccountModal";
 import { withBasePath } from "@/lib/basePath";
-import { LocationCode } from '@/types/location';
+import { LocationCode } from "@/types/location";
 
 interface Account {
   id: string;
@@ -27,23 +27,27 @@ export default function TrainerManagementPage() {
   useScrollOptimization();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<AccountDetail | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<AccountDetail | null>(
+    null,
+  );
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [accountToEdit, setAccountToEdit] = useState<AccountDetail | null>(null);
-  const [error, setError] = useState('');
+  const [accountToEdit, setAccountToEdit] = useState<AccountDetail | null>(
+    null,
+  );
+  const [error, setError] = useState("");
 
   // 獲取教練列表
   const fetchTrainerAccounts = async () => {
     try {
       setIsLoadingAccounts(true);
-      const response = await fetch(withBasePath('/api/accounts?role=trainer'));
+      const response = await fetch(withBasePath("/api/accounts?role=trainer"));
       const result = await response.json();
-      
+
       if (result.success) {
         setAccounts(result.data);
         // 如果有帳戶且没有选中的帳戶，默认选中第一个
@@ -51,10 +55,10 @@ export default function TrainerManagementPage() {
           handleSelectAccount(result.data[0].id);
         }
       } else {
-        setError('獲取教練列表失敗');
+        setError("獲取教練列表失敗");
       }
     } catch {
-      setError('Server error');
+      setError("Server error");
     } finally {
       setIsLoadingAccounts(false);
     }
@@ -66,14 +70,14 @@ export default function TrainerManagementPage() {
       setIsLoadingDetail(true);
       const response = await fetch(withBasePath(`/api/accounts/${accountId}`));
       const result = await response.json();
-      
+
       if (result.success) {
         setSelectedAccount(result.data);
       } else {
-        setError('獲取帳戶詳情失敗');
+        setError("獲取帳戶詳情失敗");
       }
     } catch {
-      setError('Server error');
+      setError("Server error");
     } finally {
       setIsLoadingDetail(false);
     }
@@ -117,8 +121,8 @@ export default function TrainerManagementPage() {
 
   // 格式化日期
   const formatDate = (dateString: string) => {
-    if (!dateString) return '從未登錄';
-    return new Date(dateString).toLocaleString('zh-CN');
+    if (!dateString) return "從未登錄";
+    return new Date(dateString).toLocaleString("zh-CN");
   };
 
   useEffect(() => {
@@ -131,7 +135,9 @@ export default function TrainerManagementPage() {
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">教練帳號管理</h1>
-          <p className="mt-2 text-gray-600">管理系統教練帳號，包括查看詳情和新增教練</p>
+          <p className="mt-2 text-gray-600">
+            管理系統教練帳號，包括查看詳情和新增教練
+          </p>
         </div>
         <div className="flex gap-3">
           <button
@@ -171,9 +177,11 @@ export default function TrainerManagementPage() {
           <div className="w-1/3 border-r border-gray-200">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">教練列表</h2>
-              <p className="text-sm text-gray-600">共 {accounts.length} 個教練</p>
+              <p className="text-sm text-gray-600">
+                共 {accounts.length} 個教練
+              </p>
             </div>
-            
+
             <div className="overflow-y-auto h-80">
               {isLoadingAccounts ? (
                 <div className="flex items-center justify-center h-full">
@@ -191,13 +199,29 @@ export default function TrainerManagementPage() {
                       onClick={() => handleSelectAccount(account.id)}
                       className={`w-full text-left p-3 rounded-lg transition-colors ${
                         selectedAccount?.id === account.id
-                          ? 'bg-green-50 border border-green-200 text-green-900'
-                          : 'hover:bg-gray-50 border border-transparent'
+                          ? "bg-green-50 border border-green-200 text-green-900"
+                          : "hover:bg-gray-50 border border-transparent"
                       }`}
                     >
-                      <div className="font-medium">{account.username}</div>
-                      <div className="text-sm text-gray-500">
-                        {account.isActive ? '活躍' : '已禁用'} · 創建於 {formatDate(account.createdAt).split(' ')[0]}
+                      <div
+                        className={`font-medium ${
+                          selectedAccount?.id === account.id
+                            ? "text-black"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {account.username}
+                      </div>
+
+                      <div
+                        className={`text-sm ${
+                          selectedAccount?.id === account.id
+                            ? "text-black"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {account.isActive ? "活躍" : "已禁用"} · 創建於{" "}
+                        {formatDate(account.createdAt).split(" ")[0]}
                       </div>
                     </button>
                   ))}
@@ -211,8 +235,8 @@ export default function TrainerManagementPage() {
             <div className="p-4 bg-gray-50 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">帳戶詳情</h2>
             </div>
-            
-            <div className="p-6">
+
+            <div className="p-6 overflow-y-auto h-80">
               {!selectedAccount ? (
                 <div className="flex items-center justify-center h-64 text-gray-500">
                   請從左側選擇一個教練帳戶
@@ -246,7 +270,9 @@ export default function TrainerManagementPage() {
                       角色
                     </label>
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                      {selectedAccount.role === 'trainer' ? '教練' : selectedAccount.role}
+                      {selectedAccount.role === "trainer"
+                        ? "教練"
+                        : selectedAccount.role}
                     </span>
                   </div>
 
@@ -255,7 +281,8 @@ export default function TrainerManagementPage() {
                       地區權限
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      {selectedAccount.locations && selectedAccount.locations.length > 0 ? (
+                      {selectedAccount.locations &&
+                      selectedAccount.locations.length > 0 ? (
                         selectedAccount.locations.map((location) => (
                           <span
                             key={location}
@@ -265,12 +292,12 @@ export default function TrainerManagementPage() {
                           </span>
                         ))
                       ) : (
-                        <span className="text-gray-500 text-sm">無地區權限</span>
+                        <span className="text-gray-500 text-sm">
+                          無地區權限
+                        </span>
                       )}
                     </div>
                   </div>
-
-
 
                   <div className="grid grid-cols-1 gap-4">
                     <div>
@@ -287,7 +314,7 @@ export default function TrainerManagementPage() {
                         最後登錄
                       </label>
                       <div className="text-gray-600">
-                        {formatDate(selectedAccount.lastLogin || '')}
+                        {formatDate(selectedAccount.lastLogin || "")}
                       </div>
                     </div>
                   </div>
@@ -305,7 +332,7 @@ export default function TrainerManagementPage() {
         onSuccess={handleAddSuccess}
         defaultRole="trainer"
       />
-      
+
       <DeleteAccountModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -313,7 +340,7 @@ export default function TrainerManagementPage() {
         account={accountToDelete}
         currentRole="trainer"
       />
-      
+
       <EditAccountModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -323,4 +350,4 @@ export default function TrainerManagementPage() {
       />
     </div>
   );
-} 
+}

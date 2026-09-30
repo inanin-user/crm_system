@@ -47,22 +47,23 @@ export default function ActivityManagementPage() {
 
   const [activities, setActivities] = useState<Activity[]>([]);
   const [trainers, setTrainers] = useState<Trainer[]>([]);
-  const [selectedActivity, setSelectedActivity] =
-    useState<Activity | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
+    null,
+  );
 
   const [isLoadingActivities, setIsLoadingActivities] = useState(true);
   const [, setIsLoadingTrainers] = useState(true);
 
   // Activity modal
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
-  const [activityModalMode, setActivityModalMode] =
-    useState<"add" | "edit">("add");
+  const [activityModalMode, setActivityModalMode] = useState<"add" | "edit">(
+    "add",
+  );
 
   const [activityFormData, setActivityFormData] =
     useState<ActivityFormData>(emptyActivityForm);
 
-  const [editingActivity, setEditingActivity] =
-    useState<Activity | null>(null);
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
 
   const [activityFormError, setActivityFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -111,9 +112,7 @@ export default function ActivityManagementPage() {
     try {
       setIsLoadingTrainers(true);
 
-      const response = await fetch(
-        withBasePath("/api/accounts?role=trainer"),
-      );
+      const response = await fetch(withBasePath("/api/accounts?role=trainer"));
 
       const result = await response.json();
 
@@ -194,9 +193,7 @@ export default function ActivityManagementPage() {
       startTime: activity.startTime
         ? formatDateTimeLocal(activity.startTime)
         : "",
-      endTime: activity.endTime
-        ? formatDateTimeLocal(activity.endTime)
-        : "",
+      endTime: activity.endTime ? formatDateTimeLocal(activity.endTime) : "",
       location: activity.location || "",
       description: activity.description || "",
     });
@@ -243,10 +240,7 @@ export default function ActivityManagementPage() {
     const startTime = new Date(activityFormData.startTime);
     const endTime = new Date(activityFormData.endTime);
 
-    if (
-      Number.isNaN(startTime.getTime()) ||
-      Number.isNaN(endTime.getTime())
-    ) {
+    if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
       setActivityFormError("開始時間或結束時間格式錯誤");
       return false;
     }
@@ -268,9 +262,7 @@ export default function ActivityManagementPage() {
   // Add activity
   // ------------------------------------------------------------
 
-  const handleAddSubmit = async (
-    e: React.FormEvent<HTMLFormElement>,
-  ) => {
+  const handleAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setActivityFormError("");
@@ -300,9 +292,7 @@ export default function ActivityManagementPage() {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        setActivityFormError(
-          result.message || "添加活動失敗",
-        );
+        setActivityFormError(result.message || "添加活動失敗");
         return;
       }
 
@@ -326,9 +316,7 @@ export default function ActivityManagementPage() {
   // Update activity
   // ------------------------------------------------------------
 
-  const handleUpdateSubmit = async (
-    e: React.FormEvent<HTMLFormElement>,
-  ) => {
+  const handleUpdateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setActivityFormError("");
@@ -366,9 +354,7 @@ export default function ActivityManagementPage() {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        setActivityFormError(
-          result.message || "修改活動失敗",
-        );
+        setActivityFormError(result.message || "修改活動失敗");
         return;
       }
 
@@ -451,9 +437,7 @@ export default function ActivityManagementPage() {
       {/* 頁面標題和添加按鈕 */}
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            活動管理
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">活動管理</h1>
 
           <p className="mt-2 text-gray-600">
             管理活動信息、分配教練和查看參與者
@@ -479,9 +463,7 @@ export default function ActivityManagementPage() {
       {/* 成功提示 */}
       {successMessage && (
         <div className="mb-6 bg-green-50 border border-green-200 rounded-md p-4">
-          <p className="text-sm text-green-600">
-            {successMessage}
-          </p>
+          <p className="text-sm text-green-600">{successMessage}</p>
         </div>
       )}
 
@@ -491,9 +473,7 @@ export default function ActivityManagementPage() {
           {/* 左側 - 活動列表 */}
           <div className="w-1/3 border-r border-gray-200">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
-                活動列表
-              </h2>
+              <h2 className="text-lg font-semibold text-gray-900">活動列表</h2>
 
               <p className="text-sm text-gray-600">
                 共 {activities.length} 個活動
@@ -523,25 +503,23 @@ export default function ActivityManagementPage() {
                       {/* 活動資料 */}
                       <button
                         type="button"
-                        onClick={() =>
-                          handleSelectActivity(activity)
-                        }
+                        onClick={() => handleSelectActivity(activity)}
                         className={`flex-1 min-w-0 text-left p-3 ${
                           selectedActivity?.id === activity.id
-                            ? "text-blue-900"
-                            : ""
+                            ? "text-black"
+                            : "text-gray-500"
                         }`}
                       >
                         <div className="font-medium truncate">
                           {activity.activityName}
                         </div>
 
-                        <div className="text-sm text-gray-500 truncate">
+                        <div className="text-sm truncate">
                           教練: {activity.trainerName || "未指定"} ·{" "}
                           {label(activity.location)}
                         </div>
 
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs">
                           {formatDateTime(activity.startTime)}
                         </div>
                       </button>
@@ -590,9 +568,7 @@ export default function ActivityManagementPage() {
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {selectedActivity.isActive
-                        ? "進行中"
-                        : "已結束"}
+                      {selectedActivity.isActive ? "進行中" : "已結束"}
                     </span>
                   </div>
 
@@ -623,9 +599,7 @@ export default function ActivityManagementPage() {
                       </label>
 
                       <div className="text-gray-900">
-                        {formatDateTime(
-                          selectedActivity.startTime,
-                        )}
+                        {formatDateTime(selectedActivity.startTime)}
                       </div>
                     </div>
 
@@ -730,9 +704,7 @@ export default function ActivityManagementPage() {
         onClose={handleCloseActivityModal}
         onChange={handleActivityFormChange}
         onSubmit={
-          activityModalMode === "add"
-            ? handleAddSubmit
-            : handleUpdateSubmit
+          activityModalMode === "add" ? handleAddSubmit : handleUpdateSubmit
         }
       />
     </div>

@@ -432,7 +432,7 @@ export default function QRCodeGeneratePage() {
                 </button>
 
                 {showProductDropdown && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-white text-slate-900 border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     <div
                       className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-gray-500"
                       onClick={() => {
@@ -521,7 +521,7 @@ export default function QRCodeGeneratePage() {
                   value={customProductDescription}
                   onChange={(e) => setCustomProductDescription(e.target.value)}
                   placeholder="請輸入產品描述"
-                  className="w-full px-3 py-2 mt-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 mt-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
                   required
                 />
               )}
@@ -539,7 +539,7 @@ export default function QRCodeGeneratePage() {
                 min="0"
                 step="0.01"
                 placeholder="請輸入價格"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
                 required
               />
             </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import CustomSelect from '@/app/components/CustomSelect';
 import { useLocation, LocationCode } from "@/types/location";
+import { withBasePath } from '@/lib/basePath';
 interface FinancialRecord {
   id: string;
   recordType: 'income' | 'expense';
@@ -102,7 +103,7 @@ export default function EditFinancialRecordModal({
     try {
       setIsSubmitting(true);
       
-      const response = await fetch(`/api/financial-records/${record.id}`, {
+      const response = await fetch(withBasePath(`/api/financial-records/${record.id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -198,7 +199,7 @@ export default function EditFinancialRecordModal({
               value={formData.memberName}
               onChange={handleInputChange}
               placeholder="輸入成員姓名"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
               required
             />
           </div>
@@ -215,7 +216,7 @@ export default function EditFinancialRecordModal({
               value={formData.item}
               onChange={handleInputChange}
               placeholder="輸入項目名稱"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
               required
             />
           </div>
@@ -247,7 +248,7 @@ export default function EditFinancialRecordModal({
                 onChange={handleInputChange}
                 min="0"
                 step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
                 required
               />
             </div>
@@ -263,7 +264,7 @@ export default function EditFinancialRecordModal({
                 onChange={handleInputChange}
                 min="1"
                 step="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
                 required
               />
             </div>
@@ -281,7 +282,7 @@ export default function EditFinancialRecordModal({
               onChange={handleInputChange}
               placeholder="輸入詳細描述"
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
             />
           </div>
 
@@ -296,7 +297,7 @@ export default function EditFinancialRecordModal({
               name="recordDate"
               value={formData.recordDate}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
             />
           </div>
 

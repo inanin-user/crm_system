@@ -314,7 +314,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      ...savedAttendance.toObject(),
+      ...savedAttendance,
       quotaDeducted: !!memberId,
       activityUpdated: !!activityId
     }, { status: 201 });
