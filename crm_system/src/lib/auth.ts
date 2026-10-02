@@ -43,6 +43,7 @@ export function getTokenFromRequest(request: NextRequest): string | null {
 // 验证用户是否已登录
 export function getAuthUser(request: NextRequest): TokenPayload | null {
   const token = getTokenFromRequest(request);
+  console.log("token: ", token);
   if (!token) return null;
   
   return verifyToken(token);

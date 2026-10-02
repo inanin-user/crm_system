@@ -228,30 +228,30 @@ export default function Navigation() {
               isolation: "isolate", // 防止觸摸事件冒泡到外層
             }),
         }}
-        onTouchStart={(e) => {
-          // 阻止事件冒泡，避免觸發其他觸摸處理器
-          if (isMobile && !isCollapsed) {
-            e.stopPropagation();
-          }
-        }}
-        onTouchMove={(e) => {
-          // 阻止觸摸移動事件冒泡
-          if (isMobile && !isCollapsed) {
-            e.stopPropagation();
-          }
-        }}
-        onTouchEnd={(e) => {
-          // 阻止觸摸結束事件冒泡
-          if (isMobile && !isCollapsed) {
-            e.stopPropagation();
-          }
-        }}
-        onClick={(e) => {
-          // 阻止點擊事件冒泡到可能的全局點擊處理器
-          if (isMobile && !isCollapsed) {
-            e.stopPropagation();
-          }
-        }}
+        // onTouchStart={(e) => {
+        //   // 阻止事件冒泡，避免觸發其他觸摸處理器
+        //   if (isMobile && !isCollapsed) {
+        //     e.stopPropagation();
+        //   }
+        // }}
+        // onTouchMove={(e) => {
+        //   // 阻止觸摸移動事件冒泡
+        //   if (isMobile && !isCollapsed) {
+        //     e.stopPropagation();
+        //   }
+        // }}
+        // onTouchEnd={(e) => {
+        //   // 阻止觸摸結束事件冒泡
+        //   if (isMobile && !isCollapsed) {
+        //     e.stopPropagation();
+        //   }
+        // }}
+        // onClick={(e) => {
+        //   // 阻止點擊事件冒泡到可能的全局點擊處理器
+        //   if (isMobile && !isCollapsed) {
+        //     e.stopPropagation();
+        //   }
+        // }}
       >
         <div className="flex flex-col h-full">
           {/* 顶部区域 - Logo和折叠按钮（只在電腦端顯示） */}

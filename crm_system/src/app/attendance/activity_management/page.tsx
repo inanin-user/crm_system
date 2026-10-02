@@ -388,6 +388,7 @@ export default function ActivityManagementPage() {
 
   const handleSelectActivity = (activity: Activity) => {
     setSelectedActivity(activity);
+    setShowDetails(true);
     setError("");
     setSuccessMessage("");
   };

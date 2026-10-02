@@ -105,7 +105,7 @@ export default function ActivityModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+            className="text-gray-400 hover:text-gray-600 min-w-0"
             disabled={isSubmitting}
           >
             <svg

@@ -32,6 +32,7 @@ export default function CheckPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [openSelectId, setOpenSelectId] = useState<string | number | null>(null);
 
   // 格式化时间，只顯示时:分
   const formatTime = (dateString: string) => {
@@ -288,8 +289,8 @@ export default function CheckPage() {
                       {records.map((record, index) => (
                         <tr
                           key={record.id}
-                          className={`transition-colors duration-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50
-    [&:has(.z-50)>td]:align-top`}
+                          className={`transition-colors duration-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 ${openSelectId === record.id ? "[&>td]:align-top" : ""
+                            }`}
                         >
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {record.name}
@@ -308,18 +309,23 @@ export default function CheckPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {label(record.location)}
                           </td>
-                          <td className="relative px-6 py-4 whitespace-nowrap text-sm text-gray-500 [&:has(.z-50)]:h-[150px]">
+                          <td className={`relative px-6 py-4 whitespace-nowrap text-sm text-gray-500 ${openSelectId === record.id ? "h-[150px] align-top" : ""
+                            }`}>
                             <CustomSelect
                               value={record.status || "出席"}
                               onChange={(value) => updateStatus(record.id, value)}
+                              onOpenChange={(open) => {
+                                console.log("onChangeOpen:", record.id, open)
+                                setOpenSelectId(open ? record.id : null)}
+                              }
                               options={[
                                 { value: "出席", label: "出席" },
                                 { value: "早退", label: "早退" },
                               ]}
                               disabled={updatingStatus === record.id}
                               className={`inline-block w-20 ${record.status === "早退"
-                                  ? "[&_button]:border-orange-200 [&_button]:bg-orange-50 [&_button]:text-orange-700 [&_button]:hover:bg-orange-100"
-                                  : "[&_button]:border-green-200 [&_button]:bg-green-50 [&_button]:text-green-700 [&_button]:hover:bg-green-100"
+                                ? "[&_button]:border-orange-200 [&_button]:bg-orange-50 [&_button]:text-orange-700 [&_button]:hover:bg-orange-100"
+                                : "[&_button]:border-green-200 [&_button]:bg-green-50 [&_button]:text-green-700 [&_button]:hover:bg-green-100"
                                 } ${updatingStatus === record.id
                                   ? "[&_button]:opacity-60 [&_button]:cursor-wait"
                                   : "[&_button]:hover:shadow-sm"

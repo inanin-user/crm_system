@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface CustomSelectOption {
   value: string;
@@ -17,6 +17,7 @@ interface CustomSelectProps {
   className?: string;
   required?: boolean;
   disabled?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export default function CustomSelect({
@@ -27,15 +28,21 @@ export default function CustomSelect({
   className = '',
   required = false,
   disabled = false,
+  onOpenChange,
 }: CustomSelectProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const setOpen = useCallback((open: boolean) => {
+    setShowDropdown(open);
+    onOpenChange?.(open);
+  }, [onOpenChange]);
 
   // 點擊外部關閉下拉選單
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
+        setOpen(false);
       }
     };
 
@@ -46,7 +53,7 @@ export default function CustomSelect({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showDropdown]);
+  }, [showDropdown, setOpen]);
 
   // 獲取當前選中的標籤
   const selectedLabel = options.find(opt => opt.value === value)?.label || placeholder;
@@ -55,13 +62,12 @@ export default function CustomSelect({
     <div ref={containerRef} className={`relative ${className}`}>
       <button
         type="button"
-        onClick={() => !disabled && setShowDropdown(!showDropdown)}
+        onClick={() => !disabled && setOpen(!showDropdown)}
         disabled={disabled}
-        className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-left bg-white flex items-center justify-between transition-colors ${
-          disabled
+        className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-left bg-white flex items-center justify-between transition-colors ${disabled
             ? 'bg-gray-100 cursor-not-allowed text-gray-500'
             : 'focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400'
-        }`}
+          }`}
       >
         <span className={value ? 'text-gray-900' : 'text-gray-500'}>
           {selectedLabel}
@@ -86,7 +92,7 @@ export default function CustomSelect({
               <span
                 onClick={() => {
                   onChange(option.value);
-                  setShowDropdown(false);
+                  setOpen(false);
                 }}
                 className={`flex-1 ${!option.value ? 'text-gray-500' : 'text-gray-900'}`}
               >
