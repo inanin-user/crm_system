@@ -1,12 +1,16 @@
 // app/daily_settlement/home/page.tsx
 "use client";
-import StaffSection, { StaffRow, StaffMember, parseAccountList } from "@/app/components/StaffSection";
+import StaffSection, {
+  StaffRow,
+  StaffMember,
+  parseAccountList,
+} from "@/app/components/StaffSection";
 import IntroductionFeeSection, {
   IntroductionFeeRow,
   emptyIntroductionFeeRow,
   incomeRowTotal,
 } from "@/app/components/IntroductionFeeSection";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { withBasePath, withDailySettlementPath } from "@/lib/basePath";
 import { LocationCode, useLocation } from "@/types/location";
 import { useSidebar } from "@/contexts/SidebarContext";
@@ -17,23 +21,37 @@ let rowIdCounter = 0;
 const nextId = () => ++rowIdCounter;
 
 export default function HomeScreen() {
-
   const { setDisableGPULayer } = useSidebar();
-  
+
+  const centerRef = useRef<HTMLSelectElement>(null);
+  const centerWrapRef = useRef<HTMLDivElement>(null);
+
   const [username, setUsername] = useState("");
-  const [center, setCenter] = useState('');
+  const [center, setCenter] = useState("");
   const [role, setRole] = useState("");
   // Add inside the component, alongside your other useState calls:
   // Update the type — was string[], now objects
 
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
 
-  const [docDate, setDocDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [docTime, setDocTime] = useState(() => new Date().toTimeString().slice(0, 5));
+  const [docDate, setDocDate] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
+  const [docTime, setDocTime] = useState(() =>
+    new Date().toTimeString().slice(0, 5),
+  );
 
-  const [waterbar, setWaterbar] = useState<StaffRow[]>([{ id: nextId(), staffName: "", quantity: 0 }]);
-  const [classItems, setClassItems] = useState<StaffRow[]>([{ id: nextId(), staffName: "", quantity: 0 }]);
-    const [income, setIncome] = useState<IntroductionFeeRow[]>([emptyIntroductionFeeRow(nextId())]);
+  const [waterbar, setWaterbar] = useState<StaffRow[]>([
+    { id: nextId(), staffName: "", quantity: 0 },
+  ]);
+  const [classItems, setClassItems] = useState<StaffRow[]>([
+    { id: nextId(), staffName: "", quantity: 0 },
+  ]);
+  const [income, setIncome] = useState<IntroductionFeeRow[]>([
+    emptyIntroductionFeeRow(nextId()),
+  ]);
+
+  const [centerError, setCenterError] = useState(false);
 
   const [remarks, setRemarks] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -86,34 +104,54 @@ export default function HomeScreen() {
 
   const grandTotal = useMemo(
     () => income.reduce((sum, row) => sum + incomeRowTotal(row), 0),
-    [income]
+    [income],
   );
 
   const addRow = (setter: React.Dispatch<React.SetStateAction<StaffRow[]>>) => {
     setter((rows) => [...rows, { id: nextId(), staffName: "", quantity: 0 }]);
   };
-  const removeRow = (setter: React.Dispatch<React.SetStateAction<StaffRow[]>>, id: number) => {
-    setter((rows) => (rows.length > 1 ? rows.filter((r) => r.id !== id) : rows));
+  const removeRow = (
+    setter: React.Dispatch<React.SetStateAction<StaffRow[]>>,
+    id: number,
+  ) => {
+    setter((rows) =>
+      rows.length > 1 ? rows.filter((r) => r.id !== id) : rows,
+    );
   };
   const updateRow = (
     setter: React.Dispatch<React.SetStateAction<StaffRow[]>>,
     id: number,
     field: "staffName" | "quantity",
-    value: string | number
+    value: string | number,
   ) => {
-    setter((rows) => rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+    setter((rows) =>
+      rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)),
+    );
   };
-
 
   const addIncomeRow = () => {
     setIncome((rows) => [...rows, emptyIntroductionFeeRow(nextId())]);
   };
   const removeIncomeRow = (id: number) => {
-    setIncome((rows) => (rows.length > 1 ? rows.filter((r) => r.id !== id) : rows));
+    setIncome((rows) =>
+      rows.length > 1 ? rows.filter((r) => r.id !== id) : rows,
+    );
   };
-  const updateIncomeRow = (id: number, field: keyof IntroductionFeeRow, value: number | string) => {
-    setIncome((rows) => rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+  const updateIncomeRow = (
+    id: number,
+    field: keyof IntroductionFeeRow,
+    value: number | string,
+  ) => {
+    setIncome((rows) =>
+      rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)),
+    );
   };
+
+  const jumpToCenter = () => {
+  setCenterError(true);
+  centerWrapRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  centerRef.current?.focus({ preventScroll: true });
+};
 
   const handleSubmit = async () => {
     // if (!center) {
@@ -139,6 +177,7 @@ export default function HomeScreen() {
       const data = await res.json();
       if (!res.ok) {
         alert(data.error || "提交失敗");
+        if (data.field === "center") jumpToCenter();
         return;
       }
       alert("提交成功");
@@ -177,40 +216,39 @@ export default function HomeScreen() {
         {/* Header */}
         <div className="relative bg-slate-800 p-6 text-white">
           <div className="flex items-center justify-between">
-            {/* <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-slate-300">{username}</p>
-              {role === "admin" && (
-                <button
-                  onClick={() => (window.location.href = withDailySettlementPath(`/view-data`))}
-                  className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
-                >
-                  查看資料
-                </button>
-              )}
-            </div> */}
-
             <div className="text-center flex-1">
-              <h1 className="text-2xl font-black tracking-tight">每日結算系統</h1>
-              <p className="text-slate-400 text-sm mt-1">{new Date().toLocaleString("zh-HK")}</p>
+              <h1 className="text-2xl font-black tracking-tight">
+                每日結算
+                <span className="ml-2 text-base font-medium text-slate-300">
+                  更新資料
+                </span>
+              </h1>
+              <p className="text-slate-400 text-sm mt-1">
+                {new Date().toLocaleString("zh-HK")}
+              </p>
             </div>
-
-            {/* <button
-              onClick={handleLogout}
-              className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-lg transition-all"
-            >
-              Logout
-            </button> */}
           </div>
         </div>
 
-
         {/* Center Selector */}
-        <div className="bg-slate-700 px-6 py-3 flex items-center justify-center gap-3 border-b border-slate-600">
+        {/* Center Selector */}
+        <div
+          ref={centerWrapRef}
+          className="bg-slate-700 px-6 py-3 flex items-center justify-center gap-3 border-b border-slate-600"
+        >
           {role === "admin" ? (
             <select
+              ref={centerRef}
               value={center}
-              onChange={(e) => setCenter(e.target.value)}
-              className="bg-slate-600 hover:bg-slate-500 text-white text-sm font-bold px-3 py-1.5 rounded-lg border border-slate-500 transition-all"
+              onChange={(e) => {
+                setCenter(e.target.value);
+                setCenterError(false);
+              }}
+              className={`bg-slate-600 hover:bg-slate-500 text-white text-sm font-bold px-3 py-1.5 rounded-lg border transition-all ${
+                centerError
+                  ? "border-red-400 ring-2 ring-red-400"
+                  : "border-slate-500"
+              }`}
             >
               <option value="">請選擇分店</option>
               {Object.values(LocationCode).map((code) => (
@@ -231,7 +269,9 @@ export default function HomeScreen() {
           {/* Date + Time */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg">
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">結算日期</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1">
+                結算日期
+              </label>
               <input
                 type="date"
                 value={docDate}
@@ -240,7 +280,9 @@ export default function HomeScreen() {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">結算時間</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1">
+                結算時間
+              </label>
               <input
                 type="time"
                 value={docTime}
@@ -256,7 +298,9 @@ export default function HomeScreen() {
             staffList={staffList}
             onAdd={() => addRow(setWaterbar)}
             onRemove={(id) => removeRow(setWaterbar, id)}
-            onChange={(id, field, value) => updateRow(setWaterbar, id, field, value)}
+            onChange={(id, field, value) =>
+              updateRow(setWaterbar, id, field, value)
+            }
           />
 
           <StaffSection
@@ -265,10 +309,10 @@ export default function HomeScreen() {
             staffList={staffList}
             onAdd={() => addRow(setClassItems)}
             onRemove={(id) => removeRow(setClassItems, id)}
-            onChange={(id, field, value) => updateRow(setClassItems, id, field, value)}
+            onChange={(id, field, value) =>
+              updateRow(setClassItems, id, field, value)
+            }
           />
-
-          
 
           <hr className="border-slate-200" />
 
@@ -283,13 +327,19 @@ export default function HomeScreen() {
 
           {/* Total */}
           <div className="bg-slate-900 rounded-xl p-6 text-white flex justify-between items-center shadow-inner">
-            <span className="text-lg font-bold text-slate-400">每日總金額 TOTAL</span>
-            <span className="text-4xl font-black text-yellow-400">$ {grandTotal}</span>
+            <span className="text-lg font-bold text-slate-400">
+              每日總金額 TOTAL
+            </span>
+            <span className="text-4xl font-black text-yellow-400">
+              $ {grandTotal}
+            </span>
           </div>
-          
+
           {/* Remarks */}
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">備註 Remarks</label>
+            <label className="block text-sm font-bold text-slate-700 mb-2">
+              備註 Remarks
+            </label>
             <textarea
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}

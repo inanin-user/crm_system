@@ -73,12 +73,14 @@ export default function IntroductionFeeSection({
       >
         <div className="min-w-max">
           {/* Header */}
-          <div className="flex items-center gap-3 px-2 mb-1">
-            <div className="w-20 shrink-0" />
+          <div className="flex items-center gap-3 px-2 border border-transparent mb-1">
+            <div className="w-20 shrink-0 text-xs font-bold text-slate-500">
+              類型
+            </div>
             <div className="w-24 shrink-0 text-xs font-bold text-slate-500">
               收入
             </div>
-            <div className="w-48 shrink-0 text-xs font-bold text-slate-500">
+            <div className="flex-1 min-w-[12rem] text-xs font-bold text-slate-500">
               介紹人
             </div>
             <div className="w-24 shrink-0 text-xs font-bold text-slate-500">
@@ -89,7 +91,7 @@ export default function IntroductionFeeSection({
           </div>
 
           {/* Rows */}
-          <div className="rows-area space-y-2">
+          <div className="rows-area">
             {rows.map((row) => (
               <div
                 key={row.id}

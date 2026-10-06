@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuid } from "uuid";
 import cache from '@/lib/cache';
 import { db } from '@/lib/db';
-import { qrCodeRow, getNextSequence, padQRCodeNumber } from '@/types/qrCode';
+import { qrCodeRow, getNextSequence } from '@/types/qrCode';
+import { getQRCodeCounterName, buildQRCodeNumber } from "@/lib/qrcodeNumber";
 import { getLocation, LocationCode } from '@/types/location';
 
 // 获取所有QR Code记录
@@ -122,8 +123,8 @@ export async function POST(request: NextRequest) {
       );
     }
     // 获取下一个編號
-    const nextNumber = await getNextSequence('qrcode_number');
-    const qrCodeNumber = padQRCodeNumber(nextNumber);
+    const nextNumber = await getNextSequence(getQRCodeCounterName(regionCode));
+    const qrCodeNumber = buildQRCodeNumber(nextNumber, regionCode);
 
 
     const { label } = await getLocation()

@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   } = body;
   
   if (!center || !docDate || !docTime) {
-    return NextResponse.json({ error: "缺少必要欄位" }, { status: 400 });
+    return NextResponse.json({ error: "分店未填寫", field: "center" }, { status: 400 });
   }
 
   const submittedAt = new Date(); // part of the composite primary key
