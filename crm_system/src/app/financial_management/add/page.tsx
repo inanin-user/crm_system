@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import CustomSelect from '@/app/components/CustomSelect';
-import { withBasePath } from '@/lib/basePath';
-import { LocationCode, useLocation } from '@/types/location';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import CustomSelect from "@/app/components/CustomSelect";
+import { withBasePath } from "@/lib/basePath";
+import { LocationCode, useLocation } from "@/types/location";
+import MentionInput from "@/app/components/MentionInput";
 
 export default function AddFinancialRecord() {
   const router = useRouter();
@@ -26,14 +27,14 @@ export default function AddFinancialRecord() {
     recordDate: string;
   };
   const [formData, setFormData] = useState<FormData>({
-    recordType: 'income',
-    memberName: '',
-    item: '',
-    details: '',
+    recordType: "income",
+    memberName: "",
+    item: "",
+    details: "",
     location: LocationCode.WC,
     unitPrice: 0,
     quantity: 1,
-    recordDate: new Date().toISOString().split('T')[0]
+    recordDate: new Date().toISOString().split("T")[0],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
@@ -44,71 +45,78 @@ export default function AddFinancialRecord() {
   }, [formData.unitPrice, formData.quantity]);
 
   // 處理表單輸入變化
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: name === 'unitPrice' || name === 'quantity' ? parseFloat(value) || 0 : value
+      [name]:
+        name === "unitPrice" || name === "quantity"
+          ? parseFloat(value) || 0
+          : value,
     }));
   };
 
   // 處理表單提交
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.memberName || !formData.item || formData.unitPrice <= 0) {
-      alert('請填寫所有必填字段');
+      alert("請填寫所有必填字段");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      
+
       // 準備提交數據
       const submitData = {
         ...formData,
         unitPrice: parseFloat(formData.unitPrice.toString()),
         quantity: parseInt(formData.quantity.toString()),
-        createdBy: user?.id
+        createdBy: user?.id,
       };
-      
-      console.log('提交的數據:', submitData);
-      
-      const response = await fetch(withBasePath('/api/financial-records'), {
-        method: 'POST',
+
+      console.log("提交的數據:", submitData);
+
+      const response = await fetch(withBasePath("/api/financial-records"), {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(submitData),
       });
 
-      console.log('API響應狀態:', response.status);
-      
+      console.log("API響應狀態:", response.status);
+
       if (response.ok) {
         const result = await response.json();
-        console.log('API響應結果:', result);
-        
+        console.log("API響應結果:", result);
+
         if (result.success) {
-          alert('財務記錄創建成功！');
-          router.push('/financial_management');
+          alert("財務記錄創建成功！");
+          router.push("/financial_management");
         } else {
-          alert(result.message || '創建失敗');
+          alert(result.message || "創建失敗");
         }
       } else {
         const errorText = await response.text();
-        console.error('API錯誤響應:', errorText);
+        console.error("API錯誤響應:", errorText);
         alert(`創建失敗 (${response.status}): ${errorText}`);
       }
     } catch (error) {
-      console.error('創建財務記錄失敗:', error);
-      alert('創建失敗，請稍後重試');
+      console.error("創建財務記錄失敗:", error);
+      alert("創建失敗，請稍後重試");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   // 認證和權限檢查 - 讓 AuthContext 處理重定向
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== "admin") {
     return null; // AuthContext 會自動重定向
   }
 
@@ -124,13 +132,27 @@ export default function AddFinancialRecord() {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
         <div className="flex items-start space-x-4">
           <div className="flex-shrink-0">
-            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="w-8 h-8 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-blue-800 mb-2">創建您的財務記錄</h3>
-            <p className="text-blue-700">開始記錄您的收入和支出，輕鬆管理財務</p>
+            <h3 className="text-lg font-semibold text-blue-800 mb-2">
+              創建您的財務記錄
+            </h3>
+            <p className="text-blue-700">
+              開始記錄您的收入和支出，輕鬆管理財務
+            </p>
           </div>
         </div>
       </div>
@@ -149,7 +171,7 @@ export default function AddFinancialRecord() {
                   type="radio"
                   name="recordType"
                   value="income"
-                  checked={formData.recordType === 'income'}
+                  checked={formData.recordType === "income"}
                   onChange={handleInputChange}
                   className="mr-2 text-blue-600 focus:ring-blue-500"
                 />
@@ -160,7 +182,7 @@ export default function AddFinancialRecord() {
                   type="radio"
                   name="recordType"
                   value="expense"
-                  checked={formData.recordType === 'expense'}
+                  checked={formData.recordType === "expense"}
                   onChange={handleInputChange}
                   className="mr-2 text-blue-600 focus:ring-blue-500"
                 />
@@ -171,16 +193,20 @@ export default function AddFinancialRecord() {
 
           {/* 成員姓名 */}
           <div>
-            <label htmlFor="memberName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="memberName"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               成員 *
             </label>
-            <input
-              type="text"
+            <MentionInput
               id="memberName"
               name="memberName"
               value={formData.memberName}
-              onChange={handleInputChange}
-              placeholder="輸入成員姓名"
+              onChange={(v) =>
+                setFormData((prev) => ({ ...prev, memberName: v }))
+              }
+              placeholder="輸入成員姓名，或輸入 @ 選擇成員"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900"
               required
             />
@@ -188,7 +214,10 @@ export default function AddFinancialRecord() {
 
           {/* 項目名稱 */}
           <div>
-            <label htmlFor="item" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="item"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               項目 *
             </label>
             <input
@@ -205,12 +234,20 @@ export default function AddFinancialRecord() {
 
           {/* 地點 */}
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="location"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               地點
             </label>
             <CustomSelect
               value={formData.location}
-              onChange={(value) => setFormData(prev => ({ ...prev, location: value as LocationCode }))}
+              onChange={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  location: value as LocationCode,
+                }))
+              }
               options={locationOptions}
               placeholder="請選擇地點"
             />
@@ -219,7 +256,10 @@ export default function AddFinancialRecord() {
           {/* 單價和數量 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="unitPrice" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="unitPrice"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 單價 *
               </label>
               <input
@@ -235,7 +275,10 @@ export default function AddFinancialRecord() {
               />
             </div>
             <div>
-              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="quantity"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 數量 *
               </label>
               <input
@@ -254,7 +297,10 @@ export default function AddFinancialRecord() {
 
           {/* 詳細描述 */}
           <div>
-            <label htmlFor="details" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="details"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               詳情
             </label>
             <textarea
@@ -270,7 +316,10 @@ export default function AddFinancialRecord() {
 
           {/* 記錄日期 */}
           <div>
-            <label htmlFor="recordDate" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="recordDate"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               記錄日期
             </label>
             <input
@@ -307,11 +356,11 @@ export default function AddFinancialRecord() {
               disabled={isSubmitting}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSubmitting ? '保存中...' : '保存記錄'}
+              {isSubmitting ? "保存中..." : "保存記錄"}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-} 
+}
