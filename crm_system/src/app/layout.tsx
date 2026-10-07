@@ -11,6 +11,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { getUserLocale } from "@/services/locale";
 import GPULayerWrapper from "./components/GPULayerWrapper";
+import RouteGuard from "./components/RouteGuard";
+import { PermissionsProvider } from "../contexts/PermissionsContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -42,10 +44,14 @@ export default async function RootLayout({
               <MobileClickInitializer />
               <DebugClickHelper />
               <GPULayerWrapper>
+                <PermissionsProvider>
+                <RouteGuard>
                 <ConditionalNavigation />
                 <ConditionalMain>
                   {children}
                 </ConditionalMain>
+                </RouteGuard>
+                </PermissionsProvider>
               </GPULayerWrapper>
             </SidebarProvider>
           </AuthProvider>

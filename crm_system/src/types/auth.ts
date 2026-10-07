@@ -11,7 +11,7 @@ export interface AccountRow extends RowDataPacket {
   username: string;
   role: DailySettlementRole;
   isActive: number;
-  locations: LocationCode[];       // parsed JSON
+  locations: LocationCode[];
   lastLogin: string | null;
   createdAt: string;
   updatedAt: string;

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useScrollOptimization } from "@/hooks/useScrollOptimization";
 import { withBasePath } from "@/lib/basePath";
+import { LocationCode, useLocation } from "@/types/location";
 
 interface Activity {
   id: string;
@@ -14,7 +15,7 @@ interface Activity {
   endTime: string;
   duration: number;
   participants: string[];
-  location: string;
+  location: LocationCode;
   description?: string;
   isActive: boolean;
   createdAt: string;
@@ -23,7 +24,8 @@ interface Activity {
 export default function MyActivityPage() {
   const { user } = useAuth();
   useScrollOptimization();
-
+  const { label } = useLocation();
+  
   const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
     null,
@@ -153,7 +155,7 @@ export default function MyActivityPage() {
                           {activity.activityName}
                         </div>
 
-                        <div className="text-sm">{activity.location}</div>
+                        <div className="text-sm">{label(activity.location)}</div>
 
                         <div className="text-xs">
                           {formatDateTime(activity.startTime)}
@@ -197,7 +199,7 @@ export default function MyActivityPage() {
                         活動地點
                       </label>
                       <div className="text-gray-900">
-                        {selectedActivity.location}
+                        {label(selectedActivity.location)}
                       </div>
                     </div>
 

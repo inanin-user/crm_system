@@ -1,4 +1,4 @@
-import { MotionValue } from "framer-motion/dom";
+import { MotionValue, Transition } from "framer-motion/dom";
 
 export interface AvatarProps {
   config?: AvatarConfig;
@@ -6,7 +6,41 @@ export interface AvatarProps {
   eyeY: MotionValue<number>;
   coveringEyes: boolean;
 }
+export type MotionTarget = {
+  x?: number;
+  y?: number;
+  scale?: number;
+  scaleX?: number;
+  scaleY?: number;
+  rotate?: number;
+  opacity?: number;
+};
 
+export type MotionSpec = {
+  idle: MotionTarget;
+  covering: MotionTarget;
+  transition?: Transition;
+};
+
+/** Where the shape sits in the layer order. */
+export type ShapeLayer =
+  | "afterBody"   // above body, below head (shoulders, collar, scarf)
+  | "afterHead"   // above head, below eyes (cheeks, blush)
+  | "beforeHands"
+  | "afterHands"; // topmost (paw pads, sleeves)
+
+export type ExtraShape = {
+  id: string;
+  layer: ShapeLayer;
+  path: string;
+  fill: string;          // a key of config.colors, or a literal color
+  stroke?: string;       // same rule, defaults to colors.outline
+  strokeWidth?: number;  // defaults to 3
+  origin?: string;       // e.g. "100px 170px", for scale/rotate
+  motion?: MotionSpec;
+};
+
+export type EyePoint = { x: number; y: number };
 export interface AvatarConfig {
   // ------------------------------------------------------------
   // Basic colors
@@ -88,6 +122,7 @@ export interface AvatarConfig {
     rightX: number;
     y: number;
     radius: number;
+    glancePath: EyePoint[];
   };
 
   // ------------------------------------------------------------
@@ -108,5 +143,7 @@ export interface AvatarConfig {
     y: number;
     radius: number;
     strokeWidth: number;
+    motion?: MotionSpec;
   };
+  shapes?: ExtraShape[];
 }

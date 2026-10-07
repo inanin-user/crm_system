@@ -23,10 +23,12 @@ export async function POST(req: Request) {
     if (rows.length === 0) {
       return NextResponse.json({ error: "Invalid username" }, { status: 401 });
     }
-
+    console.log("Login attempt for user:", username);
     const user = rows[0];
 
     const valid = await bcrypt.compare(password, user.password);
+    
+    console.log("Password comparison result:", password, user.password, valid);
     if (!valid) {
       return NextResponse.json({ error: "Invalid password" }, { status: 401 });
     }

@@ -1,8 +1,50 @@
 "use client";
 
 import { motion } from "framer-motion";
-import type { AvatarProps } from "@/lib/avatar";
+import type { AvatarConfig, AvatarProps } from "@/lib/avatar";
 import { defaultAvatar } from "@/lib/avatar";
+import { ExtraShape, MotionSpec, ShapeLayer } from "@/lib/avatar/avatarConfig";
+
+const DEFAULT_HANDS_MOTION: MotionSpec = {
+  idle: { y: 90, opacity: 0 },
+  covering: { y: 0, opacity: 1 },
+  transition: { type: "spring", stiffness: 360, damping: 24 },
+};
+
+function ExtraShapes({
+  shapes,
+  layer,
+  coveringEyes,
+  colors,
+}: {
+  shapes?: ExtraShape[];
+  layer: ShapeLayer;
+  coveringEyes: boolean;
+  colors: AvatarConfig["colors"];
+}) {
+  const resolve = (c: string) => colors[c as keyof typeof colors] ?? c;
+
+  return (
+    <>
+      {shapes
+        ?.filter((s) => s.layer === layer)
+        .map((s) => (
+          <motion.path
+            key={s.id}
+            d={s.path}
+            fill={resolve(s.fill)}
+            stroke={resolve(s.stroke ?? "outline")}
+            strokeWidth={s.strokeWidth ?? 3}
+            strokeLinejoin="round"
+            style={s.origin ? { transformOrigin: s.origin } : undefined}
+            initial={false}
+            animate={s.motion && (coveringEyes ? s.motion.covering : s.motion.idle)}
+            transition={s.motion?.transition}
+          />
+        ))}
+    </>
+  );
+}
 
 export default function Avatar({
   config = defaultAvatar,
@@ -20,7 +62,9 @@ export default function Avatar({
     eyes,
     mouth,
     hands,
+    shapes,
   } = config;
+  const handsMotion = hands.motion ?? DEFAULT_HANDS_MOTION;
 
   return (
     <svg
@@ -90,6 +134,8 @@ export default function Avatar({
         </motion.text>
         )}
 
+        <ExtraShapes shapes={shapes} layer="afterBody" coveringEyes={coveringEyes} colors={colors} />
+
         {/* -------------------------------------------------------- */}
         {/* Head                                                     */}
         {/* -------------------------------------------------------- */}
@@ -153,6 +199,8 @@ export default function Avatar({
           }}
         />
 
+        <ExtraShapes shapes={shapes} layer="afterHead" coveringEyes={coveringEyes} colors={colors} />
+
         {/* -------------------------------------------------------- */}
         {/* Eyes                                                     */}
         {/* -------------------------------------------------------- */}
@@ -201,16 +249,14 @@ export default function Avatar({
           }}
         />
 
+        <ExtraShapes shapes={shapes} layer="beforeHands" coveringEyes={coveringEyes} colors={colors} />
+
         {/* -------------------------------------------------------- */}
         {/* Hands covering eyes                                      */}
         {/* -------------------------------------------------------- */}
-
         <motion.g
           initial={false}
-          animate={{
-            y: coveringEyes ? 0 : 90,
-            opacity: coveringEyes ? 1 : 0,
-          }}
+          animate={coveringEyes ? handsMotion.covering : handsMotion.idle}
           transition={{
             type: "spring",
             stiffness: 360,
@@ -235,6 +281,8 @@ export default function Avatar({
             strokeWidth={hands.strokeWidth}
           />
         </motion.g>
+
+        <ExtraShapes shapes={shapes} layer="afterHands" coveringEyes={coveringEyes} colors={colors} />
       </g>
     </svg>
   );

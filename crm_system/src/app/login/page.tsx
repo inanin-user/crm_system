@@ -4,50 +4,11 @@ import { useEffect, useMemo, useState, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, useSpring } from "framer-motion";
 import Avatar from "@/app/components/Avatar";
-import { defaultAvatar } from "@/lib/avatar";
+import { pandaAvatar, getGlancePosition } from "@/lib/avatar";
+
 
 import { useAuth } from "@/contexts/AuthContext";
 import { withBasePath } from "@/lib/basePath";
-
-/* ------------------------------------------------------------------ */
-/* Eye glance                                                         */
-/* ------------------------------------------------------------------ */
-
-// const eyePositions = [
-//   { x: 0, y: 0 },   // 1 - starting position
-//   { x: -2, y: 5 },  // 2
-//   { x: -1, y: 11 }, // 3
-//   { x: 2, y: 15 },  // 4
-//   { x: 4, y: 17 },  // 5 - lowest position
-// ];
-
-const eyePositions = [
-  { x: 0, y: 0 }, // 1 - starting position
-  { x: -2, y: 4 }, // 2
-  { x: 0, y: 11 }, // 3
-  { x: 2, y: 13 }, // 4
-  { x: 4, y: 9.8 }, // 5 - lowest position
-];
-function getGlancePosition(progress: number) {
-  const safeProgress = Math.max(0, Math.min(progress, 1));
-
-  const scaled = safeProgress * (eyePositions.length - 1);
-
-  const index = Math.floor(scaled);
-
-  const nextIndex = Math.min(index + 1, eyePositions.length - 1);
-
-  const localProgress = scaled - index;
-
-  const current = eyePositions[index];
-  const next = eyePositions[nextIndex];
-
-  return {
-    x: current.x + (next.x - current.x) * localProgress,
-
-    y: current.y + (next.y - current.y) * localProgress,
-  };
-}
 
 /* ------------------------------------------------------------------ */
 /* Animated Avatar                                                    */
@@ -61,8 +22,8 @@ function LoginAvatar({
   coveringEyes: boolean;
 }) {
   const targetPosition = useMemo(
-    () => getGlancePosition(glanceProgress),
-    [glanceProgress],
+    () => getGlancePosition(glanceProgress, pandaAvatar.eyes.glancePath),
+    [glanceProgress, pandaAvatar.eyes.glancePath],
   );
 
   /*
@@ -108,7 +69,7 @@ function LoginAvatar({
       }}
     >
       <Avatar
-        config={defaultAvatar}
+        config={pandaAvatar}
         eyeX={eyeX}
         eyeY={eyeY}
         coveringEyes={coveringEyes}
@@ -116,52 +77,6 @@ function LoginAvatar({
     </motion.div>
   );
 }
-
-// function LoginAvatar({
-//   glanceProgress,
-//   coveringEyes,
-// }: {
-//   glanceProgress: number;
-//   coveringEyes: boolean;
-// }) {
-//   const eyePosition = useMemo(
-//     () => getGlancePosition(glanceProgress),
-//     [glanceProgress],
-//   );
-//   return (
-//     <div className="relative mx-auto h-48 w-48">
-//       {/* -------------------------------------------------------- */}
-//       {/* Static face                                               */}
-//       {/* -------------------------------------------------------- */}
-
-//       <img
-//         src={withBasePath("/images/face.png")}
-//         alt=""
-//         className="absolute inset-0 h-full w-full object-contain"
-//       />
-
-//       {/* -------------------------------------------------------- */}
-//       {/* Live eyes                                                 */}
-//       {/* -------------------------------------------------------- */}
-
-//       <svg
-//         viewBox="0 0 200 200"
-//         className="absolute inset-0 h-full w-full"
-//         aria-hidden="true"
-//       >
-//         <g
-//           style={{
-//             transform: `translateX(${eyePosition.x}px) translateY(${eyePosition.y}px)`,
-//           }}
-//         >
-//           <circle cx="82" cy="110" r="5" fill="#1B4965" />
-
-//           <circle cx="118" cy="110" r="5" fill="#1B4965" />
-//         </g>
-//       </svg>
-//     </div>
-//   );
-// }
 
 /* ------------------------------------------------------------------ */
 /* Login form                                                         */
@@ -350,6 +265,7 @@ function LoginForm() {
 
         <LoginAvatar
           glanceProgress={glanceProgress}
+
           coveringEyes={passwordFocused}
         />
 

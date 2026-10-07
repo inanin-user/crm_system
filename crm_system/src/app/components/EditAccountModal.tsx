@@ -46,7 +46,7 @@ export default function EditAccountModal({
       setFormData({
         username: account.username,
         password: account.password,
-        locations: account.locations || []
+        locations: account.locations || [] as LocationCode[]
       });
     }
   }, [account]);

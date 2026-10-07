@@ -68,11 +68,18 @@ export const defaultAvatar: AvatarConfig = {
   },
 
   eyes: {
-    leftX: 82,
-    rightX: 118,
-    y: 108,
-    radius: 5,
-  },
+  leftX: 82,
+  rightX: 118,
+  y: 108,
+  radius: 5,
+  glancePath: [
+    { x: 0, y: 0 },    // start
+    { x: -2, y: 4 },
+    { x: 0, y: 11 },
+    { x: 2, y: 13 },
+    { x: 4, y: 9.8 },  // lowest
+  ],
+},
 
   mouth: {
     path: "M85 128 Q100 140 115 128",

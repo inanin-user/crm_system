@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { AccountDetailRow, AccountRow } from '@/types/auth';
 import { LocationCode } from '@/types/location';
+import bcrypt from 'bcryptjs';
 
 // 获取单个账户的详细信息
 export async function GET(
@@ -185,20 +186,21 @@ export async function PUT(
 
     // 更新账户信息
     account.username = normalizedUsername;
-    account.password = password;
+    const salt = await bcrypt.genSalt(12);
+    account.password = await bcrypt.hash(password, salt);
     // account.displayPassword = password; // 保存明文密码用于显示
     
     // 更新地区权限（如果提供的话）
-    if (locations !== undefined) {
-      account.locations = locations;
-    }
+    // if (locations !== undefined) {
+    //   account.locations = locations;
+    // }
     
-
+    const locationsJson = JSON.stringify(Array.isArray(locations) ? locations : []);
     await db.query(
       `UPDATE account_management
-      SET username=?, role=?, isActive=?, locations=?, updatedAt=NOW(), lastLogin=?
+      SET username=?, role=?, isActive=?, locations=?, updatedAt=NOW(), lastLogin=?, password=?
       WHERE id=?`,
-      [account.username, account.role, account.isActive, account.locations, account.lastLogin, account.id]
+      [account.username, account.role, account.isActive, locationsJson, account.lastLogin, account.password,account.id]
     );
       
     
