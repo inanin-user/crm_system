@@ -81,7 +81,7 @@ export default function StaffSection({
         <div className="min-w-max">
           {/* Header */}
           <div className="flex items-center gap-3 px-2 mb-1">
-            <div className="w-48 shrink-0 text-xs font-bold text-slate-500">
+            <div className="flex-1 min-w-[12rem] text-xs font-bold text-slate-500">
               職員
             </div>
             <div className="w-24 shrink-0 text-xs font-bold text-slate-500">
