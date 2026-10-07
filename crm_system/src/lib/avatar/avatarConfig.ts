@@ -123,6 +123,8 @@ export interface AvatarConfig {
     y: number;
     radius: number;
     glancePath: EyePoint[];
+    pupil?: { radius: number; fill: string };
+    shine?: { dx: number; dy: number; radius: number; fill: string };
   };
 
   // ------------------------------------------------------------

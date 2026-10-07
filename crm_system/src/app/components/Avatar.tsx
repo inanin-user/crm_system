@@ -38,7 +38,9 @@ function ExtraShapes({
             strokeLinejoin="round"
             style={s.origin ? { transformOrigin: s.origin } : undefined}
             initial={false}
-            animate={s.motion && (coveringEyes ? s.motion.covering : s.motion.idle)}
+            animate={
+              s.motion && (coveringEyes ? s.motion.covering : s.motion.idle)
+            }
             transition={s.motion?.transition}
           />
         ))}
@@ -90,11 +92,7 @@ export default function Avatar({
       {/* ---------------------------------------------------------- */}
 
       <clipPath id="avatarClip">
-        <circle
-          cx={background.cx}
-          cy={background.cy}
-          r={background.radius}
-        />
+        <circle cx={background.cx} cy={background.cy} r={background.radius} />
       </clipPath>
 
       <g clipPath="url(#avatarClip)">
@@ -121,7 +119,7 @@ export default function Avatar({
           }}
         />
         {body.text && (
-        <motion.text
+          <motion.text
             x={body.text.x}
             y={body.text.y}
             textAnchor="middle"
@@ -129,12 +127,17 @@ export default function Avatar({
             fontSize={body.text.fontSize}
             fontWeight={body.text.fontWeight ?? 400}
             fill={body.text.fill}
-        >
+          >
             {body.text.value}
-        </motion.text>
+          </motion.text>
         )}
 
-        <ExtraShapes shapes={shapes} layer="afterBody" coveringEyes={coveringEyes} colors={colors} />
+        <ExtraShapes
+          shapes={shapes}
+          layer="afterBody"
+          coveringEyes={coveringEyes}
+          colors={colors}
+        />
 
         {/* -------------------------------------------------------- */}
         {/* Head                                                     */}
@@ -199,7 +202,12 @@ export default function Avatar({
           }}
         />
 
-        <ExtraShapes shapes={shapes} layer="afterHead" coveringEyes={coveringEyes} colors={colors} />
+        <ExtraShapes
+          shapes={shapes}
+          layer="afterHead"
+          coveringEyes={coveringEyes}
+          colors={colors}
+        />
 
         {/* -------------------------------------------------------- */}
         {/* Eyes                                                     */}
@@ -211,19 +219,27 @@ export default function Avatar({
             y: eyeY,
           }}
         >
-          <circle
-            cx={eyes.leftX}
-            cy={eyes.y}
-            r={eyes.radius}
-            fill={colors.eye}
-          />
-
-          <circle
-            cx={eyes.rightX}
-            cy={eyes.y}
-            r={eyes.radius}
-            fill={colors.eye}
-          />
+          {[eyes.leftX, eyes.rightX].map((cx) => (
+            <g key={cx}>
+              <circle cx={cx} cy={eyes.y} r={eyes.radius} fill={colors.eye} />
+              {eyes.pupil && (
+                <circle
+                  cx={cx}
+                  cy={eyes.y}
+                  r={eyes.pupil.radius}
+                  fill={eyes.pupil.fill}
+                />
+              )}
+              {eyes.shine && (
+                <circle
+                  cx={cx + eyes.shine.dx}
+                  cy={eyes.y + eyes.shine.dy}
+                  r={eyes.shine.radius}
+                  fill={eyes.shine.fill}
+                />
+              )}
+            </g>
+          ))}
         </motion.g>
 
         {/* -------------------------------------------------------- */}
@@ -237,9 +253,7 @@ export default function Avatar({
           strokeWidth={mouth.strokeWidth}
           strokeLinecap="round"
           animate={{
-            scaleX: coveringEyes
-              ? mouth.scaleWhenCoveringEyes
-              : 1,
+            scaleX: coveringEyes ? mouth.scaleWhenCoveringEyes : 1,
           }}
           transition={{
             duration: 0.25,
@@ -249,7 +263,12 @@ export default function Avatar({
           }}
         />
 
-        <ExtraShapes shapes={shapes} layer="beforeHands" coveringEyes={coveringEyes} colors={colors} />
+        <ExtraShapes
+          shapes={shapes}
+          layer="beforeHands"
+          coveringEyes={coveringEyes}
+          colors={colors}
+        />
 
         {/* -------------------------------------------------------- */}
         {/* Hands covering eyes                                      */}
@@ -282,7 +301,12 @@ export default function Avatar({
           />
         </motion.g>
 
-        <ExtraShapes shapes={shapes} layer="afterHands" coveringEyes={coveringEyes} colors={colors} />
+        <ExtraShapes
+          shapes={shapes}
+          layer="afterHands"
+          coveringEyes={coveringEyes}
+          colors={colors}
+        />
       </g>
     </svg>
   );
