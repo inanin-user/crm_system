@@ -273,7 +273,7 @@ export default function QRCodeGeneratePage() {
       ? record.price
       : price === ""
         ? 0
-        : Number(price);
+        : Number(price).toFixed(2);
     const title = getCampusTitle(currentRegionCode);
 
     // 獲取 PDF 配置
@@ -308,7 +308,7 @@ export default function QRCodeGeneratePage() {
         </div>
         <p style="font-size: ${config.fonts.product.size}; font-weight: ${config.fonts.product.weight}; margin: 0; text-align: center; color: ${config.fonts.product.color};">${config.content.productPrefix}${currentProductDesc}</p>
         <p style="font-size: ${config.fonts.product.size}; font-weight: ${config.fonts.product.weight}; margin: 0; text-align: center; color: ${config.fonts.product.color};">編號：${getNumericCode(currentNumber)}</p>
-        <p style="font-size: ${config.fonts.product.size}; font-weight: ${config.fonts.product.weight}; margin: 0; text-align: center; color: ${config.fonts.product.color};">價格：$${currentPrice.toFixed(2)}</p>
+        <p style="font-size: ${config.fonts.product.size}; font-weight: ${config.fonts.product.weight}; margin: 0; text-align: center; color: ${config.fonts.product.color};">價格：$${currentPrice}</p>
         <p style="font-size: ${config.fonts.instructions.size}; font-weight: ${config.fonts.instructions.weight}; margin: ${config.fonts.instructions.marginTop} 0 0 0; text-align: center; color: ${config.fonts.instructions.color};">${config.content.instructions}</p>
       </div>
     `;
