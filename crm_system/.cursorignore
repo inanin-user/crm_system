@@ -1,0 +1,15 @@
+# Ignore everything by default
+*
+
+# Allow specific folders
+!src/app/
+!src/lib/
+!src/types/
+!src/sql/
+!src/models/
+!src/contexts/
+!public/animations/
+
+# Allow specific files
+!next.config.mjs
+!package.json

@@ -13,6 +13,7 @@ import { getUserLocale } from "@/services/locale";
 import GPULayerWrapper from "./components/GPULayerWrapper";
 import RouteGuard from "./components/RouteGuard";
 import { PermissionsProvider } from "../contexts/PermissionsContext";
+import { withBasePath } from "@/lib/basePath";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -23,7 +24,13 @@ export const metadata: Metadata = {
   title: "CRM 系統",
   description: "活動出席管理系統",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+  icons: {
+    icon: withBasePath("/images/app-icon.png"),
+    shortcut: withBasePath("/favicon.ico"),
+    apple: withBasePath("/images/apple-icon.png"),
+  },
 };
+
 
 export default async function RootLayout({
   children,
